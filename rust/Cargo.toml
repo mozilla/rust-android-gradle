@@ -1,0 +1,10 @@
+[package]
+name = "rust"
+version = "0.1.0"
+authors = ["Nish Tahir <nish.tahir@willowtreeapps.com>"]
+
+[dependencies]
+jni = "0.5.2"
+
+[lib]
+crate_type = ["staticlib", "dylib"]

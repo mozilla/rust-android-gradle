@@ -1,0 +1,49 @@
+apply plugin: "java-gradle-plugin"
+apply plugin: "maven-publish"
+apply plugin: "kotlin"
+
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = "com.nishtahir.rust-android"
+            implementationClass = "com.nishtahir.RustAndroidPlugin"
+        }
+    }
+}
+
+group 'com.nishtahir'
+version '0.0.1'
+
+publishing {
+    repositories {
+        maven {
+            url "../sample/maven-repo"
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            groupId 'com.nishtahir'
+            artifactId 'rust-android'
+            version '0.0.1'
+
+            from components.java
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly gradleApi()
+    implementation "com.android.tools.build:gradle:2.3.3"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
