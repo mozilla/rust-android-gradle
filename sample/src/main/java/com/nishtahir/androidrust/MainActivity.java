@@ -6,9 +6,9 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Used to load the 'lib' library on application startup.
+    // Used to load the 'rust' library on application startup.
     static {
-        System.loadLibrary("lib");
+        System.loadLibrary("rust");
     }
 
     @Override
@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Example of a call to a native method
-        TextView tv = (TextView) findViewById(R.id.sample_text);
+        TextView tv = findViewById(R.id.sample_text);
         tv.setText(stringFromJNI());
 
     }
