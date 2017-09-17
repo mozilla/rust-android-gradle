@@ -6,7 +6,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import java.io.File
 
-val toolchains = listOf<Toolchain>(
+val RUST_TASK_GROUP = "rust"
+
+val toolchains = listOf(
         Toolchain("arm",
                 "arm-linux-androideabi",
                 "bin/arm-linux-androideabi-clang",
@@ -28,34 +30,32 @@ data class Toolchain(val platform: String,
     fun bin(): String = "$platform/$compiler"
 }
 
+@Suppress("unused")
 open class RustAndroidPlugin : Plugin<Project> {
 
     override fun apply(project: Project) = with(project) {
         extensions.add("cargo", CargoExtension::class.java)
-
         afterEvaluate {
             plugins.all {
                 when (it) {
                     is AppPlugin -> {
-                        val app = extensions[AppExtension::class]
-                        val minSdk = app.defaultConfig.minSdkVersion.apiLevel
-                        val ndk = app.ndkDirectory
-                        println("Checking for existing toolchain in ${getToolchainDirectory().absolutePath}")
-                        if (!getToolchainDirectory().exists()) {
-                            println("Preparing standalone toolchains...")
-                            toolchains.filterNot { (arch) -> minSdk < 21 && arch.endsWith("64") }
-                                    .forEach { (arch) ->
-                                        exec { spec ->
-                                            spec.standardOutput = System.out
-                                            spec.commandLine = listOf("$ndk/build/tools/make_standalone_toolchain.py")
-                                            spec.args = listOf("--arch=$arch", "--api=$minSdk", "--install-dir=${getToolchainDirectory()}/$arch")
-                                        }
-                                    }
-                        } else {
-                            println("Existing toolchains found. Clean to regenerate")
+                        extensions[AppExtension::class].apply {
+                            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/jniLibs/"))
                         }
-                        app.sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/jniLibs/"))
-                        tasks.create("cargoBuild", CargoBuildTask::class.java)
+
+                        val generateToolchain = tasks.maybeCreate("generateToolchains",
+                                GenerateToolchainsTask::class.java).apply {
+                            group = RUST_TASK_GROUP
+                            description = "Generate standard toolchain for given architectures"
+                        }
+
+                        val buildTask = tasks.maybeCreate("cargoBuild",
+                                CargoBuildTask::class.java).apply {
+                            group = RUST_TASK_GROUP
+                            description = "Build library"
+                        }
+
+                        buildTask.dependsOn(generateToolchain)
                     }
                 }
             }

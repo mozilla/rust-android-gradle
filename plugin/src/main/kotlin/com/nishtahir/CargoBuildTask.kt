@@ -15,7 +15,6 @@ open class CargoBuildTask : DefaultTask() {
                 val toolchain = toolchains.find { (arch) -> arch == target }
                 if (toolchain != null) {
                     buildProjectForTarget(project, toolchain, this)
-
                     copy { spec ->
                         spec.from(File(project.projectDir, "$module/target/${toolchain.target}/debug"))
                         spec.into(File(buildDir, "jniLibs/${toolchain.folder}"))
