@@ -1,7 +1,8 @@
 package com.nishtahir
 
-import com.android.build.gradle.AppExtension
+import com.android.build.gradle.*
 import org.gradle.api.DefaultTask
+import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 
 open class GenerateToolchainsTask : DefaultTask() {
@@ -9,7 +10,16 @@ open class GenerateToolchainsTask : DefaultTask() {
     @TaskAction
     @Suppress("unused")
     fun generateToolchainTask() {
-        val app = project.extensions[AppExtension::class]
+        project.plugins.all {
+            when (it) {
+                is AppPlugin -> congfigureTask<AppExtension>(project)
+                is LibraryPlugin -> congfigureTask<LibraryExtension>(project)
+            }
+        }
+    }
+
+    inline fun <reified T : BaseExtension> congfigureTask(project: Project) {
+        val app = project.extensions[T::class]
         val minApi = app.defaultConfig.minSdkVersion.apiLevel
         val ndkPath = app.ndkDirectory
 
@@ -29,4 +39,5 @@ open class GenerateToolchainsTask : DefaultTask() {
                     }
                 }
     }
+
 }

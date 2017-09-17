@@ -7,7 +7,8 @@ Cross compiles rust cargo projects for Android
 To begin you must first install the rust toolchains for your target platforms.
 
 ```
-rustup target add arm-linux-androideabi
+rustup target add arm-linux-androideabi     # for arm
+rustup target add i686-linux-android        # for x86
 ```
 
 Next add the `cargo` configuration to android project. Point to your cargo project using `module` and add targets.

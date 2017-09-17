@@ -1,7 +1,6 @@
 package com.nishtahir
 
-import com.android.build.gradle.AppExtension
-import com.android.build.gradle.AppPlugin
+import com.android.build.gradle.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import java.io.File
@@ -38,28 +37,31 @@ open class RustAndroidPlugin : Plugin<Project> {
         afterEvaluate {
             plugins.all {
                 when (it) {
-                    is AppPlugin -> {
-                        extensions[AppExtension::class].apply {
-                            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/jniLibs/"))
-                        }
-
-                        val generateToolchain = tasks.maybeCreate("generateToolchains",
-                                GenerateToolchainsTask::class.java).apply {
-                            group = RUST_TASK_GROUP
-                            description = "Generate standard toolchain for given architectures"
-                        }
-
-                        val buildTask = tasks.maybeCreate("cargoBuild",
-                                CargoBuildTask::class.java).apply {
-                            group = RUST_TASK_GROUP
-                            description = "Build library"
-                        }
-
-                        buildTask.dependsOn(generateToolchain)
-                    }
+                    is AppPlugin -> configurePlugin<AppExtension>(this)
+                    is LibraryPlugin -> configurePlugin<LibraryExtension>(this)
                 }
             }
         }
+    }
+
+    private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
+        extensions[T::class].apply {
+            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/jniLibs/"))
+        }
+
+        val generateToolchain = tasks.maybeCreate("generateToolchains",
+                GenerateToolchainsTask::class.java).apply {
+            group = RUST_TASK_GROUP
+            description = "Generate standard toolchain for given architectures"
+        }
+
+        val buildTask = tasks.maybeCreate("cargoBuild",
+                CargoBuildTask::class.java).apply {
+            group = RUST_TASK_GROUP
+            description = "Build library"
+        }
+
+        buildTask.dependsOn(generateToolchain)
     }
 }
 
