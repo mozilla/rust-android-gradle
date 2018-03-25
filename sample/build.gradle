@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        google()
         mavenCentral()
         maven {
             url "https://plugins.gradle.org/m2/"
@@ -9,7 +10,8 @@ buildscript {
         }
     }
     dependencies {
-        classpath "com.nishtahir:rust-android:0.0.1"
+        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath "com.nishtahir:rust-android:0.0.2"
     }
 }
 
@@ -17,12 +19,12 @@ apply plugin: 'com.android.application'
 apply plugin: "com.nishtahir.rust-android"
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    compileSdkVersion 27
+    buildToolsVersion "26.0.2"
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
-        minSdkVersion 19
-        targetSdkVersion 26
+        minSdkVersion 21
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -37,7 +39,7 @@ android {
 
 cargo {
     module = "../rust"
-    targets = ["arm", "x86"]
+    targets = ["arm", "x86", "x86_64", "arm64"]
 }
 
 repositories {
@@ -52,7 +54,7 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:26.0.0-alpha1'
+    compile 'com.android.support:appcompat-v7:27.1.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
 }

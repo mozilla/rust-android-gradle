@@ -12,7 +12,7 @@ gradlePlugin {
 }
 
 group 'com.nishtahir'
-version '0.0.1'
+version '0.0.2'
 
 publishing {
     repositories {
@@ -24,20 +24,16 @@ publishing {
         maven(MavenPublication) {
             groupId 'com.nishtahir'
             artifactId 'rust-android'
-            version '0.0.1'
+            version '0.0.2'
 
             from components.java
         }
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     compileOnly gradleApi()
-    implementation "com.android.tools.build:gradle:2.3.3"
+    implementation "com.android.tools.build:gradle:3.0.1"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
 }
 

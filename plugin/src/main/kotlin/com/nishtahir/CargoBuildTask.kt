@@ -29,13 +29,15 @@ open class CargoBuildTask : DefaultTask() {
 
     private fun buildProjectForTarget(project: Project, toolchain: Toolchain, cargoExtension: CargoExtension) {
         project.exec { spec ->
-            val CCompiler = "${project.getToolchainDirectory()}/${toolchain.bin()}"
-            println("using compiler: $CCompiler")
-            spec.standardOutput = System.out
-            spec.workingDir = File(project.project.projectDir, cargoExtension.module)
-            spec.environment("CC", CCompiler)
-            spec.environment("RUSTFLAGS", "-C linker=$CCompiler")
-            spec.commandLine = listOf("cargo", "build", "--target=${toolchain.target}")
+            val compiler = "${project.getToolchainDirectory()}/${toolchain.bin()}"
+            println("using compiler: $compiler")
+            with(spec) {
+                standardOutput = System.out
+                workingDir = File(project.project.projectDir, cargoExtension.module)
+                environment("CC", compiler)
+                environment("RUSTFLAGS", "-C linker=$compiler")
+                commandLine = listOf("cargo", "build", "--target=${toolchain.target}")
+            }
         }.assertNormalExitValue()
     }
 }

@@ -5,9 +5,11 @@ import org.gradle.api.plugins.ExtensionContainer
 import java.io.File
 import kotlin.reflect.KClass
 
-val TOOLS_FOLDER = ".cargo/toolchain"
+const val TOOLS_FOLDER = ".cargo/toolchain"
 
-operator fun <T : Any> ExtensionContainer.get(type: KClass<T>): T = getByType(type.java)!!
+operator fun <T : Any> ExtensionContainer.get(type: KClass<T>): T = getByType(type.java)
+
+
 
 fun Project.getToolchainDirectory(): File = File(projectDir, TOOLS_FOLDER)
 

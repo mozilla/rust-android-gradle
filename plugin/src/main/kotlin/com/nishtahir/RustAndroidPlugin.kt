@@ -3,15 +3,21 @@ package com.nishtahir
 import com.android.build.gradle.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.plugins.ide.idea.IdeaPlugin
+import org.gradle.plugins.ide.idea.model.IdeaModel
 import java.io.File
 
-val RUST_TASK_GROUP = "rust"
+const val RUST_TASK_GROUP = "rust"
 
 val toolchains = listOf(
         Toolchain("arm",
                 "arm-linux-androideabi",
                 "bin/arm-linux-androideabi-clang",
                 "armeabi"),
+        Toolchain("arm64",
+                "aarch64-linux-android",
+                "bin/aarch64-linux-android-clang",
+                "aarch64"),
         Toolchain("mips",
                 "mipsel-linux-android",
                 "bin/mipsel-linux-android-clang",
@@ -19,7 +25,11 @@ val toolchains = listOf(
         Toolchain("x86",
                 "i686-linux-android",
                 "bin/i686-linux-android-clang",
-                "x86")
+                "x86"),
+        Toolchain("x86_64",
+                "x86_64-linux-android",
+                "bin/x86_64-linux-android-clang",
+                "x86_64")
 )
 
 data class Toolchain(val platform: String,
@@ -32,15 +42,20 @@ data class Toolchain(val platform: String,
 @Suppress("unused")
 open class RustAndroidPlugin : Plugin<Project> {
 
-    override fun apply(project: Project) = with(project) {
-        extensions.add("cargo", CargoExtension::class.java)
-        afterEvaluate {
-            plugins.all {
-                when (it) {
-                    is AppPlugin -> configurePlugin<AppExtension>(this)
-                    is LibraryPlugin -> configurePlugin<LibraryExtension>(this)
+    override fun apply(project: Project) {
+        with(project) {
+
+            extensions.add("cargo", CargoExtension::class.java)
+
+            afterEvaluate {
+                plugins.all {
+                    when (it) {
+                        is AppPlugin -> configurePlugin<AppExtension>(this)
+                        is LibraryPlugin -> configurePlugin<LibraryExtension>(this)
+                    }
                 }
             }
+
         }
     }
 
