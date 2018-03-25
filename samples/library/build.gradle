@@ -6,17 +6,17 @@ buildscript {
             url "https://plugins.gradle.org/m2/"
         }
         maven {
-            url "../sample/maven-repo"
+            url "../maven-repo"
         }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
-//        classpath "com.nishtahir:rust-android:0.0.1"
+       classpath "com.nishtahir:rust-android:0.0.2"
     }
 }
 
 apply plugin: 'com.android.library'
-//apply plugin: "com.nishtahir.rust-android"
+apply plugin: "com.nishtahir.rust-android"
 
 android {
     compileSdkVersion 26
@@ -39,10 +39,10 @@ android {
     }
 }
 
-//cargo {
-//    module = "../rust"
-//    targets = ["arm", "x86"]
-//}
+cargo {
+   module = "../rust"
+   targets = ["arm", "x86"]
+}
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])

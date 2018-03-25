@@ -17,7 +17,7 @@ version '0.0.2'
 publishing {
     repositories {
         maven {
-            url "../sample/maven-repo"
+            url "../samples/maven-repo"
         }
     }
     publications {
