@@ -13,30 +13,37 @@ val toolchains = listOf(
         Toolchain("arm",
                 "arm-linux-androideabi",
                 "bin/arm-linux-androideabi-clang",
+                "bin/arm-linux-androideabi-ar",
                 "armeabi"),
         Toolchain("arm64",
                 "aarch64-linux-android",
                 "bin/aarch64-linux-android-clang",
+                "bin/aarch64-linux-android-ar",
                 "aarch64"),
         Toolchain("mips",
                 "mipsel-linux-android",
                 "bin/mipsel-linux-android-clang",
+                "bin/mipsel-linux-android-ar",
                 "mips"),
         Toolchain("x86",
                 "i686-linux-android",
                 "bin/i686-linux-android-clang",
+                "bin/i686-linux-android-ar",
                 "x86"),
         Toolchain("x86_64",
                 "x86_64-linux-android",
                 "bin/x86_64-linux-android-clang",
+                "bin/x86_64-linux-android-ar",
                 "x86_64")
 )
 
 data class Toolchain(val platform: String,
                      val target: String,
-                     val compiler: String,
+                     val cc: String,
+                     val ar: String,
                      val folder: String) {
-    fun bin(): String = "$platform/$compiler"
+    fun cc(): String = "$platform/$cc"
+    fun ar(): String = "$platform/$ar"
 }
 
 @Suppress("unused")
