@@ -68,7 +68,7 @@ open class RustAndroidPlugin : Plugin<Project> {
 
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
         extensions[T::class].apply {
-            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/jniLibs/"))
+            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/"))
         }
 
         val generateToolchain = tasks.maybeCreate("generateToolchains",
@@ -86,4 +86,3 @@ open class RustAndroidPlugin : Plugin<Project> {
         buildTask.dependsOn(generateToolchain)
     }
 }
-

@@ -17,8 +17,8 @@ open class CargoBuildTask : DefaultTask() {
                     buildProjectForTarget(project, toolchain, this)
                     copy { spec ->
                         spec.from(File(project.projectDir, "$module/target/${toolchain.target}/debug"))
-                        spec.into(File(buildDir, "jniLibs/${toolchain.folder}"))
                         spec.include("*.so")
+                        spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
                     }
                 } else {
                     println("No such target $target")
