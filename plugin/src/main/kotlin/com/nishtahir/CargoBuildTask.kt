@@ -16,7 +16,7 @@ open class CargoBuildTask : DefaultTask() {
                 if (toolchain != null) {
                     buildProjectForTarget(project, toolchain, this)
                     copy { spec ->
-                        spec.from(File(project.projectDir, "$module/target/${toolchain.target}/debug"))
+                        spec.from(File(project.projectDir, "$module/target/${toolchain.target}/${profile}"))
                         spec.include("*.so")
                         spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
                     }
@@ -39,7 +39,15 @@ open class CargoBuildTask : DefaultTask() {
                 environment("CC", cc)
                 environment("AR", ar)
                 environment("RUSTFLAGS", "-C linker=$cc")
-                commandLine = listOf("cargo", "build", "--target=${toolchain.target}")
+
+                val theCommandLine = mutableListOf("cargo", "build", "--target=${toolchain.target}")
+                if (cargoExtension.profile != "debug") {
+                     // Cargo is rigid: it accepts "--release" for release (and
+                     // nothing for dev).  This is a cheap way of allowing only
+                     // two values.
+                     theCommandLine.add("--${cargoExtension.profile}")
+                }
+                commandLine = theCommandLine
             }
         }.assertNormalExitValue()
     }
