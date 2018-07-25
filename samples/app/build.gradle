@@ -11,12 +11,12 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.2'
-        classpath "com.nishtahir:rust-android:0.0.3"
+        classpath 'org.mozilla.rust-android-gradle:rust-android:0.0.4'
     }
 }
 
 apply plugin: 'com.android.application'
-apply plugin: "com.nishtahir.rust-android"
+apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
     compileSdkVersion 27

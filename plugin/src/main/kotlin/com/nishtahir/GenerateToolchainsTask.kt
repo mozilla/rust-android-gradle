@@ -31,9 +31,13 @@ open class GenerateToolchainsTask : DefaultTask() {
                 .filterNot { (arch) -> minApi < 21 && arch.endsWith("64") }
                 .filter { (arch) -> targets.contains(arch) }
                 .forEach { (arch) ->
-                    if (File(project.getToolchainDirectory(), arch).exists()) {
-                      return;
+                    val dir = File(project.getToolchainDirectory(), arch)
+                    if (dir.exists()) {
+                        println("Toolchain for arch ${arch} exists: checked ${dir}")
+                        return@forEach
                     }
+
+                    println("Toolchain for arch ${arch} does not exist: checked ${dir}")
                     project.exec { spec ->
                         spec.standardOutput = System.out
                         spec.errorOutput = System.out
