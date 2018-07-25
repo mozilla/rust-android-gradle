@@ -15,9 +15,12 @@ open class CargoBuildTask : DefaultTask() {
                 val toolchain = toolchains.find { (arch) -> arch == target }
                 if (toolchain != null) {
                     buildProjectForTarget(project, toolchain, this)
+
+                    val targetDirectory = targetDirectory ?: "${module}/target"
+
                     copy { spec ->
-                        spec.from(File(project.projectDir, "$module/target/${toolchain.target}/${profile}"))
-                        spec.include("*.so")
+                        spec.from(File(project.projectDir, "${targetDirectory}/${toolchain.target}/${profile}"))
+                        spec.include(targetInclude)
                         spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
                     }
                 } else {
