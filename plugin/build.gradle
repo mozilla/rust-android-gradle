@@ -1,3 +1,7 @@
+plugins {
+    id 'com.gradle.plugin-publish' version '0.9.10' 
+}
+
 apply plugin: "java-gradle-plugin"
 apply plugin: "maven-publish"
 apply plugin: "kotlin"
@@ -5,13 +9,13 @@ apply plugin: "kotlin"
 gradlePlugin {
     plugins {
         simplePlugin {
-            id = "com.nishtahir.rust-android"
-            implementationClass = "com.nishtahir.RustAndroidPlugin"
+            id = 'org.mozilla.rust-android-gradle'
+            implementationClass = 'com.nishtahir.RustAndroidPlugin'
         }
     }
 }
 
-group 'com.nishtahir'
+group 'org.mozilla.rust-android-gradle'
 version '0.0.3'
 
 publishing {
@@ -22,7 +26,7 @@ publishing {
     }
     publications {
         maven(MavenPublication) {
-            groupId 'com.nishtahir'
+            groupId 'org.mozilla.rust-android-gradle'
             artifactId 'rust-android'
             version '0.0.3'
 
@@ -42,4 +46,18 @@ compileKotlin {
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+pluginBundle { 
+    website = 'https://github.com/ncalexan/rust-android-gradle' 
+    vcsUrl = 'https://github.com/ncalexan/rust-android-gradle.git'
+
+    plugins {
+        rustAndroidPlugin {
+            id = 'org.mozilla.rust-android-gradle.rust-android'
+            displayName = 'Plugin for building Rust with Cargo in Android projects'
+            description = 'A plugin that helps build Rust JNI libraries with Cargo for use in Android projects.'
+            tags = ['rust', 'cargo', 'android']
+        }
+    }
 }
