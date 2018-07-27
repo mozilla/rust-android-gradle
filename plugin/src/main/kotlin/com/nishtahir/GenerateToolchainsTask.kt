@@ -28,6 +28,7 @@ open class GenerateToolchainsTask : DefaultTask() {
         val targets = project.extensions[CargoExtension::class].targets
 
         toolchains
+                .filter { it.target != null }
                 .filterNot { (arch) -> minApi < 21 && arch.endsWith("64") }
                 .filter { (arch) -> targets.contains(arch) }
                 .forEach { (arch) ->

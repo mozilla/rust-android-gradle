@@ -21,7 +21,16 @@ open class CargoExtension {
     /**
      * Which Cargo built outputs to consider JNI libraries.
      *
-     * Defaults to `"*.so"`.
+     * Defaults to `["*.so", "*.dylib", "*.dll"]`.
      */
-    var targetInclude: String = "*.so"
+    var targetIncludes: Array<String> = arrayOf("*.so", "*.dylib", "*.dll")
+
+    /**
+     * Android toolchains know where to put their outputs; it's a well-known value like
+     * `armeabi-v7a` or `x86`.  The default toolchain outputs don't know where to put their output;
+     * use this to say where.
+     *
+     * Defaults to `""`.
+     */
+    var defaultToolchainBuildPrefixDir: String? = ""
 }

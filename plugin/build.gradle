@@ -16,7 +16,7 @@ gradlePlugin {
 }
 
 group 'org.mozilla.rust-android-gradle'
-version '0.0.4'
+version '0.1.0'
 
 publishing {
     repositories {
@@ -28,7 +28,7 @@ publishing {
         maven(MavenPublication) {
             groupId 'org.mozilla.rust-android-gradle'
             artifactId 'rust-android'
-            version '0.0.4'
+            version '0.1.0'
 
             from components.java
         }

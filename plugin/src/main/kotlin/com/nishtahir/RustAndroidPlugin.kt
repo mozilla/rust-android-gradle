@@ -10,6 +10,11 @@ import java.io.File
 const val RUST_TASK_GROUP = "rust"
 
 val toolchains = listOf(
+        Toolchain("default",
+                null,
+                "<cc>",
+                "<ar>",
+                "default"),
         Toolchain("arm",
                 "arm-linux-androideabi",
                 "bin/arm-linux-androideabi-clang",
@@ -38,7 +43,7 @@ val toolchains = listOf(
 )
 
 data class Toolchain(val platform: String,
-                     val target: String,
+                     val target: String?,
                      val cc: String,
                      val ar: String,
                      val folder: String) {
@@ -69,6 +74,7 @@ open class RustAndroidPlugin : Plugin<Project> {
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
         extensions[T::class].apply {
             sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/"))
+            sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustResources/"))
         }
 
         val generateToolchain = tasks.maybeCreate("generateToolchains",
