@@ -4,6 +4,7 @@ import java.io.File
 
 import com.android.build.gradle.*
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
 
@@ -21,31 +22,36 @@ open class GenerateToolchainsTask : DefaultTask() {
     }
 
     inline fun <reified T : BaseExtension> congfigureTask(project: Project) {
+        val cargoExtension = project.extensions[CargoExtension::class]
         val app = project.extensions[T::class]
-        val minApi = app.defaultConfig.minSdkVersion.apiLevel
+        val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
         val ndkPath = app.ndkDirectory
 
-        val targets = project.extensions[CargoExtension::class].targets
+        val targets = cargoExtension.targets
 
         toolchains
                 .filter { it.target != null }
-                .filterNot { (arch) -> minApi < 21 && arch.endsWith("64") }
                 .filter { (arch) -> targets.contains(arch) }
                 .forEach { (arch) ->
-                    val dir = File(project.getToolchainDirectory(), arch)
+                     if (arch.endsWith("64") && apiLevel < 21) {
+                        throw GradleException("Can't target 64-bit ${arch} with API level < 21 (${apiLevel})")
+                    }
+
+                    val dir = File(project.getToolchainDirectory(), arch + "-" + apiLevel)
                     if (dir.exists()) {
-                        println("Toolchain for arch ${arch} exists: checked ${dir}")
+                        println("Toolchain for arch ${arch} version ${apiLevel} exists: checked ${dir}")
                         return@forEach
                     }
 
-                    println("Toolchain for arch ${arch} does not exist: checked ${dir}")
+                    println("Toolchain for arch ${arch} version ${apiLevel} does not exist: checked ${dir}")
                     project.exec { spec ->
                         spec.standardOutput = System.out
                         spec.errorOutput = System.out
                         spec.commandLine("$ndkPath/build/tools/make_standalone_toolchain.py")
-                        spec.args("--arch=$arch", "--api=$minApi",
-                                "--install-dir=${project.getToolchainDirectory()}/$arch",
-                                "--force")
+                        spec.args("--arch=$arch",
+                                  "--api=$apiLevel",
+                                  "--install-dir=${dir}",
+                                  "--force")
                     }
                 }
     }

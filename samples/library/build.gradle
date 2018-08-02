@@ -11,7 +11,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.2'
-        classpath 'org.mozilla.rust-android-gradle:rust-android:0.0.4'
+        classpath 'org.mozilla.rust-android-gradle:rust-android:0.2.0'
     }
 }
 

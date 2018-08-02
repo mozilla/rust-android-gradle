@@ -5,6 +5,12 @@ open class CargoExtension {
     var targets: List<String> = emptyList()
 
     /**
+     * The Android NDK API level to target.  Defaults to the minimum SDK version of the Android
+     * project's default configuration.
+     */
+    var apiLevel: Int? = null
+
+    /**
      * The Cargo [release profile](https://doc.rust-lang.org/book/second-edition/ch14-01-release-profiles.html#customizing-builds-with-release-profiles) to build.
      *
      * Defaults to `"debug"`.

@@ -29,6 +29,7 @@ modules.xml
 .idea/misc.xml
 *.ipr
 /target/
+/samples/rust/target/
 Cargo.lock
 **/*.rs.bk
 .gradle

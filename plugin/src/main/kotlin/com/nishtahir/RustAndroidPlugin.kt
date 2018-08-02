@@ -42,8 +42,8 @@ data class Toolchain(val platform: String,
                      val cc: String,
                      val ar: String,
                      val folder: String) {
-    fun cc(): String = "$platform/$cc"
-    fun ar(): String = "$platform/$ar"
+    fun cc(apiLevel: Int): String = "$platform-$apiLevel/$cc"
+    fun ar(apiLevel: Int): String = "$platform-$apiLevel/$ar"
 }
 
 @Suppress("unused")

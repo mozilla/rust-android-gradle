@@ -1,5 +1,6 @@
 package com.nishtahir;
 
+import com.android.build.gradle.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
@@ -19,7 +20,12 @@ open class CargoBuildTask : DefaultTask() {
                     throw GradleException("No such target $target")
                 }
 
-                buildProjectForTarget(project, toolchain, this)
+                project.plugins.all {
+                    when (it) {
+                        is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, this)
+                        is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, this)
+                    }
+                }
 
                 val targetDirectory = targetDirectory ?: "${module}/target"
 
@@ -37,7 +43,10 @@ open class CargoBuildTask : DefaultTask() {
         }
     }
 
-    private fun buildProjectForTarget(project: Project, toolchain: Toolchain, cargoExtension: CargoExtension) {
+    inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoExtension: CargoExtension) {
+        val app = project.extensions[T::class]
+        val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
+
         project.exec { spec ->
             with(spec) {
                 standardOutput = System.out
@@ -55,8 +64,8 @@ open class CargoBuildTask : DefaultTask() {
                 if (toolchain.target != null) {
                     theCommandLine.add("--target=${toolchain.target}")
 
-                    val cc = "${project.getToolchainDirectory()}/${toolchain.cc()}"
-                    val ar = "${project.getToolchainDirectory()}/${toolchain.ar()}"
+                    val cc = "${project.getToolchainDirectory()}/${toolchain.cc(apiLevel)}"
+                    val ar = "${project.getToolchainDirectory()}/${toolchain.ar(apiLevel)}"
                     environment("CC", cc)
                     environment("AR", ar)
                     environment("RUSTFLAGS", "-C linker=$cc")
