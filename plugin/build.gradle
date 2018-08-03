@@ -16,7 +16,7 @@ gradlePlugin {
 }
 
 group 'org.mozilla.rust-android-gradle'
-version '0.2.0'
+version "$plugin_version"
 
 publishing {
     repositories {
