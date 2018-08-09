@@ -1,5 +1,7 @@
 package com.nishtahir
 
+import org.gradle.process.ExecSpec
+
 open class CargoExtension {
     var module: String = ""
     var targets: List<String> = emptyList()
@@ -39,4 +41,9 @@ open class CargoExtension {
      * Defaults to `""`.
      */
     var defaultToolchainBuildPrefixDir: String? = ""
+
+    // It would be nice to use a receiver here, but there are problems interoperating with Groovy
+    // and Kotlin that are just not worth working out.  Another JVM language, yet another dynamic
+    // invoke solution :(
+    var exec: ((ExecSpec, Toolchain) -> Unit)? = null
 }

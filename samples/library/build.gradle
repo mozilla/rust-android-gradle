@@ -41,6 +41,10 @@ android {
 cargo {
     module = "../rust"
     targets = ["arm", "arm64", "x86"]
+
+    exec = { spec, toolchain ->
+        spec.environment("TEST", "test")
+    }
 }
 
 repositories {

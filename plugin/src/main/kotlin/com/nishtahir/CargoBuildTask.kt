@@ -48,6 +48,10 @@ open class CargoBuildTask : DefaultTask() {
         val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
 
         project.exec { spec ->
+            if (cargoExtension.exec != null) {
+                (cargoExtension.exec!!)(spec, toolchain)
+            }
+
             with(spec) {
                 standardOutput = System.out
                 workingDir = File(project.project.projectDir, cargoExtension.module)
