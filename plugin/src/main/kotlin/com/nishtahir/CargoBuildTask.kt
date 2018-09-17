@@ -8,37 +8,36 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 open class CargoBuildTask : DefaultTask() {
+    var toolchain: Toolchain? = null
 
     @Suppress("unused")
     @TaskAction
     fun build() = with(project) {
         extensions[CargoExtension::class].apply {
-            targets.forEach { target ->
-                val toolchain = toolchains.find { (arch) -> arch == target }
+            // Need to capture the value to dereference smoothly.
+            val toolchain = toolchain
+            if (toolchain == null) {
+                throw GradleException("toolchain cannot be null")
+            }
 
-                if (toolchain == null) {
-                    throw GradleException("No such target $target")
+            project.plugins.all {
+                when (it) {
+                    is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, this)
+                    is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, this)
                 }
+            }
 
-                project.plugins.all {
-                    when (it) {
-                        is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, this)
-                        is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, this)
-                    }
+            val targetDirectory = targetDirectory ?: "${module}/target"
+
+            copy { spec ->
+                if (toolchain.target != null) {
+                    spec.from(File(project.projectDir, "${targetDirectory}/${toolchain.target}/${profile}"))
+                    spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
+                } else {
+                    spec.from(File(project.projectDir, "${targetDirectory}/${profile}"))
+                    spec.into(File(buildDir, "rustResources/${defaultToolchainBuildPrefixDir}"))
                 }
-
-                val targetDirectory = targetDirectory ?: "${module}/target"
-
-                copy { spec ->
-                    if (toolchain.target != null) {
-                        spec.from(File(project.projectDir, "${targetDirectory}/${toolchain.target}/${profile}"))
-                        spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
-                    } else {
-                        spec.from(File(project.projectDir, "${targetDirectory}/${profile}"))
-                        spec.into(File(buildDir, "rustResources/${defaultToolchainBuildPrefixDir}"))
-                    }
-                    spec.include(targetIncludes.asIterable())
-                }
+                spec.include(targetIncludes.asIterable())
             }
         }
     }

@@ -1,6 +1,8 @@
 package com.nishtahir
 
 import com.android.build.gradle.*
+import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.plugins.ide.idea.IdeaPlugin
@@ -79,11 +81,21 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         val buildTask = tasks.maybeCreate("cargoBuild",
-                CargoBuildTask::class.java).apply {
+                DefaultTask::class.java).apply {
             group = RUST_TASK_GROUP
-            description = "Build library"
+            description = "Build library (all targets)"
         }
 
-        buildTask.dependsOn(generateToolchain)
+        extensions[CargoExtension::class].targets.forEach { target ->
+            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
+                    CargoBuildTask::class.java).apply {
+                group = RUST_TASK_GROUP
+                description = "Build library ($target)"
+                toolchain = toolchains.find { (arch) -> arch == target }
+            }
+
+            targetBuildTask.dependsOn(generateToolchain)
+            buildTask.dependsOn(targetBuildTask)
+        }
     }
 }
