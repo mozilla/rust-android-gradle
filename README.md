@@ -152,6 +152,42 @@ cargo {
 }
 ```
 
+### features
+
+Set the Cargo [features](https://doc.rust-lang.org/cargo/reference/manifest.html#the-features-section).
+
+Defaults to passing no flags to `cargo`.
+
+To pass `--all-features`, use
+```groovy
+cargo {
+    features {
+        all()
+    }
+}
+```
+
+To pass an optional list of `--features`, use
+```groovy
+cargo {
+    features {
+        defaultAnd("x")
+        defaultAnd("x", "y")
+    }
+}
+```
+
+To pass `--no-default-features`, and an optional list of replacement `--features`, use
+```groovy
+cargo {
+    features {
+        noDefaultFeatures()
+        noDefaultFeatures("x")
+        noDefaultFeatures "x", "y"
+    }
+}
+```
+
 ### targetDirectory
 
 The target directory into which Cargo writes built outputs.

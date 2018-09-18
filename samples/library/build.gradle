@@ -46,6 +46,12 @@ cargo {
     libname = "rust"
     verbose = true
 
+   features {
+       defaultAnd "foo", "bar"
+       noDefaultBut("foo", "bar")
+       all()
+   }
+
     exec = { spec, toolchain ->
         spec.environment("TEST", "test")
     }

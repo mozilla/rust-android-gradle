@@ -5,8 +5,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.plugins.ide.idea.IdeaPlugin
-import org.gradle.plugins.ide.idea.model.IdeaModel
 import java.io.File
 
 const val RUST_TASK_GROUP = "rust"
@@ -56,11 +54,11 @@ data class Toolchain(val platform: String,
 
 @Suppress("unused")
 open class RustAndroidPlugin : Plugin<Project> {
+    internal lateinit var cargoExtension: CargoExtension
 
     override fun apply(project: Project) {
         with(project) {
-
-            extensions.add("cargo", CargoExtension::class.java)
+            cargoExtension = extensions.create("cargo", CargoExtension::class.java)
 
             afterEvaluate {
                 plugins.all {
@@ -75,8 +73,6 @@ open class RustAndroidPlugin : Plugin<Project> {
     }
 
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
-        val cargoExtension = project.extensions[CargoExtension::class]
-
         if (cargoExtension.module == null) {
             throw GradleException("module cannot be null")
         }

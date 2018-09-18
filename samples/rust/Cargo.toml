@@ -11,3 +11,9 @@ tokio-core = "0.1"
 
 [lib]
 crate_type = ["staticlib", "dylib"]
+
+[features]
+default = ["foo"]
+foo = []
+bar = []
+

@@ -75,6 +75,31 @@ open class CargoBuildTask : DefaultTask() {
                     theCommandLine.add("--verbose")
                 }
 
+                val features = cargoExtension.featureSpec.features
+                // We just pass this along to cargo as something space separated... AFAICT
+                // you're allowed to have featureSpec with spaces in them, but I don't think
+                // there's a way to specify them in the cargo command line -- rustc accepts
+                // them if passed in directly with `--cfg`, and cargo will pass them to rustc
+                // if you use them as default featureSpec.
+                when (features) {
+                    is Features.All -> {
+                        theCommandLine.add("--all-features")
+                    }
+                    is Features.DefaultAnd -> {
+                        if (!features.featureSet.isEmpty()) {
+                            theCommandLine.add("--features")
+                            theCommandLine.add(features.featureSet.joinToString(" "))
+                        }
+                    }
+                    is Features.NoDefaultBut -> {
+                        theCommandLine.add("--no-default-features")
+                        if (!features.featureSet.isEmpty()) {
+                            theCommandLine.add("--features")
+                            theCommandLine.add(features.featureSet.joinToString(" "))
+                        }
+                    }
+                }
+
                 if (cargoExtension.profile != "debug") {
                     // Cargo is rigid: it accepts "--release" for release (and
                     // nothing for dev).  This is a cheap way of allowing only
