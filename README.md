@@ -125,6 +125,21 @@ cargo {
 }
 ```
 
+### verbose
+
+When set, execute `cargo build` with or without the `--verbose` flag.  When unset, respect the
+Gradle log level: execute `cargo build` with or without the `--verbose` flag according to whether
+the log level is at least `INFO`.  In practice, this makes `./gradlew ... --info` (and `./gradlew
+... --debug`) execute `cargo build --verbose ...`.
+
+Defaults to `null`.
+
+```groovy
+cargo {
+    verbose = true
+}
+```
+
 ### profile
 
 The Cargo [release profile](https://doc.rust-lang.org/book/second-edition/ch14-01-release-profiles.html#customizing-builds-with-release-profiles) to build.

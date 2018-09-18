@@ -8,6 +8,7 @@ open class CargoExtension {
     var libname: String? = null
     var targets: List<String>? = null
     var profile: String = "debug"
+    var verbose: Boolean? = null
     var targetDirectory: String? = null
     var targetIncludes: Array<String>? = null
     var defaultToolchainBuildPrefixDir: String? = ""

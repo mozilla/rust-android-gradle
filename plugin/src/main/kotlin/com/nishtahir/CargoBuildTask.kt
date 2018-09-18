@@ -4,6 +4,7 @@ import com.android.build.gradle.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
@@ -67,6 +68,12 @@ open class CargoBuildTask : DefaultTask() {
                 workingDir = File(project.project.projectDir, cargoExtension.module!!)
 
                 val theCommandLine = mutableListOf("cargo", "build");
+
+                // Respect `verbose` if it is set; otherwise, log if asked to
+                // with `--info` or `--debug` from the command line.
+                if (cargoExtension.verbose ?: project.logger.isEnabled(LogLevel.INFO)) {
+                    theCommandLine.add("--verbose")
+                }
 
                 if (cargoExtension.profile != "debug") {
                     // Cargo is rigid: it accepts "--release" for release (and
