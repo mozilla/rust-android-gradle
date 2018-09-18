@@ -13,6 +13,15 @@ open class CargoExtension {
     var apiLevel: Int? = null
 
     /**
+     * The library name produced by Cargo.
+     *
+     * Right now, `libname` is used to determine the ELF SONAME to declare in the Android libraries
+     * produced by Cargo.  Different versions of the Android system linker [depend on the ELF
+     * SONAME](https://android-developers.googleblog.com/2016/06/android-changes-for-ndk-developers.html).
+     */
+    var libname: String = ""
+
+    /**
      * The Cargo [release profile](https://doc.rust-lang.org/book/second-edition/ch14-01-release-profiles.html#customizing-builds-with-release-profiles) to build.
      *
      * Defaults to `"debug"`.
@@ -29,9 +38,9 @@ open class CargoExtension {
     /**
      * Which Cargo built outputs to consider JNI libraries.
      *
-     * Defaults to `["*.so", "*.dylib", "*.dll"]`.
+     * Defaults to `["$libname.so", "$libname.dylib", "$libname.dll"]`.
      */
-    var targetIncludes: Array<String> = arrayOf("*.so", "*.dylib", "*.dll")
+    var targetIncludes: Array<String>? = null
 
     /**
      * Android toolchains know where to put their outputs; it's a well-known value like

@@ -37,7 +37,16 @@ open class CargoBuildTask : DefaultTask() {
                     spec.from(File(project.projectDir, "${targetDirectory}/${profile}"))
                     spec.into(File(buildDir, "rustResources/${defaultToolchainBuildPrefixDir}"))
                 }
-                spec.include(targetIncludes.asIterable())
+
+                // Need to capture the value to dereference smoothly.
+                val targetIncludes = targetIncludes
+                if (targetIncludes != null) {
+                    spec.include(targetIncludes.asIterable())
+                } else {
+                    spec.include("${libname}.so")
+                    spec.include("${libname}.dylib")
+                    spec.include("${libname}.dll")
+                }
             }
         }
     }
@@ -71,7 +80,11 @@ open class CargoBuildTask : DefaultTask() {
                     val ar = "${project.getToolchainDirectory()}/${toolchain.ar(apiLevel)}"
                     environment("CC", cc)
                     environment("AR", ar)
-                    environment("RUSTFLAGS", "-C linker=$cc")
+
+                    // Be aware that RUSTFLAGS can have problems with embedded
+                    // spaces, but that shouldn't be a problem here.
+                    var rustflags = "-C linker=$cc -C link-arg=-Wl,-soname,${cargoExtension.libname}.so"
+                    environment("RUSTFLAGS", rustflags)
                 }
 
                 commandLine = theCommandLine
