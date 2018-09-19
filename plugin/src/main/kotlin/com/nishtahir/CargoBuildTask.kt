@@ -62,7 +62,12 @@ open class CargoBuildTask : DefaultTask() {
 
             with(spec) {
                 standardOutput = System.out
-                workingDir = File(project.project.projectDir, cargoExtension.module)
+
+                if (!File(cargoExtension.module).isAbsolute()) {
+                    workingDir = File(project.project.projectDir, cargoExtension.module)
+                } else {
+                    workingDir = File(cargoExtension.module)
+                }
 
                 val theCommandLine = mutableListOf("cargo", "build");
 
