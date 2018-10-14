@@ -27,7 +27,7 @@ open class CargoBuildTask : DefaultTask() {
                 }
             }
 
-            val targetDirectory = targetDirectory ?: "${module}/target"
+            val targetDirectory = targetDirectory ?: "${module!!}/target"
 
             copy { spec ->
                 if (toolchain.target != null) {
@@ -43,6 +43,8 @@ open class CargoBuildTask : DefaultTask() {
                 if (targetIncludes != null) {
                     spec.include(targetIncludes.asIterable())
                 } else {
+                    // It's safe to unwrap, since we bailed at configuration time if this is unset.
+                    val libname = libname!!
                     spec.include("${libname}.so")
                     spec.include("${libname}.dylib")
                     spec.include("${libname}.dll")
@@ -62,7 +64,7 @@ open class CargoBuildTask : DefaultTask() {
 
             with(spec) {
                 standardOutput = System.out
-                workingDir = File(project.project.projectDir, cargoExtension.module)
+                workingDir = File(project.project.projectDir, cargoExtension.module!!)
 
                 val theCommandLine = mutableListOf("cargo", "build");
 
@@ -83,7 +85,7 @@ open class CargoBuildTask : DefaultTask() {
 
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
-                    var rustflags = "-C linker=$cc -C link-arg=-Wl,-soname,${cargoExtension.libname}.so"
+                    var rustflags = "-C linker=$cc -C link-arg=-Wl,-soname,${cargoExtension.libname!!}.so"
                     environment("RUSTFLAGS", rustflags)
                 }
 

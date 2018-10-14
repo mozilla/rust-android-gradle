@@ -69,6 +69,20 @@ open class RustAndroidPlugin : Plugin<Project> {
     }
 
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
+        val cargoExtension = project.extensions[CargoExtension::class]
+
+        if (cargoExtension.module == null) {
+            throw GradleException("module cannot be null")
+        }
+
+        if (cargoExtension.libname == null) {
+            throw GradleException("libname cannot be null")
+        }
+
+        if (cargoExtension.targets == null) {
+            throw GradleException("targets cannot be null")
+        }
+
         extensions[T::class].apply {
             sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/"))
             sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustResources/"))
@@ -86,7 +100,7 @@ open class RustAndroidPlugin : Plugin<Project> {
             description = "Build library (all targets)"
         }
 
-        extensions[CargoExtension::class].targets.forEach { target ->
+        cargoExtension.targets!!.forEach { target ->
             val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
                     CargoBuildTask::class.java).apply {
                 group = RUST_TASK_GROUP

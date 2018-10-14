@@ -27,7 +27,8 @@ open class GenerateToolchainsTask : DefaultTask() {
         val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
         val ndkPath = app.ndkDirectory
 
-        val targets = cargoExtension.targets
+        // It's safe to unwrap, since we bailed at configuration time if this is unset.
+        val targets = cargoExtension.targets!!
 
         toolchains
                 .filter { it.target != null }
