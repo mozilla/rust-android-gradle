@@ -48,8 +48,9 @@ open class GenerateToolchainsTask : DefaultTask() {
                     project.exec { spec ->
                         spec.standardOutput = System.out
                         spec.errorOutput = System.out
-                        spec.commandLine("$ndkPath/build/tools/make_standalone_toolchain.py")
-                        spec.args("--arch=$arch",
+                        spec.commandLine("python")
+                        spec.args("$ndkPath/build/tools/make_standalone_toolchain.py",
+                                  "--arch=$arch",
                                   "--api=$apiLevel",
                                   "--install-dir=${dir}",
                                   "--force")

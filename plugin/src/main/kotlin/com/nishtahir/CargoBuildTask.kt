@@ -85,10 +85,10 @@ open class CargoBuildTask : DefaultTask() {
                 if (toolchain.target != null) {
                     theCommandLine.add("--target=${toolchain.target}")
 
-                    val cc = "${project.getToolchainDirectory()}/${toolchain.cc(apiLevel)}"
-                    val ar = "${project.getToolchainDirectory()}/${toolchain.ar(apiLevel)}"
-                    environment("CC", cc)
-                    environment("AR", ar)
+                    val cc = File(project.getToolchainDirectory(), "${toolchain.cc(apiLevel)}");
+                    val ar = File(project.getToolchainDirectory(), "${toolchain.ar(apiLevel)}");
+                    environment("CC", "$cc")
+                    environment("AR", "$ar")
 
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
