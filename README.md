@@ -259,6 +259,23 @@ Note that the Java system property `java.io.tmpdir` is not necessarily `/tmp`, i
 
 Each target architecture toolchain is named like `$arch-$apiLevel`: for example, `arm-16` or `arm64-21`.
 
+## Specifying local targets
+
+When developing a project that consumes `rust-android-gradle` locally, it's often convenient to
+temporarily change the set of Rust target architectures.  In order of preference, the plugin
+determines the per-project targets by:
+
+#. `rust.targets.${project.Name}` for each project in `${rootDir}/local.properties`
+#. `rust.targets` in `${rootDir}/local.properties`
+#. the `cargo { targets ... }` block in the per-project `build.gradle`
+
+The targets are split on `','`.  For example:
+
+```
+rust.targets.library=default
+rust.targets=arm,default
+```
+
 # Development
 
 At top-level, the `publish` Gradle task updates the Maven repository

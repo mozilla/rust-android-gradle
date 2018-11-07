@@ -6,6 +6,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import java.io.File
+import java.util.Properties
 
 const val RUST_TASK_GROUP = "rust"
 
@@ -79,6 +80,19 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         if (cargoExtension.libname == null) {
             throw GradleException("libname cannot be null")
+        }
+
+        // Allow to set targets, including per-project, in local.properties.
+        val localPropertiesFile = File(rootDir, "local.properties")
+        if (localPropertiesFile.exists()) {
+            val localProperties = Properties()
+            localProperties.load(localPropertiesFile.inputStream())
+            val localTargets: String? =
+                    localProperties.getProperty("rust.targets.${project.name}") ?:
+                    localProperties.getProperty("rust.targets")
+            if (localTargets != null) {
+                cargoExtension.targets = localTargets.split(',').map { it.trim() }
+            }
         }
 
         if (cargoExtension.targets == null) {
