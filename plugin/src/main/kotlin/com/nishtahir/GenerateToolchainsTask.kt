@@ -38,7 +38,7 @@ open class GenerateToolchainsTask : DefaultTask() {
                         throw GradleException("Can't target 64-bit ${arch} with API level < 21 (${apiLevel})")
                     }
 
-                    val dir = File(project.getToolchainDirectory(), arch + "-" + apiLevel)
+                    val dir = File(cargoExtension.toolchainDirectory, arch + "-" + apiLevel)
                     if (dir.exists()) {
                         println("Toolchain for arch ${arch} version ${apiLevel} exists: checked ${dir}")
                         return@forEach

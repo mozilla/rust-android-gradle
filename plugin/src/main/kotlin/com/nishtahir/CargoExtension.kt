@@ -1,7 +1,10 @@
 package com.nishtahir
 
 import org.gradle.api.Action
+import org.gradle.api.Project
 import org.gradle.process.ExecSpec
+import java.io.File
+import java.util.*
 
 sealed class Features {
     class All() : Features()
@@ -27,6 +30,8 @@ data class FeatureSpec(var features: Features? = null) {
 
 // `CargoExtension` is documented in README.md.
 open class CargoExtension {
+    lateinit var localProperties: Properties
+
     var module: String? = null
     var libname: String? = null
     var targets: List<String>? = null
@@ -47,4 +52,22 @@ open class CargoExtension {
     fun features(action: Action<FeatureSpec>) {
         action.execute(featureSpec)
     }
+
+    val toolchainDirectory: File
+        get() {
+            // Share a single toolchain directory, if one is configured.  Prefer "local.properties"
+            // to "ANDROID_NDK_TOOLCHAIN_DIR" to "$TMP/rust-android-ndk-toolchains".
+            val local: String? = localProperties.getProperty("rust.androidNdkToolchainDir")
+            if (local != null) {
+                return File(local).absoluteFile
+            }
+
+            val globalDir: String? = System.getenv("ANDROID_NDK_TOOLCHAIN_DIR")
+            if (globalDir != null) {
+                return File(globalDir).absoluteFile
+            }
+
+            var defaultDir = File(System.getProperty("java.io.tmpdir"), "rust-android-ndk-toolchains")
+            return defaultDir.absoluteFile
+        }
 }

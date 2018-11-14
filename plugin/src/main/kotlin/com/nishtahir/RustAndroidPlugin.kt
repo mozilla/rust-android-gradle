@@ -74,6 +74,13 @@ open class RustAndroidPlugin : Plugin<Project> {
     }
 
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
+        cargoExtension.localProperties = Properties()
+
+        val localPropertiesFile = File(project.rootDir, "local.properties")
+        if (localPropertiesFile.exists()) {
+            cargoExtension.localProperties.load(localPropertiesFile.inputStream())
+        }
+
         if (cargoExtension.module == null) {
             throw GradleException("module cannot be null")
         }
@@ -83,16 +90,11 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         // Allow to set targets, including per-project, in local.properties.
-        val localPropertiesFile = File(rootDir, "local.properties")
-        if (localPropertiesFile.exists()) {
-            val localProperties = Properties()
-            localProperties.load(localPropertiesFile.inputStream())
-            val localTargets: String? =
-                    localProperties.getProperty("rust.targets.${project.name}") ?:
-                    localProperties.getProperty("rust.targets")
-            if (localTargets != null) {
-                cargoExtension.targets = localTargets.split(',').map { it.trim() }
-            }
+        val localTargets: String? =
+                cargoExtension.localProperties.getProperty("rust.targets.${project.name}") ?:
+                cargoExtension.localProperties.getProperty("rust.targets")
+        if (localTargets != null) {
+            cargoExtension.targets = localTargets.split(',').map { it.trim() }
         }
 
         if (cargoExtension.targets == null) {

@@ -112,8 +112,8 @@ open class CargoBuildTask : DefaultTask() {
 
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
-                    val cc = File(project.getToolchainDirectory(), "${toolchain.cc(apiLevel)}").path;
-                    val ar = File(project.getToolchainDirectory(), "${toolchain.ar(apiLevel)}").path;
+                    val cc = File(cargoExtension.toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
+                    val ar = File(cargoExtension.toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
 
                     // For cargo: like "CARGO_TARGET_i686-linux-android_CC".  This is really weakly
                     // documented; see https://github.com/rust-lang/cargo/issues/5690 and follow
