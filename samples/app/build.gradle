@@ -1,5 +1,5 @@
 buildscript {
-    ext.plugin_version = '0.4.1'
+    ext.plugin_version = '0.5.0'
 
     repositories {
         google()

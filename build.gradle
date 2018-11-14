@@ -1,6 +1,6 @@
 buildscript {
     ext.kotlin_version = '1.2.41'
-    ext.plugin_version = '0.4.1'
+    ext.plugin_version = '0.5.0'
 
     repositories {
         google()
