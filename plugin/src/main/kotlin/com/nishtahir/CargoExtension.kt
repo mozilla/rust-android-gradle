@@ -70,4 +70,26 @@ open class CargoExtension {
             var defaultDir = File(System.getProperty("java.io.tmpdir"), "rust-android-ndk-toolchains")
             return defaultDir.absoluteFile
         }
+
+    val cargoCommand: String
+        get() {
+            return getProperty("rust.cargoCommand", "RUST_ANDROID_GRADLE_CARGO_COMMAND") ?: "cargo"
+        }
+
+    val pythonCommand: String
+        get() {
+            return getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
+        }
+
+    internal fun getProperty(camelCaseName: String, snakeCaseName: String): String? {
+        val local: String? = localProperties.getProperty(camelCaseName)
+        if (local != null) {
+            return local
+        }
+        val global: String? = System.getenv(snakeCaseName)
+        if (global != null) {
+            return global
+        }
+        return null
+    }
 }

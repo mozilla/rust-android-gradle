@@ -276,6 +276,31 @@ rust.targets.library=default
 rust.targets=arm,default
 ```
 
+## Specifying paths to sub-commands (Python and Cargo)
+
+The plugin invokes Python and Cargo.  In order of preference, the plugin determines what command to invoke for Python by:
+
+1. `rust.pythonCommand` in `${rootDir}/local.properties`
+1. the environment variable `RUST_ANDROID_GRADLE_PYTHON_COMMAND`
+1. the default, `python`
+
+In order of preference, the plugin determines what command to invoke for Cargo by:
+
+1. `rust.cargoCommand` in `${rootDir}/local.properties`
+1. the environment variable `RUST_ANDROID_GRADLE_CARGO_COMMAND`
+1. the default, `cargo`
+
+Paths must be host operating system specific.  For example, on Windows:
+
+```properties
+rust.pythonCommand=c:\Python27\bin\python
+```
+
+On Linux,
+```shell
+env RUST_ANDROID_GRADLE_CARGO_COMMAND=$HOME/.cargo/bin/cargo ./gradlew ...
+```
+
 # Development
 
 At top-level, the `publish` Gradle task updates the Maven repository
