@@ -122,13 +122,25 @@ open class CargoBuildTask : DefaultTask() {
                     environment("CARGO_TARGET_${toolchain_target}_CC", cc)
                     environment("CARGO_TARGET_${toolchain_target}_AR", ar)
 
+                    val linker_wrapper =
+                    if (System.getProperty("os.name").startsWith("Windows")) {
+                        File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.bat")
+                    } else {
+                        File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.sh")
+                    }
+                    environment("CARGO_TARGET_${toolchain_target}_LINKER", linker_wrapper.path)
+
                     // For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
                     // https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
                     environment("CC_${toolchain.target}", cc)
                     environment("AR_${toolchain.target}", ar)
 
-                    var rustflags = "-C linker=$cc -C link-arg=-Wl,-soname,${cargoExtension.libname!!}.so"
-                    environment("RUSTFLAGS", rustflags)
+                    // Configure our linker wrapper.
+                    environment("RUST_ANDROID_GRADLE_PYTHON_COMMAND", cargoExtension.pythonCommand)
+                    environment("RUST_ANDROID_GRADLE_LINKER_WRAPPER_PY",
+                            File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.py").path)
+                    environment("RUST_ANDROID_GRADLE_CC", cc)
+                    environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${cargoExtension.libname!!}.so")
                 }
 
                 commandLine = theCommandLine

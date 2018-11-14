@@ -44,11 +44,11 @@ data class Toolchain(val platform: String,
                      val ar: String,
                      val folder: String) {
     fun cc(apiLevel: Int): File =
-        if (System.getProperty("os.name").startsWith("Windows")) {
-            File("$platform-$apiLevel", "$cc.cmd")
-        } else {
-            File("$platform-$apiLevel", "$cc")
-        }
+            if (System.getProperty("os.name").startsWith("Windows")) {
+                File("$platform-$apiLevel", "$cc.cmd")
+            } else {
+                File("$platform-$apiLevel", "$cc")
+            }
 
     fun ar(apiLevel: Int): File = File("$platform-$apiLevel", "$ar")
 }
@@ -112,6 +112,24 @@ open class RustAndroidPlugin : Plugin<Project> {
             description = "Generate standard toolchain for given architectures"
         }
 
+        // Fish linker wrapper scripts from our Java resources.
+        val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
+            group = RUST_TASK_GROUP
+            description = "Generate shared linker wrapper script"
+        }
+
+        generateLinkerWrapper.apply {
+            // From https://stackoverflow.com/a/320595.
+            from(rootProject.zipTree(File(RustAndroidPlugin::class.java.protectionDomain.codeSource.location.toURI()).path))
+            include("**/linker-wrapper*")
+            into(File(rootProject.buildDir, "linker-wrapper"))
+            eachFile {
+                it.path = it.path.replaceFirst("com/nishtahir", "")
+            }
+            fileMode = 493 // 0755 in decimal; Kotlin doesn't have octal literals (!).
+            includeEmptyDirs = false
+        }
+
         val buildTask = tasks.maybeCreate("cargoBuild",
                 DefaultTask::class.java).apply {
             group = RUST_TASK_GROUP
@@ -127,6 +145,7 @@ open class RustAndroidPlugin : Plugin<Project> {
             }
 
             targetBuildTask.dependsOn(generateToolchain)
+            targetBuildTask.dependsOn(generateLinkerWrapper)
             buildTask.dependsOn(targetBuildTask)
         }
     }
