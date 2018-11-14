@@ -43,7 +43,7 @@ android {
 cargo {
     module = "../rust"
     targets = ["arm", "arm64", "x86"]
-    libname = "rust"
+    libname = "librust"
     verbose = true
 
    features {

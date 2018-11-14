@@ -40,13 +40,13 @@ The `cargo` Gradle configuration accepts many options.
 
 Generated libraries will be added to the Android `jniLibs` source-sets, when correctly referenced in
 the `cargo` configuration through the `libname` and/or `targetIncludes` options.  The latter
-defaults to `["$libname.so", "$libname.dylib", "$libname.dll"]`, so the following configuration will
+defaults to `["lib${libname}.so", "lib${libname}.dylib", "lib{$libname}.dll"]`, so the following configuration will
 include all `libbackend` libraries generated in the Rust project in `../rust`:
 
 ```
 cargo {
     module = "../rust"
-    libname = "libbackend"
+    libname = "backend"
 }
 ```
 
@@ -205,7 +205,7 @@ cargo {
 
 Which Cargo outputs to consider JNI libraries.
 
-Defaults to `["${libname}.so", "${libname}.dylib", "${libname}.dll"]`.
+Defaults to `["lib${libname}.so", "lib${libname}.dylib", "lib{$libname}.dll"]`.
 
 ```groovy
 cargo {

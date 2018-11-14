@@ -46,9 +46,9 @@ open class CargoBuildTask : DefaultTask() {
                 } else {
                     // It's safe to unwrap, since we bailed at configuration time if this is unset.
                     val libname = libname!!
-                    spec.include("${libname}.so")
-                    spec.include("${libname}.dylib")
-                    spec.include("${libname}.dll")
+                    spec.include("lib${libname}.so")
+                    spec.include("lib${libname}.dylib")
+                    spec.include("lib${libname}.dll")
                 }
             }
         }
