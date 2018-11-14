@@ -110,13 +110,23 @@ open class CargoBuildTask : DefaultTask() {
                 if (toolchain.target != null) {
                     theCommandLine.add("--target=${toolchain.target}")
 
-                    val cc = File(project.getToolchainDirectory(), "${toolchain.cc(apiLevel)}");
-                    val ar = File(project.getToolchainDirectory(), "${toolchain.ar(apiLevel)}");
-                    environment("CC", "$cc")
-                    environment("AR", "$ar")
-
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
+                    val cc = File(project.getToolchainDirectory(), "${toolchain.cc(apiLevel)}").path;
+                    val ar = File(project.getToolchainDirectory(), "${toolchain.ar(apiLevel)}").path;
+
+                    // For cargo: like "CARGO_TARGET_i686-linux-android_CC".  This is really weakly
+                    // documented; see https://github.com/rust-lang/cargo/issues/5690 and follow
+                    // links from there.
+                    val toolchain_target = toolchain.target.toUpperCase().replace('-', '_')
+                    environment("CARGO_TARGET_${toolchain_target}_CC", cc)
+                    environment("CARGO_TARGET_${toolchain_target}_AR", ar)
+
+                    // For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
+                    // https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
+                    environment("CC_${toolchain.target}", cc)
+                    environment("AR_${toolchain.target}", ar)
+
                     var rustflags = "-C linker=$cc -C link-arg=-Wl,-soname,${cargoExtension.libname!!}.so"
                     environment("RUSTFLAGS", rustflags)
                 }
