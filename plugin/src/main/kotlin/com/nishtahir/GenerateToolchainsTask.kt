@@ -15,13 +15,13 @@ open class GenerateToolchainsTask : DefaultTask() {
     fun generateToolchainTask() {
         project.plugins.all {
             when (it) {
-                is AppPlugin -> congfigureTask<AppExtension>(project)
-                is LibraryPlugin -> congfigureTask<LibraryExtension>(project)
+                is AppPlugin -> configureTask<AppExtension>(project)
+                is LibraryPlugin -> configureTask<LibraryExtension>(project)
             }
         }
     }
 
-    inline fun <reified T : BaseExtension> congfigureTask(project: Project) {
+    inline fun <reified T : BaseExtension> configureTask(project: Project) {
         val cargoExtension = project.extensions[CargoExtension::class]
         val app = project.extensions[T::class]
         val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
