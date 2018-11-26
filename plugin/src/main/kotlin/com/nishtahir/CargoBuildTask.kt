@@ -110,15 +110,29 @@ open class CargoBuildTask : DefaultTask() {
                 if (toolchain.target != null) {
                     theCommandLine.add("--target=${toolchain.target}")
 
+                    // Target-specific environment configuration, passed through to
+                    // the underlying `cargo build` invocation.
+                    val toolchain_target = toolchain.target.toUpperCase().replace('-', '_')
+                    val prefix = "RUST_ANDROID_GRADLE_TARGET_${toolchain_target}_"
+
+                    // For ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_TARGET_x_KEY=VALUE, set KEY=VALUE.
+                    project.logger.info("Passing through project properties with prefix '${prefix}' (environment variables with prefix 'ORG_GRADLE_PROJECT_${prefix}'")
+                    project.properties.forEach { (key, value) ->
+                                                 if (key.startsWith(prefix)) {
+                                                     val realKey = key.substring(prefix.length)
+                                                     project.logger.debug("Passing through environment variable '${key}' as '${realKey}=${value}'")
+                                                     environment(realKey, value)
+                                                 }
+                    }
+
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
                     val cc = File(cargoExtension.toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
                     val ar = File(cargoExtension.toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
 
-                    // For cargo: like "CARGO_TARGET_i686-linux-android_CC".  This is really weakly
+                    // For cargo: like "CARGO_TARGET_I686_LINUX_ANDROID_CC".  This is really weakly
                     // documented; see https://github.com/rust-lang/cargo/issues/5690 and follow
                     // links from there.
-                    val toolchain_target = toolchain.target.toUpperCase().replace('-', '_')
                     environment("CARGO_TARGET_${toolchain_target}_CC", cc)
                     environment("CARGO_TARGET_${toolchain_target}_AR", ar)
 
