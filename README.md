@@ -11,13 +11,15 @@ rustup target add armv7-linux-androideabi   # for arm
 rustup target add i686-linux-android        # for x86
 rustup target add aarch64-linux-android     # for arm64
 rustup target add x86_64-linux-android      # for x86_64
+rustup target add x86_64-unknown-linux-gnu  # for linux-x86-64
+rustup target add x86_64-apple-darwin       # for macOS (darwin)
+rustup target add x86_64-pc-windows-msvc    # for win32-x86-64
 ...
 ```
 
 Next add the `cargo` configuration to android project. Point to your cargo project using `module`
-and add targets.  Currently supported targets are `arm`, `arm64`, `x86`, `x86_64`, and `default`.
-`default` is special: it's whatever Cargo builds when no `--target` parameter is supplied -- usually
-the host architecture.
+and add targets.  Currently supported targets are `arm`, `arm64`, `x86`, `x86_64`, and
+`linux-x86-64`, `darwin`, and `win32-x86-64`.
 
 ```
 cargo {
@@ -113,15 +115,16 @@ cargo {
 
 A list of Android targets to build with Cargo; required.
 
-Valid targets are `'arm'`, `'arm64'`, `'x86'`, `'x86_64'`, and `'default'`.  `'default'` is special:
-it's whatever Cargo builds when no `--target ...` parameter is supplied -- usually the host
-architecture.  `'default'` is useful for testing native code in Android unit tests that run on the
-host, not on the target device.  Better support for this feature is
+Valid targets are `arm`, `arm64`, `x86`, `x86_64` (Android), and `'linux-x86-64'`, `'darwin'`, and
+`'win32-x86-64'` (Desktop).
+
+The desktop targets are useful for testing native code in Android unit tests that run on the host,
+not on the target device.  Better support for this feature is
 [planned](https://github.com/ncalexan/rust-android-gradle/issues/13).
 
 ```groovy
 cargo {
-    targets = ['arm', 'x86', 'default']
+    targets = ['arm', 'x86', 'linux-x86-64']
 }
 ```
 
@@ -226,23 +229,6 @@ cargo {
 }
 ```
 
-### defaultToolchainBuildPrefixDir
-
-Android toolchains know where to put their outputs; it's a well-known value like `armeabi-v7a` or
-`x86`.  The default toolchains don't know where to put their output; use this to say where.  For use
-with [JNA](https://github.com/java-native-access/jna), this should depend on the host platform.
-
-Defaults to `""`.
-
-
-```groovy
-cargo {
-    // This puts the output of `cargo build` (the "default" toolchain) into the correct directory
-    // for JNA to find it.
-    defaultToolchainBuildPrefixDir = com.sun.jna.Platform.RESOURCE_PREFIX
-}
-```
-
 ## Specifying NDK toolchains
 
 The plugin looks for (and will generate) per-target architecture standalone NDK toolchains as
@@ -272,8 +258,8 @@ determines the per-project targets by:
 The targets are split on `','`.  For example:
 
 ```
-rust.targets.library=default
-rust.targets=arm,default
+rust.targets.library=linux-x86-64
+rust.targets=arm,linux-x86-64,darwin
 ```
 
 ## Specifying paths to sub-commands (Python and Cargo)

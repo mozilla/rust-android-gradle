@@ -31,13 +31,8 @@ open class CargoBuildTask : DefaultTask() {
             val targetDirectory = targetDirectory ?: "${module!!}/target"
 
             copy { spec ->
-                if (toolchain.target != null) {
-                    spec.from(File(project.projectDir, "${targetDirectory}/${toolchain.target}/${profile}"))
-                    spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
-                } else {
-                    spec.from(File(project.projectDir, "${targetDirectory}/${profile}"))
-                    spec.into(File(buildDir, "rustResources/${defaultToolchainBuildPrefixDir}"))
-                }
+                spec.from(File(project.projectDir, "${targetDirectory}/${toolchain.target}/${profile}"))
+                spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
 
                 // Need to capture the value to dereference smoothly.
                 val targetIncludes = targetIncludes
@@ -107,24 +102,25 @@ open class CargoBuildTask : DefaultTask() {
                     theCommandLine.add("--${cargoExtension.profile}")
                 }
 
-                if (toolchain.target != null) {
-                    theCommandLine.add("--target=${toolchain.target}")
+                theCommandLine.add("--target=${toolchain.target}")
 
-                    // Target-specific environment configuration, passed through to
-                    // the underlying `cargo build` invocation.
-                    val toolchain_target = toolchain.target.toUpperCase().replace('-', '_')
-                    val prefix = "RUST_ANDROID_GRADLE_TARGET_${toolchain_target}_"
+                // Target-specific environment configuration, passed through to
+                // the underlying `cargo build` invocation.
+                val toolchain_target = toolchain.target.toUpperCase().replace('-', '_')
+                val prefix = "RUST_ANDROID_GRADLE_TARGET_${toolchain_target}_"
 
-                    // For ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_TARGET_x_KEY=VALUE, set KEY=VALUE.
-                    project.logger.info("Passing through project properties with prefix '${prefix}' (environment variables with prefix 'ORG_GRADLE_PROJECT_${prefix}'")
-                    project.properties.forEach { (key, value) ->
-                                                 if (key.startsWith(prefix)) {
-                                                     val realKey = key.substring(prefix.length)
-                                                     project.logger.debug("Passing through environment variable '${key}' as '${realKey}=${value}'")
-                                                     environment(realKey, value)
-                                                 }
-                    }
+                // For ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_TARGET_x_KEY=VALUE, set KEY=VALUE.
+                project.logger.info("Passing through project properties with prefix '${prefix}' (environment variables with prefix 'ORG_GRADLE_PROJECT_${prefix}'")
+                project.properties.forEach { (key, value) ->
+                                             if (key.startsWith(prefix)) {
+                                                 val realKey = key.substring(prefix.length)
+                                                 project.logger.debug("Passing through environment variable '${key}' as '${realKey}=${value}'")
+                                                 environment(realKey, value)
+                                             }
+                }
 
+                // Cross-compiling to Android requires toolchain massaging.
+                if (toolchain.type == ToolchainType.ANDROID) {
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
                     val cc = File(cargoExtension.toolchainDirectory, "${toolchain.cc(apiLevel)}").path;

@@ -37,15 +37,17 @@ android {
 
 cargo {
     module = "../rust"
-    targets = ["arm", "arm64", "x86"]
+    targets = [
+        "arm",
+        "darwin",
+    ]
     libname = "librust"
-    verbose = true
 
-   features {
-       defaultAnd "foo", "bar"
-       noDefaultBut("foo", "bar")
-       all()
-   }
+    features {
+        defaultAnd "foo", "bar"
+        noDefaultBut("foo", "bar")
+        all()
+    }
 
     exec = { spec, toolchain ->
         spec.environment("TEST", "test")

@@ -39,7 +39,6 @@ open class CargoExtension {
     var verbose: Boolean? = null
     var targetDirectory: String? = null
     var targetIncludes: Array<String>? = null
-    var defaultToolchainBuildPrefixDir: String? = ""
     var apiLevel: Int? = null
 
     // It would be nice to use a receiver here, but there are problems interoperating with Groovy
