@@ -10,36 +10,60 @@ import java.util.Properties
 
 const val RUST_TASK_GROUP = "rust"
 
+enum class ToolchainType {
+    ANDROID,
+    DESKTOP,
+}
+
+// See https://forge.rust-lang.org/platform-support.html.
 val toolchains = listOf(
-        Toolchain("default",
-                null,
+        Toolchain("linux-x86-64",
+                ToolchainType.DESKTOP,
+                "x86_64-unknown-linux-gnu",
                 "<cc>",
                 "<ar>",
-                "default"),
+                "desktop/linux-x86-64"),
+        Toolchain("darwin",
+                ToolchainType.DESKTOP,
+                "x86_64-apple-darwin",
+                "<cc>",
+                "<ar>",
+                "desktop/darwin"),
+        Toolchain("win32-x86-64",
+                ToolchainType.DESKTOP,
+                "x86_64-pc-windows-msvc",
+                "<cc>",
+                "<ar>",
+                "desktop/win32-x86-64"),
         Toolchain("arm",
+                ToolchainType.ANDROID,
                 "armv7-linux-androideabi",
                 "bin/arm-linux-androideabi-clang",
                 "bin/arm-linux-androideabi-ar",
-                "armeabi-v7a"),
+                "android/armeabi-v7a"),
         Toolchain("arm64",
+                ToolchainType.ANDROID,
                 "aarch64-linux-android",
                 "bin/aarch64-linux-android-clang",
                 "bin/aarch64-linux-android-ar",
-                "arm64-v8a"),
+                "android/arm64-v8a"),
         Toolchain("x86",
+                ToolchainType.ANDROID,
                 "i686-linux-android",
                 "bin/i686-linux-android-clang",
                 "bin/i686-linux-android-ar",
-                "x86"),
+                "android/x86"),
         Toolchain("x86_64",
+                ToolchainType.ANDROID,
                 "x86_64-linux-android",
                 "bin/x86_64-linux-android-clang",
                 "bin/x86_64-linux-android-ar",
-                "x86_64")
+                "android/x86_64")
 )
 
 data class Toolchain(val platform: String,
-                     val target: String?,
+                     val type: ToolchainType,
+                     val target: String,
                      val cc: String,
                      val ar: String,
                      val folder: String) {
@@ -102,8 +126,8 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         extensions[T::class].apply {
-            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/"))
-            sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustResources/"))
+            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/android"))
+            sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
         }
 
         val generateToolchain = tasks.maybeCreate("generateToolchains",

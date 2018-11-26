@@ -1,5 +1,5 @@
 buildscript {
-    ext.plugin_version = '0.6.0'
+    ext.plugin_version = '0.7.0'
 
     repositories {
         google()
@@ -42,15 +42,21 @@ android {
 
 cargo {
     module = "../rust"
-    targets = ["arm", "arm64", "x86"]
+    targets = [
+        "arm",
+        // "arm64",
+        // "x86",
+        "darwin",
+        // "linux-x86-64",
+    ]
     libname = "librust"
-    verbose = true
+    // verbose = true
 
-   features {
-       defaultAnd "foo", "bar"
-       noDefaultBut("foo", "bar")
-       all()
-   }
+    features {
+        defaultAnd "foo", "bar"
+        noDefaultBut("foo", "bar")
+        all()
+    }
 
     exec = { spec, toolchain ->
         spec.environment("TEST", "test")
