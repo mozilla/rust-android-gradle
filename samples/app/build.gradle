@@ -1,19 +1,14 @@
 buildscript {
-    ext.plugin_version = '0.6.0'
-
     repositories {
         google()
         jcenter()
         maven {
             url "https://plugins.gradle.org/m2/"
         }
-        maven {
-            url "../maven-repo"
-        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.2'
-        classpath "org.mozilla.rust-android-gradle:rust-android:$plugin_version"
+        classpath 'org.mozilla.rust-android-gradle:rust-android:+'
     }
 }
 
@@ -47,9 +42,6 @@ cargo {
 repositories {
     jcenter()
     google()
-    maven {
-        url "./maven-repo"
-    }
 }
 
 dependencies {
