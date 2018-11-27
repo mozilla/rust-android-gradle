@@ -2,6 +2,8 @@
 
 Cross compiles rust cargo projects for Android
 
+https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org/mozilla/rust-android-gradle/rust-android/org.mozilla.rust-android-gradle.rust-android.gradle.plugin/maven-metadata.xml.svg?label=rust-android-gradle
+
 # Usage
 
 To begin you must first install the rust toolchains for your target platforms.
@@ -15,6 +17,21 @@ rustup target add x86_64-unknown-linux-gnu  # for linux-x86-64
 rustup target add x86_64-apple-darwin       # for macOS (darwin)
 rustup target add x86_64-pc-windows-msvc    # for win32-x86-64
 ...
+```
+
+Add the plugin to your root `build.gradle`, like:
+
+```groovy
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath 'gradle.plugin.org.mozilla.rust-android-gradle:plugin:0.7.0'
+    }
+}
 ```
 
 Next add the `cargo` configuration to android project. Point to your cargo project using `module`
