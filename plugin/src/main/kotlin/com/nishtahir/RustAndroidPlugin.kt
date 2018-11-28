@@ -167,11 +167,16 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         cargoExtension.targets!!.forEach { target ->
+            val theToolchain = toolchains.find { it.platform == target }
+            if (theToolchain == null) {
+                throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
+            }
+
             val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
                     CargoBuildTask::class.java).apply {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
-                toolchain = toolchains.find { (arch) -> arch == target }
+                toolchain = theToolchain
             }
 
             targetBuildTask.dependsOn(generateToolchain)
