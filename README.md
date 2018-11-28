@@ -19,7 +19,8 @@ rustup target add aarch64-linux-android     # for arm64
 rustup target add x86_64-linux-android      # for x86_64
 rustup target add x86_64-unknown-linux-gnu  # for linux-x86-64
 rustup target add x86_64-apple-darwin       # for macOS (darwin)
-rustup target add x86_64-pc-windows-msvc    # for win32-x86-64
+rustup target add x86_64-pc-windows-gnu     # for win32-x86-64-gnu
+rustup target add x86_64-pc-windows-msvc    # for win32-x86-64-msvc
 ...
 ```
 
@@ -33,14 +34,14 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'gradle.plugin.org.mozilla.rust-android-gradle:plugin:0.7.0'
+        classpath 'gradle.plugin.org.mozilla.rust-android-gradle:plugin:0.8.0'
     }
 }
 ```
 
 Next add the `cargo` configuration to android project. Point to your cargo project using `module`
 and add targets.  Currently supported targets are `arm`, `arm64`, `x86`, `x86_64`, and
-`linux-x86-64`, `darwin`, and `win32-x86-64`.
+`linux-x86-64`, `darwin`, `win32-x86-64-gnu`, and `win32-x86-64-msvc`.
 
 ```
 cargo {
@@ -136,8 +137,8 @@ cargo {
 
 A list of Android targets to build with Cargo; required.
 
-Valid targets are `arm`, `arm64`, `x86`, `x86_64` (Android), and `'linux-x86-64'`, `'darwin'`, and
-`'win32-x86-64'` (Desktop).
+Valid targets are `arm`, `arm64`, `x86`, `x86_64` (Android), and `'linux-x86-64'`, `'darwin'`,
+`'win32-x86-64-gnu'`, and `'win32-x86-64-msvc'` (Desktop).
 
 The desktop targets are useful for testing native code in Android unit tests that run on the host,
 not on the target device.  Better support for this feature is
