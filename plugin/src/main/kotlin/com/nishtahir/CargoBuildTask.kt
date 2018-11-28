@@ -43,7 +43,7 @@ open class CargoBuildTask : DefaultTask() {
                     val libname = libname!!
                     spec.include("lib${libname}.so")
                     spec.include("lib${libname}.dylib")
-                    spec.include("lib${libname}.dll")
+                    spec.include("${libname}.dll")
                 }
             }
         }
