@@ -119,15 +119,8 @@ open class RustAndroidPlugin : Plugin<Project> {
             throw GradleException("libname cannot be null")
         }
 
-        // Allow to set targets, including per-project, in local.properties.
-        val localTargets: String? =
-                cargoExtension.localProperties.getProperty("rust.targets.${project.name}") ?:
-                cargoExtension.localProperties.getProperty("rust.targets")
-        if (localTargets != null) {
-            cargoExtension.targets = localTargets.split(',').map { it.trim() }
-        }
-
-        if (cargoExtension.targets == null) {
+        val targets = cargoExtension.getLocalTargets(project.name)
+        if (targets == null) {
             throw GradleException("targets cannot be null")
         }
 
@@ -166,7 +159,7 @@ open class RustAndroidPlugin : Plugin<Project> {
             description = "Build library (all targets)"
         }
 
-        cargoExtension.targets!!.forEach { target ->
+        targets!!.forEach { target ->
             val theToolchain = toolchains.find { it.platform == target }
             if (theToolchain == null) {
                 throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")

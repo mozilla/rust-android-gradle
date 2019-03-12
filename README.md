@@ -275,6 +275,7 @@ determines the per-project targets by:
 
 1. `rust.targets.${project.Name}` for each project in `${rootDir}/local.properties`
 1. `rust.targets` in `${rootDir}/local.properties`
+1. the `RUST_ANDROID_GRADLE_TARGETS` environment variable, or its per-project alternative `RUST_ANDROID_GRADLE_TARGETS_${project.Name}`
 1. the `cargo { targets ... }` block in the per-project `build.gradle`
 
 The targets are split on `','`.  For example:

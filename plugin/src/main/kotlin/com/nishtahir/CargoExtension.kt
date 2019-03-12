@@ -80,15 +80,32 @@ open class CargoExtension {
             return getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
         }
 
-    internal fun getProperty(camelCaseName: String, snakeCaseName: String): String? {
-        val local: String? = localProperties.getProperty(camelCaseName)
-        if (local != null) {
-            return local
+    fun getLocalTargets(projectName: String): List<String>? {
+        // Allow to set targets, including per-project, in local.properties.
+        val camelCaseNames = arrayOf<String>("rust.targets.$projectName", "rust.targets")
+        val snakeCaseNames = arrayOf<String>("RUST_ANDROID_GRADLE_TARGETS_$projectName", "RUST_ANDROID_GRADLE_TARGETS")
+        return getProperty(camelCaseNames, snakeCaseNames)?.let {
+            it.split(',').map { it.trim() }
+        } ?: this.targets
+    }
+
+    internal fun getProperty(camelCaseNames: Array<String>, snakeCaseNames: Array<String>): String? {
+        for (camelCaseName in camelCaseNames) {
+            val local: String? = localProperties.getProperty(camelCaseName)
+            if (local != null) {
+                return local
+            }
         }
-        val global: String? = System.getenv(snakeCaseName)
-        if (global != null) {
-            return global
+        for (snakeCaseName in snakeCaseNames) {
+            val global: String? = System.getenv(snakeCaseName)
+            if (global != null) {
+                return global
+            }
         }
         return null
+    }
+
+    internal fun getProperty(camelCaseName: String, snakeCaseName: String): String? {
+        return getProperty(arrayOf<String>(camelCaseName), arrayOf<String>(snakeCaseName))
     }
 }

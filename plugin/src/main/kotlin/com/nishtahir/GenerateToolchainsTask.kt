@@ -28,7 +28,7 @@ open class GenerateToolchainsTask : DefaultTask() {
         val ndkPath = app.ndkDirectory
 
         // It's safe to unwrap, since we bailed at configuration time if this is unset.
-        val targets = cargoExtension.targets!!
+        val targets = cargoExtension.getLocalTargets(project.name)!!
 
         toolchains
                 .filter { it.type == ToolchainType.ANDROID }
