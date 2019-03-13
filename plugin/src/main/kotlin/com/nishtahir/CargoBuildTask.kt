@@ -1,6 +1,7 @@
 package com.nishtahir;
 
 import com.android.build.gradle.*
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
@@ -10,6 +11,7 @@ import java.io.File
 
 open class CargoBuildTask : DefaultTask() {
     var toolchain: Toolchain? = null
+    var prebuilt: Boolean = false
 
     @Suppress("unused")
     @TaskAction
@@ -121,10 +123,28 @@ open class CargoBuildTask : DefaultTask() {
 
                 // Cross-compiling to Android requires toolchain massaging.
                 if (toolchain.type == ToolchainType.ANDROID) {
+                    val toolchainDirectory = if (prebuilt) {
+                        val ndkPath = app.ndkDirectory
+                        val hostTag = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                            if (Os.isArch("x86_64") || Os.isArch("amd64")) {
+                                "windows-x86_64"
+                            } else {
+                                "windows"
+                            }
+                        } else if (Os.isFamily(Os.FAMILY_MAC)) {
+                            "darwin-x86_64"
+                        } else {
+                            "linux-x86_64"
+                        }
+                        File("$ndkPath/toolchains/llvm/prebuilt", hostTag)
+                    } else {
+                        cargoExtension.toolchainDirectory
+                    }
+
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
-                    val cc = File(cargoExtension.toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
-                    val ar = File(cargoExtension.toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
+                    val cc = File(toolchainDirectory, "${toolchain.cc(prebuilt, apiLevel)}").path;
+                    val ar = File(toolchainDirectory, "${toolchain.ar(prebuilt, apiLevel)}").path;
 
                     // For cargo: like "CARGO_TARGET_I686_LINUX_ANDROID_CC".  This is really weakly
                     // documented; see https://github.com/rust-lang/cargo/issues/5690 and follow

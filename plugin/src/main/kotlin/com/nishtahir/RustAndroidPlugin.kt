@@ -20,35 +20,47 @@ val toolchains = listOf(
         Toolchain("linux-x86-64",
                 ToolchainType.DESKTOP,
                 "x86_64-unknown-linux-gnu",
+                "<compilerTriple>",
+                "<binutilsTriple>",
                 "<cc>",
                 "<ar>",
                 "desktop/linux-x86-64"),
         Toolchain("darwin",
                 ToolchainType.DESKTOP,
                 "x86_64-apple-darwin",
+                "<compilerTriple>",
+                "<binutilsTriple>",
                 "<cc>",
                 "<ar>",
                 "desktop/darwin"),
         Toolchain("win32-x86-64-msvc",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-msvc",
+                "<compilerTriple>",
+                "<binutilsTriple>",
                 "<cc>",
                 "<ar>",
                 "desktop/win32-x86-64"),
         Toolchain("win32-x86-64-gnu",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-gnu",
+                "<compilerTriple>",
+                "<binutilsTriple>",
                 "<cc>",
                 "<ar>",
                 "desktop/win32-x86-64"),
         Toolchain("arm",
                 ToolchainType.ANDROID,
                 "armv7-linux-androideabi",
+                "armv7a-linux-androideabi",
+                "arm-linux-androideabi",
                 "bin/arm-linux-androideabi-clang",
                 "bin/arm-linux-androideabi-ar",
                 "android/armeabi-v7a"),
         Toolchain("arm64",
                 ToolchainType.ANDROID,
+                "aarch64-linux-android",
+                "aarch64-linux-android",
                 "aarch64-linux-android",
                 "bin/aarch64-linux-android-clang",
                 "bin/aarch64-linux-android-ar",
@@ -56,11 +68,15 @@ val toolchains = listOf(
         Toolchain("x86",
                 ToolchainType.ANDROID,
                 "i686-linux-android",
+                "i686-linux-android",
+                "i686-linux-android",
                 "bin/i686-linux-android-clang",
                 "bin/i686-linux-android-ar",
                 "android/x86"),
         Toolchain("x86_64",
                 ToolchainType.ANDROID,
+                "x86_64-linux-android",
+                "x86_64-linux-android",
                 "x86_64-linux-android",
                 "bin/x86_64-linux-android-clang",
                 "bin/x86_64-linux-android-ar",
@@ -70,17 +86,32 @@ val toolchains = listOf(
 data class Toolchain(val platform: String,
                      val type: ToolchainType,
                      val target: String,
+                     val compilerTriple: String,
+                     val binutilsTriple: String,
                      val cc: String,
                      val ar: String,
                      val folder: String) {
-    fun cc(apiLevel: Int): File =
+    fun cc(prebuilt: Boolean, apiLevel: Int): File =
             if (System.getProperty("os.name").startsWith("Windows")) {
-                File("$platform-$apiLevel", "$cc.cmd")
+                if (prebuilt) {
+                    File("bin", "$compilerTriple$apiLevel-clang.cmd")
+                } else {
+                    File("$platform-$apiLevel", "$cc.cmd")
+                }
             } else {
-                File("$platform-$apiLevel", "$cc")
+                if (prebuilt) {
+                    File("bin", "$compilerTriple$apiLevel-clang")
+                } else {
+                    File("$platform-$apiLevel", "$cc")
+                }
             }
 
-    fun ar(apiLevel: Int): File = File("$platform-$apiLevel", "$ar")
+    fun ar(prebuilt: Boolean, apiLevel: Int): File =
+            if (prebuilt) {
+                File("bin", "$binutilsTriple-ar")
+            } else {
+                File("$platform-$apiLevel", "$ar")
+            }
 }
 
 @Suppress("unused")
@@ -136,11 +167,14 @@ open class RustAndroidPlugin : Plugin<Project> {
             sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
         }
 
-        val generateToolchain = tasks.maybeCreate("generateToolchains",
-                GenerateToolchainsTask::class.java).apply {
-            group = RUST_TASK_GROUP
-            description = "Generate standard toolchain for given architectures"
+        // Detect whether the NDK, if present, is r19+
+        val ndkSourceProperties = Properties()
+        val ndkSourcePropertiesFile = File(extensions[T::class].ndkDirectory, "source.properties")
+        if (ndkSourcePropertiesFile.exists()) {
+            ndkSourceProperties.load(ndkSourcePropertiesFile.inputStream())
         }
+        val ndkVersion = ndkSourceProperties.getProperty("Pkg.Revision", "0.0")
+        val usePrebuilt = ndkVersion.split(".").first().toInt() >= 19
 
         // Fish linker wrapper scripts from our Java resources.
         val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
@@ -177,9 +211,18 @@ open class RustAndroidPlugin : Plugin<Project> {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
                 toolchain = theToolchain
+                prebuilt = usePrebuilt
             }
 
-            targetBuildTask.dependsOn(generateToolchain)
+            if (!usePrebuilt) {
+                val generateToolchain = tasks.maybeCreate("generateToolchains",
+                        GenerateToolchainsTask::class.java).apply {
+                    group = RUST_TASK_GROUP
+                    description = "Generate standard toolchain for given architectures"
+                }
+
+                targetBuildTask.dependsOn(generateToolchain)
+            }
             targetBuildTask.dependsOn(generateLinkerWrapper)
             buildTask.dependsOn(targetBuildTask)
         }
