@@ -153,6 +153,14 @@ open class CargoBuildTask : DefaultTask() {
                     environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${cargoExtension.libname!!}.so")
                 }
 
+                if (cargoExtension.locked) {
+                    theCommandLine.add("--locked")
+                }
+
+                if (cargoExtension.frozen) {
+                    theCommandLine.add("--frozen")
+                }
+
                 commandLine = theCommandLine
             }
         }.assertNormalExitValue()

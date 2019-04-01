@@ -40,6 +40,8 @@ open class CargoExtension {
     var targetDirectory: String? = null
     var targetIncludes: Array<String>? = null
     var apiLevel: Int? = null
+    var locked: Boolean = false
+    var frozen: Boolean = false
 
     // It would be nice to use a receiver here, but there are problems interoperating with Groovy
     // and Kotlin that are just not worth working out.  Another JVM language, yet another dynamic
