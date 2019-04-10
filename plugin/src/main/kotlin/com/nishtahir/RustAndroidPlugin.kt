@@ -167,14 +167,24 @@ open class RustAndroidPlugin : Plugin<Project> {
             sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
         }
 
-        // Detect whether the NDK, if present, is r19+
+        // Determine the NDK version, if present
         val ndkSourceProperties = Properties()
         val ndkSourcePropertiesFile = File(extensions[T::class].ndkDirectory, "source.properties")
         if (ndkSourcePropertiesFile.exists()) {
             ndkSourceProperties.load(ndkSourcePropertiesFile.inputStream())
         }
         val ndkVersion = ndkSourceProperties.getProperty("Pkg.Revision", "0.0")
-        val usePrebuilt = ndkVersion.split(".").first().toInt() >= 19
+        val ndkVersionMajor = ndkVersion.split(".").first().toInt()
+
+        // Determine whether to use prebuilt or generated toolchains
+        val usePrebuilt = if (cargoExtension.prebuiltToolchains == null) {
+            ndkVersionMajor >= 19
+        } else {
+            cargoExtension.prebuiltToolchains!!
+        }
+        if (usePrebuilt && ndkVersionMajor < 19) {
+            throw GradleException("usePrebuilt = true requires NDK version 19+")
+        }
 
         // Fish linker wrapper scripts from our Java resources.
         val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
