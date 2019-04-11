@@ -11,7 +11,8 @@ import java.util.Properties
 const val RUST_TASK_GROUP = "rust"
 
 enum class ToolchainType {
-    ANDROID,
+    ANDROID_PREBUILT,
+    ANDROID_GENERATED,
     DESKTOP,
 }
 
@@ -42,25 +43,49 @@ val toolchains = listOf(
                 "<binutilsTriple>",
                 "desktop/win32-x86-64"),
         Toolchain("arm",
-                ToolchainType.ANDROID,
+                ToolchainType.ANDROID_GENERATED,
                 "armv7-linux-androideabi",
-                "armv7a-linux-androideabi",
+                "arm-linux-androideabi",
                 "arm-linux-androideabi",
                 "android/armeabi-v7a"),
         Toolchain("arm64",
-                ToolchainType.ANDROID,
+                ToolchainType.ANDROID_GENERATED,
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "android/arm64-v8a"),
         Toolchain("x86",
-                ToolchainType.ANDROID,
+                ToolchainType.ANDROID_GENERATED,
                 "i686-linux-android",
                 "i686-linux-android",
                 "i686-linux-android",
                 "android/x86"),
         Toolchain("x86_64",
-                ToolchainType.ANDROID,
+                ToolchainType.ANDROID_GENERATED,
+                "x86_64-linux-android",
+                "x86_64-linux-android",
+                "x86_64-linux-android",
+                "android/x86_64"),
+        Toolchain("arm",
+                ToolchainType.ANDROID_PREBUILT,
+                "armv7-linux-androideabi",
+                "armv7a-linux-androideabi",
+                "arm-linux-androideabi",
+                "android/armeabi-v7a"),
+        Toolchain("arm64",
+                ToolchainType.ANDROID_PREBUILT,
+                "aarch64-linux-android",
+                "aarch64-linux-android",
+                "aarch64-linux-android",
+                "android/arm64-v8a"),
+        Toolchain("x86",
+                ToolchainType.ANDROID_PREBUILT,
+                "i686-linux-android",
+                "i686-linux-android",
+                "i686-linux-android",
+                "android/x86"),
+        Toolchain("x86_64",
+                ToolchainType.ANDROID_PREBUILT,
                 "x86_64-linux-android",
                 "x86_64-linux-android",
                 "x86_64-linux-android",
@@ -73,23 +98,23 @@ data class Toolchain(val platform: String,
                      val compilerTriple: String,
                      val binutilsTriple: String,
                      val folder: String) {
-    fun cc(prebuilt: Boolean, apiLevel: Int): File =
+    fun cc(apiLevel: Int): File =
             if (System.getProperty("os.name").startsWith("Windows")) {
-                if (prebuilt) {
+                if (type == ToolchainType.ANDROID_PREBUILT) {
                     File("bin", "$compilerTriple$apiLevel-clang.cmd")
                 } else {
-                    File("$platform-$apiLevel/bin", "$binutilsTriple-clang.cmd")
+                    File("$platform-$apiLevel/bin", "$compilerTriple-clang.cmd")
                 }
             } else {
-                if (prebuilt) {
+                if (type == ToolchainType.ANDROID_PREBUILT) {
                     File("bin", "$compilerTriple$apiLevel-clang")
                 } else {
-                    File("$platform-$apiLevel/bin", "$binutilsTriple-clang")
+                    File("$platform-$apiLevel/bin", "$compilerTriple-clang")
                 }
             }
 
-    fun ar(prebuilt: Boolean, apiLevel: Int): File =
-            if (prebuilt) {
+    fun ar(apiLevel: Int): File =
+            if (type == ToolchainType.ANDROID_PREBUILT) {
                 File("bin", "$binutilsTriple-ar")
             } else {
                 File("$platform-$apiLevel/bin", "$binutilsTriple-ar")
@@ -168,6 +193,16 @@ open class RustAndroidPlugin : Plugin<Project> {
             throw GradleException("usePrebuilt = true requires NDK version 19+")
         }
 
+        val generateToolchain = if (!usePrebuilt) {
+            tasks.maybeCreate("generateToolchains",
+                    GenerateToolchainsTask::class.java).apply {
+                group = RUST_TASK_GROUP
+                description = "Generate standard toolchain for given architectures"
+            }
+        } else {
+            null
+        }
+
         // Fish linker wrapper scripts from our Java resources.
         val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
             group = RUST_TASK_GROUP
@@ -193,7 +228,15 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         cargoExtension.targets!!.forEach { target ->
-            val theToolchain = toolchains.find { it.platform == target }
+            val theToolchain = toolchains
+                    .filter {
+                        if (usePrebuilt) {
+                            it.type != ToolchainType.ANDROID_GENERATED
+                        } else {
+                            it.type != ToolchainType.ANDROID_PREBUILT
+                        }
+                    }
+                    .find { it.platform == target }
             if (theToolchain == null) {
                 throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
             }
@@ -203,17 +246,10 @@ open class RustAndroidPlugin : Plugin<Project> {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
                 toolchain = theToolchain
-                prebuilt = usePrebuilt
             }
 
             if (!usePrebuilt) {
-                val generateToolchain = tasks.maybeCreate("generateToolchains",
-                        GenerateToolchainsTask::class.java).apply {
-                    group = RUST_TASK_GROUP
-                    description = "Generate standard toolchain for given architectures"
-                }
-
-                targetBuildTask.dependsOn(generateToolchain)
+                targetBuildTask.dependsOn(generateToolchain!!)
             }
             targetBuildTask.dependsOn(generateLinkerWrapper)
             buildTask.dependsOn(targetBuildTask)

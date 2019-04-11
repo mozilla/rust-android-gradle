@@ -11,7 +11,6 @@ import java.io.File
 
 open class CargoBuildTask : DefaultTask() {
     var toolchain: Toolchain? = null
-    var prebuilt: Boolean = false
 
     @Suppress("unused")
     @TaskAction
@@ -122,8 +121,8 @@ open class CargoBuildTask : DefaultTask() {
                 }
 
                 // Cross-compiling to Android requires toolchain massaging.
-                if (toolchain.type == ToolchainType.ANDROID) {
-                    val toolchainDirectory = if (prebuilt) {
+                if (toolchain.type != ToolchainType.DESKTOP) {
+                    val toolchainDirectory = if (toolchain.type == ToolchainType.ANDROID_PREBUILT) {
                         val ndkPath = app.ndkDirectory
                         val hostTag = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                             if (Os.isArch("x86_64") || Os.isArch("amd64")) {
@@ -143,8 +142,8 @@ open class CargoBuildTask : DefaultTask() {
 
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
-                    val cc = File(toolchainDirectory, "${toolchain.cc(prebuilt, apiLevel)}").path;
-                    val ar = File(toolchainDirectory, "${toolchain.ar(prebuilt, apiLevel)}").path;
+                    val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
+                    val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
 
                     // For cargo: like "CARGO_TARGET_I686_LINUX_ANDROID_CC".  This is really weakly
                     // documented; see https://github.com/rust-lang/cargo/issues/5690 and follow

@@ -31,7 +31,7 @@ open class GenerateToolchainsTask : DefaultTask() {
         val targets = cargoExtension.targets!!
 
         toolchains
-                .filter { it.type == ToolchainType.ANDROID }
+                .filter { it.type == ToolchainType.ANDROID_GENERATED }
                 .filter { (arch) -> targets.contains(arch) }
                 .forEach { (arch) ->
                      if (arch.endsWith("64") && apiLevel < 21) {
