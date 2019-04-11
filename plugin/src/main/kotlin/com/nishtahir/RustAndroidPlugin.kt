@@ -22,64 +22,48 @@ val toolchains = listOf(
                 "x86_64-unknown-linux-gnu",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "<cc>",
-                "<ar>",
                 "desktop/linux-x86-64"),
         Toolchain("darwin",
                 ToolchainType.DESKTOP,
                 "x86_64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "<cc>",
-                "<ar>",
                 "desktop/darwin"),
         Toolchain("win32-x86-64-msvc",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-msvc",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "<cc>",
-                "<ar>",
                 "desktop/win32-x86-64"),
         Toolchain("win32-x86-64-gnu",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-gnu",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "<cc>",
-                "<ar>",
                 "desktop/win32-x86-64"),
         Toolchain("arm",
                 ToolchainType.ANDROID,
                 "armv7-linux-androideabi",
                 "armv7a-linux-androideabi",
                 "arm-linux-androideabi",
-                "bin/arm-linux-androideabi-clang",
-                "bin/arm-linux-androideabi-ar",
                 "android/armeabi-v7a"),
         Toolchain("arm64",
                 ToolchainType.ANDROID,
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "aarch64-linux-android",
-                "bin/aarch64-linux-android-clang",
-                "bin/aarch64-linux-android-ar",
                 "android/arm64-v8a"),
         Toolchain("x86",
                 ToolchainType.ANDROID,
                 "i686-linux-android",
                 "i686-linux-android",
                 "i686-linux-android",
-                "bin/i686-linux-android-clang",
-                "bin/i686-linux-android-ar",
                 "android/x86"),
         Toolchain("x86_64",
                 ToolchainType.ANDROID,
                 "x86_64-linux-android",
                 "x86_64-linux-android",
                 "x86_64-linux-android",
-                "bin/x86_64-linux-android-clang",
-                "bin/x86_64-linux-android-ar",
                 "android/x86_64")
 )
 
@@ -88,21 +72,19 @@ data class Toolchain(val platform: String,
                      val target: String,
                      val compilerTriple: String,
                      val binutilsTriple: String,
-                     val cc: String,
-                     val ar: String,
                      val folder: String) {
     fun cc(prebuilt: Boolean, apiLevel: Int): File =
             if (System.getProperty("os.name").startsWith("Windows")) {
                 if (prebuilt) {
                     File("bin", "$compilerTriple$apiLevel-clang.cmd")
                 } else {
-                    File("$platform-$apiLevel", "$cc.cmd")
+                    File("$platform-$apiLevel/bin", "$binutilsTriple-clang.cmd")
                 }
             } else {
                 if (prebuilt) {
                     File("bin", "$compilerTriple$apiLevel-clang")
                 } else {
-                    File("$platform-$apiLevel", "$cc")
+                    File("$platform-$apiLevel/bin", "$binutilsTriple-clang")
                 }
             }
 
@@ -110,7 +92,7 @@ data class Toolchain(val platform: String,
             if (prebuilt) {
                 File("bin", "$binutilsTriple-ar")
             } else {
-                File("$platform-$apiLevel", "$ar")
+                File("$platform-$apiLevel/bin", "$binutilsTriple-ar")
             }
 }
 
