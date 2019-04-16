@@ -251,6 +251,17 @@ cargo {
 }
 ```
 
+### extraCargoBuildArguments
+
+Sometimes, you need to do things that the plugin doesn't anticipate.  Use `extraCargoBuildArguments`
+to append a list of additional arguments to each `cargo build` invocation.
+
+```groovy
+cargo {
+    extraCargoBuildArguments = ['a', 'list', 'of', 'strings']
+}
+```
+
 ## Specifying NDK toolchains
 
 The plugin looks for (and will generate) per-target architecture standalone NDK toolchains as
