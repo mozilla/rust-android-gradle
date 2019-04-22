@@ -353,6 +353,25 @@ $ ls -al samples/maven-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-and
 samples/maven-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-android-gradle.gradle.plugin/0.4.0/org.mozilla.rust-android-gradle.gradle.plugin-0.4.0.pom
 ```
 
+# Publishing
+
+You will need credentials to publish to the [Gradle plugin portal](https://plugins.gradle.org/) in
+the appropriate place for the [`plugin-publish`](https://plugins.gradle.org/docs/publish-plugin) to
+find them.  Usually, that's in `~/.gradle/gradle.properties`.
+
+At top-level, the `publishPlugins` Gradle task publishes the plugin for consumption:
+
+```
+$ ./gradlew publishPlugins
+...
+Publishing plugin org.mozilla.rust-android-gradle.rust-android version 0.8.1
+Publishing artifact build/libs/plugin-0.8.1.jar
+Publishing artifact build/libs/plugin-0.8.1-sources.jar
+Publishing artifact build/libs/plugin-0.8.1-javadoc.jar
+Publishing artifact build/publish-generated-resources/pom.xml
+Activating plugin org.mozilla.rust-android-gradle.rust-android version 0.8.1
+```
+
 ## Sample projects
 
 To run the sample projects:
