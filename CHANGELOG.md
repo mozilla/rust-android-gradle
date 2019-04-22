@@ -1,3 +1,7 @@
+# 0.8.1
+
+- Added `extraCargoBuildArguments`.
+
 # 0.8.0
 
 - **breaking** Further split "win32-x86-64" into "win32-x86-64-{gnu,msvc}".
