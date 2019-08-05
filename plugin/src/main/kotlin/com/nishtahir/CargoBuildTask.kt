@@ -6,10 +6,12 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.TaskAction
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 open class CargoBuildTask : DefaultTask() {
     var toolchain: Toolchain? = null
+
 
     @Suppress("unused")
     @TaskAction
@@ -30,12 +32,24 @@ open class CargoBuildTask : DefaultTask() {
             // CARGO_TARGET_DIR can be used to force the use of a global, shared target directory
             // across all rust projects on a machine. Use it if it's set, otherwise use the
             // configured `targetDirectory` value, and fall back to `${module}/target`.
-            val targetDirectory = System.getenv("CARGO_TARGET_DIR")
+            //
+            // We also allow this to be specified in `local.properties`, not because this is
+            // something you should ever need to do currently, but we don't want it to ruin anyone's
+            // day if it turns out we're wrong about that.
+            val targetDirectory =
+                getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
                 ?: targetDirectory
                 ?: "${module!!}/target"
 
+            val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
+
+            val cargoOutputDir = if (toolchain.target == defaultTargetTriple) {
+                "${targetDirectory}/${profile}"
+            } else {
+                "${targetDirectory}/${toolchain.target}/${profile}"
+            }
             copy { spec ->
-                spec.from(File(project.projectDir, "${targetDirectory}/${toolchain.target}/${profile}"))
+                spec.from(File(project.projectDir, cargoOutputDir))
                 spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
 
                 // Need to capture the value to dereference smoothly.
@@ -56,6 +70,7 @@ open class CargoBuildTask : DefaultTask() {
     inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoExtension: CargoExtension) {
         val app = project.extensions[T::class]
         val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
+        val defaultTargetTriple = getDefaultTargetTriple(project, cargoExtension.rustcCommand)
 
         project.exec { spec ->
             with(spec) {
@@ -101,8 +116,12 @@ open class CargoBuildTask : DefaultTask() {
                     // two values.
                     theCommandLine.add("--${cargoExtension.profile}")
                 }
-
-                theCommandLine.add("--target=${toolchain.target}")
+                if (toolchain.target != defaultTargetTriple) {
+                    // Only providing --target for the non-default targets means desktop builds
+                    // can share the build cache with `cargo build`/`cargo test`/etc invocations,
+                    // instead of requiring a large amount of redundant work.
+                    theCommandLine.add("--target=${toolchain.target}")
+                }
 
                 // Target-specific environment configuration, passed through to
                 // the underlying `cargo build` invocation.
@@ -165,3 +184,34 @@ open class CargoBuildTask : DefaultTask() {
         }.assertNormalExitValue()
     }
 }
+
+// This can't be private/internal as it's called from `buildProjectForTarget`.
+fun getDefaultTargetTriple(project: Project, rustc: String): String? {
+    val stdout = ByteArrayOutputStream()
+    val result = project.exec { spec ->
+        spec.standardOutput = stdout
+        spec.commandLine = listOf(rustc, "--version", "--verbose")
+    }
+    if (result.exitValue != 0) {
+        project.logger.warn(
+            "Failed to get default target triple from rustc (exit code: ${result.exitValue})")
+        return null
+    }
+    val output = stdout.toString()
+
+    // The `rustc --version --verbose` output contains a number of lines like `key: value`.
+    // We're only interested in `host: `, which corresponds to the default target triple.
+    val triplePrefix = "host: "
+
+    val triple = output.split("\n")
+        .find { it.startsWith(triplePrefix) }
+        ?.let { it.substring(triplePrefix.length).trim() }
+
+    if (triple == null) {
+        project.logger.warn("Failed to parse `rustc -Vv` output! (Please report a rust-android-gradle bug)")
+    } else {
+        project.logger.info("Default rust target triple: $triple")
+    }
+    return triple
+}
+

@@ -81,6 +81,14 @@ open class CargoExtension {
             return getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
         }
 
+    // Required so that we can parse the default triple out of `rustc --version --verbose`. Sadly,
+    // there seems to be no way to get this information out of cargo directly. Failure to locate
+    // this isn't fatal, however.
+    val rustcCommand: String
+        get() {
+            return getProperty("rust.rustcCommand", "RUST_ANDROID_GRADLE_RUSTC_COMMAND") ?: "rustc"
+        }
+
     internal fun getProperty(camelCaseName: String, snakeCaseName: String): String? {
         val local: String? = localProperties.getProperty(camelCaseName)
         if (local != null) {
