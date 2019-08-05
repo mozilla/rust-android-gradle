@@ -27,8 +27,12 @@ open class CargoBuildTask : DefaultTask() {
                     is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, this)
                 }
             }
-
-            val targetDirectory = targetDirectory ?: "${module!!}/target"
+            // CARGO_TARGET_DIR can be used to force the use of a global, shared target directory
+            // across all rust projects on a machine. Use it if it's set, otherwise use the
+            // configured `targetDirectory` value, and fall back to `${module}/target`.
+            val targetDirectory = System.getenv("CARGO_TARGET_DIR")
+                ?: targetDirectory
+                ?: "${module!!}/target"
 
             copy { spec ->
                 spec.from(File(project.projectDir, "${targetDirectory}/${toolchain.target}/${profile}"))

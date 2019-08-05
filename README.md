@@ -221,14 +221,21 @@ cargo {
 
 ### targetDirectory
 
-The target directory into which Cargo writes built outputs.
+The target directory into which Cargo writes built outputs. You will likely need to specify this
+if you are using a [cargo virtual workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html),
+as our default will likely fail to locate the correct target directory.
 
 Defaults to `${module}/target`.  `targetDirectory` is interpreted as a relative path to the Gradle
 `projectDir`.
 
+Note that if `CARGO_TARGET_DIR` (see https://doc.rust-lang.org/cargo/reference/environment-variables.html)
+is specified in the environment, it takes precedence over `targetDirectory`, as cargo will output
+all build artifacts to it, regardless of what is being built, or where it was invoked.
+
 ```groovy
 cargo {
-    targetDirectory = 'release'
+    // Note: path is relative to the gradle project root.
+    targetDirectory = 'path/to/workspace/root/target'
 }
 ```
 
