@@ -226,9 +226,11 @@ Note that if `CARGO_TARGET_DIR` (see https://doc.rust-lang.org/cargo/reference/e
 is specified in the environment, it takes precedence over `targetDirectory`, as cargo will output
 all build artifacts to it, regardless of what is being built, or where it was invoked.
 
+You may also override `CARGO_TARGET_DIR` variable by setting `rust.cargoTargetDir` in `local.properties`, however it seems very unlikely that this will be useful, as we don't pass this information to cargo itself. That said, it can be used to control where we search for the built library on a per-machine basis.
+
 ```groovy
 cargo {
-    // Note: path is relative to the gradle project root.
+    // Note: path is relative to the gradle project's `projectDir`
     targetDirectory = 'path/to/workspace/root/target'
 }
 ```
@@ -302,9 +304,9 @@ rust.targets.library=linux-x86-64
 rust.targets=arm,linux-x86-64,darwin
 ```
 
-## Specifying paths to sub-commands (Python and Cargo)
+## Specifying paths to sub-commands (Python, Cargo, and Rustc)
 
-The plugin invokes Python and Cargo.  In order of preference, the plugin determines what command to invoke for Python by:
+The plugin invokes Python, Cargo and Rustc.  In order of preference, the plugin determines what command to invoke for Python by:
 
 1. `rust.pythonCommand` in `${rootDir}/local.properties`
 1. the environment variable `RUST_ANDROID_GRADLE_PYTHON_COMMAND`
@@ -315,6 +317,14 @@ In order of preference, the plugin determines what command to invoke for Cargo b
 1. `rust.cargoCommand` in `${rootDir}/local.properties`
 1. the environment variable `RUST_ANDROID_GRADLE_CARGO_COMMAND`
 1. the default, `cargo`
+
+In order of preference, the plugin determines what command to invoke for `rustc` by:
+
+1. `rust.rustcCommand` in `${rootDir}/local.properties`
+1. the environment variable `RUST_ANDROID_GRADLE_RUSTC_COMMAND`
+1. the default, `rustc`
+
+(Note that failure to locate `rustc` is not fatal, however it may result in rebuilding the code more often than is necessary).
 
 Paths must be host operating system specific.  For example, on Windows:
 
