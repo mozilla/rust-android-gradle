@@ -10,20 +10,6 @@ Cross compile Rust Cargo projects for Android targets.
 
 # Usage
 
-To begin you must first install the rust toolchains for your target platforms.
-
-```
-rustup target add armv7-linux-androideabi   # for arm
-rustup target add i686-linux-android        # for x86
-rustup target add aarch64-linux-android     # for arm64
-rustup target add x86_64-linux-android      # for x86_64
-rustup target add x86_64-unknown-linux-gnu  # for linux-x86-64
-rustup target add x86_64-apple-darwin       # for macOS (darwin)
-rustup target add x86_64-pc-windows-gnu     # for win32-x86-64-gnu
-rustup target add x86_64-pc-windows-msvc    # for win32-x86-64-msvc
-...
-```
-
 Add the plugin to your root `build.gradle`, like:
 
 ```groovy
@@ -39,21 +25,41 @@ buildscript {
 }
 ```
 
-Next add the `cargo` configuration to android project. Point to your cargo project using `module`
-and add targets.  Currently supported targets are `arm`, `arm64`, `x86`, `x86_64`, and
-`linux-x86-64`, `darwin`, `win32-x86-64-gnu`, and `win32-x86-64-msvc`.
+In your *project's* build.gradle, `apply plugin` and add the `cargo` configuration:
 
-```
+```groovy
+android { ... }
+
+apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
+
 cargo {
-    module = "../rust"
-    targets = ["arm", "x86"]
+    module  = "../rust"       // Or whatever directory contains your Cargo.toml
+    libname = "rust"          // Or whatever matches Cargo.toml's [package] name.
+    targets = ["arm", "x86"]  // See bellow for a longer list of options
 }
 ```
 
-Run the `cargoBuild` task to cross compile
+Install the rust toolchains for your target platforms:
 
+```sh
+rustup target add armv7-linux-androideabi   # for arm
+rustup target add i686-linux-android        # for x86
+rustup target add aarch64-linux-android     # for arm64
+rustup target add x86_64-linux-android      # for x86_64
+rustup target add x86_64-unknown-linux-gnu  # for linux-x86-64
+rustup target add x86_64-apple-darwin       # for darwin (macOS)
+rustup target add x86_64-pc-windows-gnu     # for win32-x86-64-gnu
+rustup target add x86_64-pc-windows-msvc    # for win32-x86-64-msvc
+...
 ```
+
+Finally, run the `cargoBuild` task to cross compile:
+```sh
 ./gradlew cargoBuild
+```
+Or add it as a dependency to one of your other build tasks, to build your rust code when you normally build your project:
+```gradle
+preBuild.dependsOn "cargoBuild"
 ```
 
 ## Configuration
