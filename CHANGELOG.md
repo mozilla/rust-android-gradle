@@ -1,3 +1,10 @@
+# 0.8.2
+
+- Avoid passing `--target` to cargo for the default target.
+- The `exec` callback is now invoked as late as possible.
+- The `CARGO_TARGET_DIR` environment variable should now be respected, if it is set.
+- Various parts of the plugin's documentation have been improved.
+
 # 0.8.1
 
 - Added `extraCargoBuildArguments`.
