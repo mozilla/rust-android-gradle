@@ -184,11 +184,11 @@ open class RustAndroidPlugin : Plugin<Project> {
         val ndkVersionMajor = ndkVersion.split(".").first().toInt()
 
         // Determine whether to use prebuilt or generated toolchains
-        val usePrebuilt = if (cargoExtension.prebuiltToolchains == null) {
-            ndkVersionMajor >= 19
-        } else {
-            cargoExtension.prebuiltToolchains!!
-        }
+        val usePrebuilt =
+            cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
+            cargoExtension.prebuiltToolchains ?:
+            (ndkVersionMajor >= 19);
+
         if (usePrebuilt && ndkVersionMajor < 19) {
             throw GradleException("usePrebuilt = true requires NDK version 19+")
         }
