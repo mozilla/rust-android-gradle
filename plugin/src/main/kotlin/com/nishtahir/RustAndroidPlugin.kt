@@ -68,10 +68,10 @@ val toolchains = listOf(
                 "android/x86_64"),
         Toolchain("arm",
                 ToolchainType.ANDROID_PREBUILT,
-                "armv7-linux-androideabi",
-                "armv7a-linux-androideabi",
-                "arm-linux-androideabi",
-                "android/armeabi-v7a"),
+                "armv7-linux-androideabi",  // This is correct.  "Note: For 32-bit ARM, the compiler is prefixed with
+                "armv7a-linux-androideabi", // armv7a-linux-androideabi, but the binutils tools are prefixed with
+                "arm-linux-androideabi",    // arm-linux-androideabi. For other architectures, the prefixes are the same
+                "android/armeabi-v7a"),     // for all tools."  (Ref: https://developer.android.com/ndk/guides/other_build_systems#overview )
         Toolchain("arm64",
                 ToolchainType.ANDROID_PREBUILT,
                 "aarch64-linux-android",
