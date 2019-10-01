@@ -48,8 +48,8 @@ compileTestKotlin {
 }
 
 pluginBundle {
-    website = 'https://github.com/ncalexan/rust-android-gradle'
-    vcsUrl = 'https://github.com/ncalexan/rust-android-gradle.git'
+    website = 'https://github.com/mozilla/rust-android-gradle'
+    vcsUrl = 'https://github.com/mozilla/rust-android-gradle.git'
 
     plugins {
         rustAndroidPlugin {

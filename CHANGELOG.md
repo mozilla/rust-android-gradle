@@ -1,3 +1,7 @@
+# 0.8.3
+
+- Plugin now supports using prebuilt NDK toolchains.
+
 # 0.8.2
 
 - Avoid passing `--target` to cargo for the default target.
