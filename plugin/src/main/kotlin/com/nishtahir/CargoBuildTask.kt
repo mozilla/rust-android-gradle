@@ -158,7 +158,6 @@ open class CargoBuildTask : DefaultTask() {
                     } else {
                         cargoExtension.toolchainDirectory
                     }
-
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
                     val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
@@ -182,6 +181,20 @@ open class CargoBuildTask : DefaultTask() {
                     // https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
                     environment("CC_${toolchain.target}", cc)
                     environment("AR_${toolchain.target}", ar)
+
+                    // Set CLANG_PATH in the environment, so that bindgen (or anything
+                    // else using clang-sys in a build.rs) works properly, and doesn't
+                    // use host headers and such.
+                    val shouldConfigure = cargoExtension.getFlagProperty(
+                        "rust.autoConfigureClangSys",
+                        "RUST_ANDROID_GRADLE_AUTO_CONFIGURE_CLANG_SYS",
+                        // By default, only do this for non-desktop platforms. If we're
+                        // building for desktop, things should work out of the box.
+                        toolchain.type != ToolchainType.DESKTOP
+                    )
+                    if (shouldConfigure) {
+                        environment("CLANG_PATH", cc)
+                    }
 
                     // Configure our linker wrapper.
                     environment("RUST_ANDROID_GRADLE_PYTHON_COMMAND", cargoExtension.pythonCommand)

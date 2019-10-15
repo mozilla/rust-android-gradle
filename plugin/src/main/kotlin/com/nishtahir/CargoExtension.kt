@@ -1,6 +1,7 @@
 package com.nishtahir
 
 import org.gradle.api.Action
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.process.ExecSpec
 import java.io.File
@@ -89,6 +90,20 @@ open class CargoExtension {
         get() {
             return getProperty("rust.rustcCommand", "RUST_ANDROID_GRADLE_RUSTC_COMMAND") ?: "rustc"
         }
+
+    fun getFlagProperty(camelCaseName: String, snakeCaseName: String, ifUnset: Boolean): Boolean {
+        val propVal = getProperty(camelCaseName, snakeCaseName)
+        if (propVal == "1" || propVal == "true") {
+            return true
+        }
+        if (propVal == "0" || propVal == "false") {
+            return false
+        }
+        if (propVal == null || propVal == "") {
+            return ifUnset
+        }
+        throw GradleException("Illegal value for property \"$camelCaseName\" / \"$snakeCaseName\". Must be 0/1/true/false if set")
+    }
 
     internal fun getProperty(camelCaseName: String, snakeCaseName: String): String? {
         val local: String? = localProperties.getProperty(camelCaseName)
