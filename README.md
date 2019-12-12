@@ -375,6 +375,12 @@ In order of preference, the plugin determines what command to invoke for `rustc`
 
 (Note that failure to locate `rustc` is not fatal, however it may result in rebuilding the code more often than is necessary).
 
+In order of preference, the plugin determines what toolchain to invoke for `rustup` by:
+
+1. `rust.rustupToolchain` in `${rootDir}/local.properties`
+1. the environment variable `RUST_TOOLCHAIN_VERSION`
+1. the default, `stable`
+
 Paths must be host operating system specific.  For example, on Windows:
 
 ```properties

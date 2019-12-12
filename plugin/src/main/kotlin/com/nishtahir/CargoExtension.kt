@@ -76,6 +76,10 @@ open class CargoExtension {
         get() {
             return getProperty("rust.cargoCommand", "RUST_ANDROID_GRADLE_CARGO_COMMAND") ?: "cargo"
         }
+    val rustupToolchain: String
+        get() {
+            return getProperty("rust.rustupToolchain", "RUST_TOOLCHAIN_VERSION") ?: ""
+        }
 
     val pythonCommand: String
         get() {

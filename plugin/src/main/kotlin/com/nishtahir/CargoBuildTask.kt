@@ -78,7 +78,12 @@ open class CargoBuildTask : DefaultTask() {
                 standardOutput = System.out
                 workingDir = File(project.project.projectDir, cargoExtension.module!!)
 
-                val theCommandLine = mutableListOf(cargoExtension.cargoCommand, "build");
+                val theCommandLine = mutableListOf(cargoExtension.cargoCommand)
+
+                if (cargoExtension.rustupToolchain != "")
+                    theCommandLine.add(cargoExtension.rustupToolchain)
+
+                theCommandLine.add("build")                 
 
                 // Respect `verbose` if it is set; otherwise, log if asked to
                 // with `--info` or `--debug` from the command line.
