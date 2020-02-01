@@ -162,6 +162,7 @@ open class CargoBuildTask : DefaultTask() {
                     // Be aware that RUSTFLAGS can have problems with embedded
                     // spaces, but that shouldn't be a problem here.
                     val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
+                    val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path;
                     val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
 
                     // For cargo: like "CARGO_TARGET_I686_LINUX_ANDROID_CC".  This is really weakly
@@ -181,6 +182,7 @@ open class CargoBuildTask : DefaultTask() {
                     // For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
                     // https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
                     environment("CC_${toolchain.target}", cc)
+                    environment("CXX_${toolchain.target}", cxx)
                     environment("AR_${toolchain.target}", ar)
 
                     // Configure our linker wrapper.
@@ -233,4 +235,3 @@ fun getDefaultTargetTriple(project: Project, rustc: String): String? {
     }
     return triple
 }
-
