@@ -113,6 +113,21 @@ data class Toolchain(val platform: String,
                 }
             }
 
+    fun cxx(apiLevel: Int): File =
+            if (System.getProperty("os.name").startsWith("Windows")) {
+                if (type == ToolchainType.ANDROID_PREBUILT) {
+                    File("bin", "$compilerTriple$apiLevel-clang++.cmd")
+                } else {
+                    File("$platform-$apiLevel/bin", "$compilerTriple-clang++.cmd")
+                }
+            } else {
+                if (type == ToolchainType.ANDROID_PREBUILT) {
+                    File("bin", "$compilerTriple$apiLevel-clang++")
+                } else {
+                    File("$platform-$apiLevel/bin", "$compilerTriple-clang++")
+                }
+            }
+
     fun ar(apiLevel: Int): File =
             if (type == ToolchainType.ANDROID_PREBUILT) {
                 File("bin", "$binutilsTriple-ar")
