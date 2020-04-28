@@ -59,7 +59,11 @@ Finally, run the `cargoBuild` task to cross compile:
 ```
 Or add it as a dependency to one of your other build tasks, to build your rust code when you normally build your project:
 ```gradle
-preBuild.dependsOn "cargoBuild"
+tasks.whenTaskAdded { task ->
+    if ((task.name == 'javaPreCompileDebug' || task.name == 'javaPreCompileRelease')) {
+        task.dependsOn 'cargoBuild'
+    }
+}
 ```
 
 ## Configuration
