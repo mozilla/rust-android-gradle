@@ -58,12 +58,9 @@ open class CargoBuildTask : DefaultTask() {
                 if (targetIncludes != null) {
                     spec.include(targetIncludes.asIterable())
                 } else {
-                    // It's safe to unwrap, since we bailed at configuration time if this is unset.
-                    val libname = libname!!
-                    spec.include("lib${libname}.so")
-                    spec.include("lib${libname}.dylib")
-                    spec.include("${libname}.dll")
+                    spec.include(libname!!)
                 }
+                rename { filename -> "lib$filename.so" }
             }
         }
     }
