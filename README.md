@@ -377,8 +377,8 @@ In order of preference, the plugin determines what command to invoke for `rustc`
 
 In order of preference, the plugin determines what toolchain to invoke for `rustup` by:
 
-1. `rust.rustupToolchain` in `${rootDir}/local.properties`
-1. the environment variable `RUST_TOOLCHAIN_VERSION`
+1. `rust.toolchainVersion` in `${rootDir}/local.properties`
+1. the environment variable `RUST_ANDROID_GRADLE_TOOLCHAIN_VERSION`
 1. the default, `stable`
 
 Paths must be host operating system specific.  For example, on Windows:

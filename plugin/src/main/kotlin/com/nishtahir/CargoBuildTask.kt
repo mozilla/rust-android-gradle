@@ -80,8 +80,12 @@ open class CargoBuildTask : DefaultTask() {
 
                 val theCommandLine = mutableListOf(cargoExtension.cargoCommand)
 
-                if (cargoExtension.rustupToolchain != "")
-                    theCommandLine.add(cargoExtension.rustupToolchain)
+                if (cargoExtension.toolchainVersion != "") {
+                    val maybePlusSign = cargoExtension.toolchainVersion[0]
+                    val plusSign = if (maybePlusSign == '+' ) "" else "+"
+        
+                    theCommandLine.add(plusSign + cargoExtension.toolchainVersion)
+                }
 
                 theCommandLine.add("build")                 
 
