@@ -288,6 +288,20 @@ cargo {
 }
 ```
 
+You may specify the API level per target in `targets` using the `apiLevels` option. At most one of
+`apiLevel` and `apiLevels` may be specified. `apiLevels` must have an entry for each target in
+`targets`.
+
+```groovy
+cargo {
+    targets = ["arm", "x86_64"]
+    apiLevels = [
+        "arm": 16,
+        "x86_64": 21,
+    ]
+}
+```
+
 ### extraCargoBuildArguments
 
 Sometimes, you need to do things that the plugin doesn't anticipate.  Use `extraCargoBuildArguments`
