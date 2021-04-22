@@ -42,6 +42,7 @@ open class CargoExtension {
     var targetDirectory: String? = null
     var targetIncludes: Array<String>? = null
     var apiLevel: Int? = null
+    var apiLevels: Map<String, Int> = mapOf()
     var extraCargoBuildArguments: List<String>? = null
 
     // It would be nice to use a receiver here, but there are problems interoperating with Groovy

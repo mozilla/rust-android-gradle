@@ -24,7 +24,6 @@ open class GenerateToolchainsTask : DefaultTask() {
     inline fun <reified T : BaseExtension> configureTask(project: Project) {
         val cargoExtension = project.extensions[CargoExtension::class]
         val app = project.extensions[T::class]
-        val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
         val ndkPath = app.ndkDirectory
 
         // It's safe to unwrap, since we bailed at configuration time if this is unset.
@@ -34,6 +33,9 @@ open class GenerateToolchainsTask : DefaultTask() {
                 .filter { it.type == ToolchainType.ANDROID_GENERATED }
                 .filter { (arch) -> targets.contains(arch) }
                 .forEach { (arch) ->
+                     // We ensure all architectures have an API level at configuration time
+                     val apiLevel = cargoExtension.apiLevels[arch]!!
+
                      if (arch.endsWith("64") && apiLevel < 21) {
                         throw GradleException("Can't target 64-bit ${arch} with API level < 21 (${apiLevel})")
                     }

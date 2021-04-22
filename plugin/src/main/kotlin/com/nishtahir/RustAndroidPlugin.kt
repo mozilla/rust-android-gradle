@@ -184,6 +184,26 @@ open class RustAndroidPlugin : Plugin<Project> {
             throw GradleException("targets cannot be null")
         }
 
+        // Ensure that an API level is specified for all targets
+        val apiLevel = cargoExtension.apiLevel
+        if (cargoExtension.apiLevels.size > 0) {
+            if (apiLevel != null) {
+                throw GradleException("Cannot set both `apiLevel` and `apiLevels`")
+            }
+        } else {
+            val default = if (apiLevel != null) {
+                apiLevel
+            } else {
+                extensions[T::class].defaultConfig.minSdkVersion.apiLevel
+            }
+            cargoExtension.apiLevels = cargoExtension.targets!!.map { it to default }.toMap()
+        }
+        val missingApiLevelTargets = cargoExtension.targets!!.toSet().minus(
+            cargoExtension.apiLevels.keys)
+        if (missingApiLevelTargets.size > 0) {
+            throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
+        }
+
         extensions[T::class].apply {
             sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/android"))
             sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
