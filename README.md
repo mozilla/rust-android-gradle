@@ -378,18 +378,21 @@ rust.targets=arm,linux-x86-64,darwin
 
 The plugin invokes Python, Cargo and Rustc.  In order of preference, the plugin determines what command to invoke for Python by:
 
+1. the value of `cargo { pythonCommand = "..." }`, if non-empty
 1. `rust.pythonCommand` in `${rootDir}/local.properties`
 1. the environment variable `RUST_ANDROID_GRADLE_PYTHON_COMMAND`
 1. the default, `python`
 
 In order of preference, the plugin determines what command to invoke for Cargo by:
 
+1. the value of `cargo { cargoCommand = "..." }`, if non-empty
 1. `rust.cargoCommand` in `${rootDir}/local.properties`
 1. the environment variable `RUST_ANDROID_GRADLE_CARGO_COMMAND`
 1. the default, `cargo`
 
 In order of preference, the plugin determines what command to invoke for `rustc` by:
 
+1. the value of `cargo { rustcCommand = "..." }`, if non-empty
 1. `rust.rustcCommand` in `${rootDir}/local.properties`
 1. the environment variable `RUST_ANDROID_GRADLE_RUSTC_COMMAND`
 1. the default, `rustc`

@@ -74,22 +74,34 @@ open class CargoExtension {
             return defaultDir.absoluteFile
         }
 
-    val cargoCommand: String
+    var cargoCommand: String = ""
         get() {
-            return getProperty("rust.cargoCommand", "RUST_ANDROID_GRADLE_CARGO_COMMAND") ?: "cargo"
+            return if (!field.isEmpty()) {
+                field
+            } else {
+                getProperty("rust.cargoCommand", "RUST_ANDROID_GRADLE_CARGO_COMMAND") ?: "cargo"
+            }
         }
 
-    val pythonCommand: String
+    var pythonCommand: String = ""
         get() {
-            return getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
+            return if (!field.isEmpty()) {
+                field
+            } else {
+                getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
+            }
         }
 
     // Required so that we can parse the default triple out of `rustc --version --verbose`. Sadly,
     // there seems to be no way to get this information out of cargo directly. Failure to locate
     // this isn't fatal, however.
-    val rustcCommand: String
+    var rustcCommand: String = ""
         get() {
-            return getProperty("rust.rustcCommand", "RUST_ANDROID_GRADLE_RUSTC_COMMAND") ?: "rustc"
+            return if (!field.isEmpty()) {
+                field
+            } else {
+                getProperty("rust.rustcCommand", "RUST_ANDROID_GRADLE_RUSTC_COMMAND") ?: "rustc"
+            }
         }
 
     fun getFlagProperty(camelCaseName: String, snakeCaseName: String, ifUnset: Boolean): Boolean {
