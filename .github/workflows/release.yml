@@ -35,15 +35,5 @@ jobs:
         echo "gradle.publish.secret=${GRADLE_PUBLISH_SECRET}" >> ~/.gradle/gradle.properties
 
     - name: Publish plugin
-      uses: burrunan/gradle-cache-action@v1
-      env:
-        GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
-        GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
-      with:
-        # If you have multiple jobs, use distinct job-id in in case you want to split caches
-        # For instance, jobs with different JDK versions can't share caches
-        # RUNNER_OS is added to job-id automatically
-        job-id: jdk8
-        # Specifies arguments for Gradle execution
-        # If arguments is missing or empty, then Gradle is not executed
-        arguments: publishPlugins
+      run: |
+        ./gradlew publishPlugins
