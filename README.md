@@ -251,7 +251,10 @@ Note that if `CARGO_TARGET_DIR` (see https://doc.rust-lang.org/cargo/reference/e
 is specified in the environment, it takes precedence over `targetDirectory`, as cargo will output
 all build artifacts to it, regardless of what is being built, or where it was invoked.
 
-You may also override `CARGO_TARGET_DIR` variable by setting `rust.cargoTargetDir` in `local.properties`, however it seems very unlikely that this will be useful, as we don't pass this information to cargo itself. That said, it can be used to control where we search for the built library on a per-machine basis.
+You may also override `CARGO_TARGET_DIR` variable by setting `rust.cargoTargetDir` in
+`local.properties`, however it seems very unlikely that this will be useful, as we don't pass this
+information to cargo itself. That said, it can be used to control where we search for the built
+library on a per-machine basis.
 
 ```groovy
 cargo {
@@ -424,6 +427,17 @@ samples/maven-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-android-grad
 ```
 
 # Publishing
+
+## Automatically via the release Github workflow
+
+You will need to be a collaborator.  First, push a preparatory commit updating version numbers and
+the changelog like [this
+one](https://github.com/mozilla/rust-android-gradle/commit/2a637d1797a5d0b5063b8d2f0a3d4a4938511154).
+Second, make a new Github Release with a name like `v0.8.4`.  The release Github workflow will build
+and publish the plugin, although it may take some days for it to be reflected on the Gradle plugin
+portal.
+
+## By hand
 
 You will need credentials to publish to the [Gradle plugin portal](https://plugins.gradle.org/) in
 the appropriate place for the [`plugin-publish`](https://plugins.gradle.org/docs/publish-plugin) to
