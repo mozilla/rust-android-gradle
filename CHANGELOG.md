@@ -1,3 +1,8 @@
+# 0.8.4
+
+- The plugin tries to interoperate with Rust bindgen out of the box by setting `CLANG_PATH`.
+- We no longer invoke `cargo` for the Gradle `clean` target.
+
 # 0.8.3
 
 - Plugin now supports using prebuilt NDK toolchains.
