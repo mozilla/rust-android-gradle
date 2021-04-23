@@ -1,5 +1,5 @@
 plugins {
-    id 'com.gradle.plugin-publish' version '0.9.10'
+    id 'com.gradle.plugin-publish' version '0.14.0'
 }
 
 apply plugin: "java-gradle-plugin"
@@ -11,6 +11,8 @@ gradlePlugin {
         simplePlugin {
             id = 'org.mozilla.rust-android-gradle'
             implementationClass = 'com.nishtahir.RustAndroidPlugin'
+            displayName = 'Plugin for building Rust with Cargo in Android projects'
+            description = 'A plugin that helps build Rust JNI libraries with Cargo for use in Android projects.'
         }
     }
 }
@@ -50,6 +52,7 @@ compileTestKotlin {
 pluginBundle {
     website = 'https://github.com/mozilla/rust-android-gradle'
     vcsUrl = 'https://github.com/mozilla/rust-android-gradle.git'
+    tags = ['rust', 'cargo', 'android']
 
     plugins {
         rustAndroidPlugin {
