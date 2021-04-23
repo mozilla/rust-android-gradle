@@ -41,7 +41,7 @@ cargo {
         "arm",
         "darwin",
     ]
-    libname = "librust"
+    libname = "rust"
 
     features {
         defaultAnd "foo", "bar"
