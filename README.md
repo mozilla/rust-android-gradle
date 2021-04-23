@@ -231,9 +231,9 @@ To pass `--no-default-features`, and an optional list of replacement `--features
 ```groovy
 cargo {
     features {
-        noDefaultFeatures()
-        noDefaultFeatures("x")
-        noDefaultFeatures "x", "y"
+        noDefaultBut()
+        noDefaultBut("x")
+        noDefaultBut "x", "y"
     }
 }
 ```
