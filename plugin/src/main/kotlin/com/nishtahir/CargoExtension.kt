@@ -83,6 +83,15 @@ open class CargoExtension {
             }
         }
 
+    var rustupChannel: String = ""
+        get() {
+            return if (!field.isEmpty()) {
+                field
+            } else {
+                getProperty("rust.rustupChannel", "RUST_ANDROID_GRADLE_RUSTUP_CHANNEL") ?: ""
+            }
+        }
+
     var pythonCommand: String = ""
         get() {
             return if (!field.isEmpty()) {

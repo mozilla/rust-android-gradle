@@ -410,6 +410,31 @@ On Linux,
 env RUST_ANDROID_GRADLE_CARGO_COMMAND=$HOME/.cargo/bin/cargo ./gradlew ...
 ```
 
+## Specifying Rust channel
+
+Rust is released to three different "channels": stable, beta, and nightly (see
+https://rust-lang.github.io/rustup/concepts/channels.html).  The `rustup` tool, which is how most
+people install Rust, allows multiple channels to be installed simultaneously and to specify which
+channel to use by invoking `cargo +channel ...`.
+
+In order of preference, the plugin determines what channel to invoke `cargo` with by:
+
+1. the value of `cargo { rustupChannel = "..." }`, if non-empty
+1. `rust.rustupChannel` in `${rootDir}/local.properties`
+1. the environment variable `RUST_ANDROID_GRADLE_RUSTUP_CHANNEL`
+1. the default, no channel specified (which `cargo` installed via `rustup` generally defaults to the
+   `stable` channel)
+
+The channel should be recognized by `cargo` installed via `rustup`, i.e.:
+- `"stable"`
+- `"beta"`
+- `"nightly"`
+
+A single leading `'+'` will be stripped, if present.
+
+(Note that Cargo installed by a method other than `rustup` will generally not understand `+channel`
+and builds will likely fail.)
+
 ## Passing arguments to cargo
 
 The plugin passes project properties named like `RUST_ANDROID_GRADLE_target_..._KEY=VALUE` through
