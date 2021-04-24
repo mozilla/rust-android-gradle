@@ -1,3 +1,8 @@
+# 0.8.5
+
+- Allow to use `+nightly`, etc, with `cargo { rustupChannel = "..." }`. Fixes #24.
+- Allow to set `cargo { (cargo|python|rustc)Command = "..." }`. Fixes #48.
+
 # 0.8.4
 
 - The plugin tries to interoperate with Rust bindgen out of the box by setting `CLANG_PATH`.
