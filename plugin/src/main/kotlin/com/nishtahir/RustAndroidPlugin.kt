@@ -194,7 +194,7 @@ open class RustAndroidPlugin : Plugin<Project> {
             val default = if (apiLevel != null) {
                 apiLevel
             } else {
-                extensions[T::class].defaultConfig.minSdkVersion.apiLevel
+                extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
             }
             cargoExtension.apiLevels = cargoExtension.targets!!.map { it to default }.toMap()
         }

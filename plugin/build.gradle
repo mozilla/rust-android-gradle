@@ -38,8 +38,8 @@ publishing {
 
 dependencies {
     compileOnly gradleApi()
-    implementation "com.android.tools.build:gradle:3.1.2"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+    implementation "com.android.tools.build:gradle:$agp_version"
+    // implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
 
 compileKotlin {
