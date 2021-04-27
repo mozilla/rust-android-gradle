@@ -6,6 +6,17 @@ apply plugin: "java-gradle-plugin"
 apply plugin: "maven-publish"
 apply plugin: "kotlin"
 
+gradlePlugin {
+    plugins {
+        simplePlugin {
+            id = 'org.mozilla.rust-android-gradle'
+            implementationClass = 'com.nishtahir.RustAndroidPlugin'
+            displayName = 'Plugin for building Rust with Cargo in Android projects'
+            description = 'A plugin that helps build Rust JNI libraries with Cargo for use in Android projects.'
+        }
+    }
+}
+
 group 'org.mozilla.rust-android-gradle'
 version "$plugin_version"
 
