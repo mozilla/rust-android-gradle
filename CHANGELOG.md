@@ -1,3 +1,7 @@
+# 0.8.6
+
+- Revert a change that prevented publishing.
+
 # 0.8.5
 
 - Allow to use `+nightly`, etc, with `cargo { rustupChannel = "..." }`. Fixes #24.
