@@ -70,7 +70,7 @@ open class CargoBuildTask : DefaultTask() {
 
     inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoExtension: CargoExtension) {
         val app = project.extensions[T::class]
-        val apiLevel = cargoExtension.apiLevel ?: app.defaultConfig.minSdkVersion.apiLevel
+        val apiLevel = cargoExtension.apiLevels[toolchain.platform]!!
         val defaultTargetTriple = getDefaultTargetTriple(project, cargoExtension.rustcCommand)
 
         project.exec { spec ->
