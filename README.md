@@ -120,11 +120,12 @@ to `debug`!*
 
 ### module
 
-The path to the Rust library to build with Cargo; required.  `module` is interpreted as a relative
-path to the Gradle `projectDir`.
+The path to the Rust library to build with Cargo; required.  `module` can be absolute; if it is not,
+it is interpreted as a path relative to the Gradle `projectDir`.
 
 ```groovy
 cargo {
+    // Note: path is either absolute, or relative to the gradle project's `projectDir`.
     module = '../rust'
 }
 ```
@@ -256,8 +257,8 @@ The target directory into which Cargo writes built outputs. You will likely need
 if you are using a [cargo virtual workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html),
 as our default will likely fail to locate the correct target directory.
 
-Defaults to `${module}/target`.  `targetDirectory` is interpreted as a relative path to the Gradle
-`projectDir`.
+Defaults to `${module}/target`.  `targetDirectory` can be absolute; if it is not, it is interpreted
+as a path relative to the Gradle `projectDir`.
 
 Note that if `CARGO_TARGET_DIR` (see https://doc.rust-lang.org/cargo/reference/environment-variables.html)
 is specified in the environment, it takes precedence over `targetDirectory`, as cargo will output
@@ -270,7 +271,7 @@ library on a per-machine basis.
 
 ```groovy
 cargo {
-    // Note: path is relative to the gradle project's `projectDir`
+    // Note: path is either absolute, or relative to the gradle project's `projectDir`.
     targetDirectory = 'path/to/workspace/root/target'
 }
 ```

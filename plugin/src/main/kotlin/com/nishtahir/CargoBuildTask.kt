@@ -37,21 +37,29 @@ open class CargoBuildTask : DefaultTask() {
             // We also allow this to be specified in `local.properties`, not because this is
             // something you should ever need to do currently, but we don't want it to ruin anyone's
             // day if it turns out we're wrong about that.
-            val targetDirectory =
+            val target =
                 getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
                 ?: targetDirectory
                 ?: "${module!!}/target"
 
             val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
 
-            val cargoOutputDir = if (toolchain.target == defaultTargetTriple) {
-                "${targetDirectory}/${profile}"
+            var cargoOutputDir = File(if (toolchain.target == defaultTargetTriple) {
+                "${target}/${profile}"
             } else {
-                "${targetDirectory}/${toolchain.target}/${profile}"
+                "${target}/${toolchain.target}/${profile}"
+            })
+            if (!cargoOutputDir.isAbsolute) {
+                cargoOutputDir = File(project.project.projectDir, cargoOutputDir.path)
             }
+            cargoOutputDir = cargoOutputDir.canonicalFile
+
+            val intoDir = File(buildDir, "rustJniLibs/${toolchain.folder}")
+            intoDir.mkdirs()
+
             copy { spec ->
-                spec.from(File(project.projectDir, cargoOutputDir))
-                spec.into(File(buildDir, "rustJniLibs/${toolchain.folder}"))
+                spec.from(cargoOutputDir)
+                spec.into(intoDir)
 
                 // Need to capture the value to dereference smoothly.
                 val targetIncludes = targetIncludes
@@ -76,7 +84,13 @@ open class CargoBuildTask : DefaultTask() {
         project.exec { spec ->
             with(spec) {
                 standardOutput = System.out
-                workingDir = File(project.project.projectDir, cargoExtension.module!!)
+                val module = File(cargoExtension.module!!)
+                if (module.isAbsolute) {
+                    workingDir = module
+                } else {
+                    workingDir = File(project.project.projectDir, module.path)
+                }
+                workingDir = workingDir.canonicalFile
 
                 val theCommandLine = mutableListOf(cargoExtension.cargoCommand)
 
