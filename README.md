@@ -20,8 +20,20 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'gradle.plugin.org.mozilla.rust-android-gradle:plugin:0.8.6'
+        classpath 'org.mozilla.rust-android-gradle:plugin:0.8.6'
     }
+}
+```
+
+or 
+
+```groovy
+buildscript {
+    //...
+}
+
+plugins {
+    id "org.mozilla.rust-android-gradle.rust-android" version "0.8.6"
 }
 ```
 
