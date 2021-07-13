@@ -167,17 +167,6 @@ open class CargoBuildTask : DefaultTask() {
                     } else {
                         cargoExtension.toolchainDirectory
                     }
-                    // Be aware that RUSTFLAGS can have problems with embedded
-                    // spaces, but that shouldn't be a problem here.
-                    val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
-                    val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path;
-                    val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
-
-                    // For cargo: like "CARGO_TARGET_I686_LINUX_ANDROID_CC".  This is really weakly
-                    // documented; see https://github.com/rust-lang/cargo/issues/5690 and follow
-                    // links from there.
-                    environment("CARGO_TARGET_${toolchain_target}_CC", cc)
-                    environment("CARGO_TARGET_${toolchain_target}_AR", ar)
 
                     val linker_wrapper =
                     if (System.getProperty("os.name").startsWith("Windows")) {
@@ -186,6 +175,10 @@ open class CargoBuildTask : DefaultTask() {
                         File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.sh")
                     }
                     environment("CARGO_TARGET_${toolchain_target}_LINKER", linker_wrapper.path)
+
+                    val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
+                    val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path;
+                    val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
 
                     // For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
                     // https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
