@@ -1,3 +1,7 @@
+# 0.8.7
+
+- Use per-platform API level for selecting toolchain.
+
 # 0.8.6
 
 - Revert a change that prevented publishing.
