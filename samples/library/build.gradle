@@ -42,6 +42,10 @@ cargo {
         "darwin",
     ]
     libname = "rust"
+    buildTypeToProfile = [
+        "debug": "dev",
+        "release": "dev",
+    ]
 
     features {
         defaultAnd "foo", "bar"
@@ -68,13 +72,13 @@ dependencies {
 }
 
 afterEvaluate {
-    // The `cargoBuild` task isn't available until after evaluation.
+    // The `cargoBuild...` tasks aren't available until after evaluation.
     android.libraryVariants.all { variant ->
         def productFlavor = ""
         variant.productFlavors.each {
             productFlavor += "${it.name.capitalize()}"
         }
         def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild"])
+        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild${buildType}"])
     }
 }

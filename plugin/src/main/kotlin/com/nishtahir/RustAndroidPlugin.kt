@@ -172,6 +172,10 @@ open class RustAndroidPlugin : Plugin<Project> {
             throw GradleException("libname cannot be null")
         }
 
+        if (cargoExtension.buildTypeToProfile.isEmpty()) {
+            throw GradleException("buildTypeToProfile must have entries")
+        }
+
         // Allow to set targets, including per-project, in local.properties.
         val localTargets: String? =
                 cargoExtension.localProperties.getProperty("rust.targets.${project.name}") ?:
@@ -256,38 +260,41 @@ open class RustAndroidPlugin : Plugin<Project> {
             includeEmptyDirs = false
         }
 
-        val buildTask = tasks.maybeCreate("cargoBuild",
-                DefaultTask::class.java).apply {
-            group = RUST_TASK_GROUP
-            description = "Build library (all targets)"
-        }
-
-        cargoExtension.targets!!.forEach { target ->
-            val theToolchain = toolchains
-                    .filter {
-                        if (usePrebuilt) {
-                            it.type != ToolchainType.ANDROID_GENERATED
-                        } else {
-                            it.type != ToolchainType.ANDROID_PREBUILT
-                        }
-                    }
-                    .find { it.platform == target }
-            if (theToolchain == null) {
-                throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
-            }
-
-            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
-                    CargoBuildTask::class.java).apply {
+        cargoExtension.buildTypeToProfile.forEach { buildType, theProfile ->
+            val buildTask = tasks.maybeCreate("cargoBuild${buildType.capitalize()}",
+                    DefaultTask::class.java).apply {
                 group = RUST_TASK_GROUP
-                description = "Build library ($target)"
-                toolchain = theToolchain
+                description = "Build library (all targets) for android build type ${buildType}"
             }
 
-            if (!usePrebuilt) {
-                targetBuildTask.dependsOn(generateToolchain!!)
+            cargoExtension.targets!!.forEach { target ->
+                val theToolchain = toolchains
+                        .filter {
+                            if (usePrebuilt) {
+                                it.type != ToolchainType.ANDROID_GENERATED
+                            } else {
+                                it.type != ToolchainType.ANDROID_PREBUILT
+                            }
+                        }
+                        .find { it.platform == target }
+                if (theToolchain == null) {
+                    throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}). Check `local.properties` and `build.gradle`.")
+                }
+
+                val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}${buildType.capitalize()}",
+                        CargoBuildTask::class.java).apply {
+                    group = RUST_TASK_GROUP
+                    description = "Build library ($target) for android build type ${buildType}"
+                    toolchain = theToolchain
+                    profile = theProfile
+                }
+
+                if (!usePrebuilt) {
+                    targetBuildTask.dependsOn(generateToolchain!!)
+                }
+                targetBuildTask.dependsOn(generateLinkerWrapper)
+                buildTask.dependsOn(targetBuildTask)
             }
-            targetBuildTask.dependsOn(generateLinkerWrapper)
-            buildTask.dependsOn(targetBuildTask)
         }
     }
 }

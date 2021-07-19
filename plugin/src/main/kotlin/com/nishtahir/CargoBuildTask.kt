@@ -6,12 +6,16 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction
 import java.io.ByteArrayOutputStream
 import java.io.File
 
 open class CargoBuildTask : DefaultTask() {
+    @Input
     var toolchain: Toolchain? = null
+    @Input
+    var profile: String? = null
 
 
     @Suppress("unused")
@@ -24,10 +28,15 @@ open class CargoBuildTask : DefaultTask() {
                 throw GradleException("toolchain cannot be null")
             }
 
+            var profile = profile
+            if (profile == null) {
+                throw GradleException("profile cannot be null")
+            }
+
             project.plugins.all {
                 when (it) {
-                    is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, this)
-                    is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, this)
+                    is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, profile, this)
+                    is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, profile, this)
                 }
             }
             // CARGO_TARGET_DIR can be used to force the use of a global, shared target directory
@@ -44,10 +53,18 @@ open class CargoBuildTask : DefaultTask() {
 
             val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
 
-            val cargoOutputDir = if (toolchain.target == defaultTargetTriple) {
-                "${targetDirectory}/${profile}"
+            // See https://rust-lang.github.io/rfcs/2678-named-custom-cargo-profiles.html#new-dir-name-attribute
+            // Right now "dev" maps to "debug", but depending on how RFC 2678 gets merged in the end, we may need to read a  property out of `cargo metadata`
+            var profileDirName = if (profile == "dev") {
+                "debug"
             } else {
-                "${targetDirectory}/${toolchain.target}/${profile}"
+                profile
+            }
+
+            val cargoOutputDir = if (toolchain.target == defaultTargetTriple) {
+                "${targetDirectory}/${profileDirName}"
+            } else {
+                "${targetDirectory}/${toolchain.target}/${profileDirName}"
             }
             copy { spec ->
                 spec.from(File(project.projectDir, cargoOutputDir))
@@ -68,7 +85,7 @@ open class CargoBuildTask : DefaultTask() {
         }
     }
 
-    inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoExtension: CargoExtension) {
+    inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, profile: String, cargoExtension: CargoExtension) {
         val app = project.extensions[T::class]
         val apiLevel = cargoExtension.apiLevels[toolchain.platform]!!
         val defaultTargetTriple = getDefaultTargetTriple(project, cargoExtension.rustcCommand)
@@ -120,12 +137,14 @@ open class CargoBuildTask : DefaultTask() {
                     }
                 }
 
-                if (cargoExtension.profile != "debug") {
-                    // Cargo is rigid: it accepts "--release" for release (and
-                    // nothing for dev).  This is a cheap way of allowing only
-                    // two values.
-                    theCommandLine.add("--${cargoExtension.profile}")
+                // TODO: When --profile is stabilized use it instead of --release
+                // https://github.com/rust-lang/cargo/issues/6988
+                if (profile == "release") {
+                    theCommandLine.add("--release")
+                } else if (profile != "dev") {
+                    throw GradleException("Profile may only be 'dev' or 'release', got '${profile}'")
                 }
+
                 if (toolchain.target != defaultTargetTriple) {
                     // Only providing --target for the non-default targets means desktop builds
                     // can share the build cache with `cargo build`/`cargo test`/etc invocations,
