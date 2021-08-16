@@ -1,3 +1,11 @@
+# 0.9.0
+
+- Support multiple Android Gradle Plugin versions.  Everything here is
+  based on https://github.com/gradle/android-cache-fix-gradle-plugin;
+  many thanks to that project for paving the way here.
+- Allow `module` and `targetDirectory` to be absolute paths.  This is
+  used in the test harness at the moment.
+
 # 0.8.7
 
 - Use per-platform API level for selecting toolchain.
