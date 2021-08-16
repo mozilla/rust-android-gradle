@@ -14,7 +14,7 @@ apply plugin: "kotlin"
 gradlePlugin {
     plugins {
         rustAndroidGradlePlugin {
-            id = 'org.mozilla.rust-android-gradle'
+            id = 'org.mozilla.rust-android-gradle.rust-android'
             implementationClass = 'com.nishtahir.RustAndroidPlugin'
             displayName = 'Plugin for building Rust with Cargo in Android projects'
             description = 'A plugin that helps build Rust JNI libraries with Cargo for use in Android projects.'
@@ -72,10 +72,6 @@ pluginBundle {
     website = 'https://github.com/mozilla/rust-android-gradle'
     vcsUrl = 'https://github.com/mozilla/rust-android-gradle.git'
     tags = ['rust', 'cargo', 'android']
-
-    mavenCoordinates {
-        groupId = "gradle.plugin.org.mozilla.rust-android-gradle"
-    }
 }
 
 
