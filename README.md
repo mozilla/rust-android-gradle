@@ -65,15 +65,17 @@ rustup target add x86_64-pc-windows-msvc    # for win32-x86-64-msvc
 ...
 ```
 
-Finally, run the `cargoBuild` task to cross compile:
+Finally, run a `cargoBuild${buildType}` task (see `buildTypeToProfile`) to cross compile:
 ```sh
-./gradlew cargoBuild
+./gradlew cargoBuildDebug
 ```
 Or add it as a dependency to one of your other build tasks, to build your rust code when you normally build your project:
 ```gradle
 tasks.whenTaskAdded { task ->
-    if ((task.name == 'javaPreCompileDebug' || task.name == 'javaPreCompileRelease')) {
-        task.dependsOn 'cargoBuild'
+    if (task.name == 'javaPreCompileDebug') {
+        task.dependsOn 'cargoBuildDebug'
+    } else if (task.name == 'javaPreCompileRelease') {
+        task.dependsOn 'cargoBuildRelease'
     }
 }
 ```
@@ -110,11 +112,6 @@ The [Android NDK](https://developer.android.com/ndk/guides/stable_apis) also fix
 which can be specified using the `apiLevel` option.  This option defaults to the minimum SDK API
 level.  As of API level 21, 64-bit builds are possible; and conversely, the `arm64` and `x86_64`
 targets require `apiLevel >= 21`.
-
-### Cargo release profile
-
-The `profile` option selects between the `--debug` and `--release` profiles in `cargo`.  *Defaults
-to `debug`!*
 
 ### Extension reference
 
@@ -202,17 +199,23 @@ cargo {
 }
 ```
 
-### profile
+### buildTypeToProfile
 
-The Cargo [release profile](https://doc.rust-lang.org/book/second-edition/ch14-01-release-profiles.html#customizing-builds-with-release-profiles) to build.
-
-Defaults to `"debug"`.
+This mandatory option specifies the Cargo [release profile](https://doc.rust-lang.org/book/second-edition/ch14-01-release-profiles.html#customizing-builds-with-release-profiles) to build per [Android build type](https://developer.android.com/studio/build/build-variants#build-types).
+Each entry in the map causes a new `cargoBuild${buildType}` task to be created.
 
 ```groovy
 cargo {
-    profile = 'release'
+    buildTypeToProfile = [
+        "debug": "debug",
+        "alpha": "debug",
+        "beta": "release",
+        "release": "release",
+    ]
 }
 ```
+
+The above example creates these targets: `cargoBuildDebug`, `cargoBuildAlpha`, `cargoBuildBeta`, `cargoBuildRelease`.
 
 ### features
 

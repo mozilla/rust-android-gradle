@@ -37,6 +37,10 @@ cargo {
     module = "../rust"
     targets = ["arm", "x86", "x86_64", "arm64"]
     libname = "rust"
+    buildTypeToProfile = [
+        "debug": "dev",
+        "release": "dev",
+    ]
 }
 
 repositories {
@@ -54,13 +58,13 @@ dependencies {
 }
 
 afterEvaluate {
-    // The `cargoBuild` task isn't available until after evaluation.
+    // The `cargoBuild...` tasks aren't available until after evaluation.
     android.applicationVariants.all { variant ->
         def productFlavor = ""
         variant.productFlavors.each {
             productFlavor += "${it.name.capitalize()}"
         }
         def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild"])
+        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild${buildType}"])
     }
 }
