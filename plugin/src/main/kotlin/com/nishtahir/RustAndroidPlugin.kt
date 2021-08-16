@@ -5,6 +5,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.file.DuplicatesStrategy
 import java.io.File
 import java.util.Properties
 
@@ -254,6 +255,7 @@ open class RustAndroidPlugin : Plugin<Project> {
             }
             fileMode = 493 // 0755 in decimal; Kotlin doesn't have octal literals (!).
             includeEmptyDirs = false
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
 
         val buildTask = tasks.maybeCreate("cargoBuild",

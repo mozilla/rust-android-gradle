@@ -1,0 +1,80 @@
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master, citest ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  generate_versions:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v1
+
+    - name: Gradle test
+      run: |
+        ./gradlew -p plugin generateTestTasksJson
+
+    - id: setup-matrix
+      run: echo "::set-output name=matrix::$(cat plugin/build/build-resources/androidTestTasks.json)"
+
+    - name: debug
+      run: echo ${{ steps.setup-matrix.outputs.matrix }}
+
+    outputs:
+      matrix: ${{ steps.setup-matrix.outputs.matrix }}
+
+  android_version_tests:
+    needs: [generate_versions] # , sanity_check]
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        androidTestTask: ${{ fromJson(needs.generate_versions.outputs.matrix) }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v1
+
+    # # Sets up the NDK required by AGP 3.6.x
+    # - name: Setup NDK
+    #   run: sudo $ANDROID_HOME/tools/bin/sdkmanager 'ndk;20.0.5594570'
+
+    # - name: Install Rustup
+    #   run: |
+    #     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none
+    #     echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Setup Rust
+      run: |
+        rustup toolchain install stable
+        rustup target add x86_64-linux-android
+        rustup target add x86_64-unknown-linux-gnu
+
+    # Use Java 8
+    - name: Setup Java 8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 8
+
+    - name: Gradle setup
+      run: |
+        ./gradlew -p plugin tasks --warning-mode all
+
+    - name: Gradle test
+      run: |
+        ./gradlew -p plugin ${{ matrix.androidTestTask }} --tests CargoBuildTest --info --warning-mode all
+
+    # # Gradle build
+    # - uses: eskatos/gradle-command-action@v1
+    #   with:
+    #     arguments: ${{ matrix.androidTestTask }} -I gradle/buildScanInit.gradle

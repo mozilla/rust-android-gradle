@@ -31,7 +31,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    ndkVersion "20.1.5948944"
+    ndkVersion "22.1.7171670"
     sourceSets {
         test.resources.srcDirs += "$buildDir/rustJniLibs/desktop"
     }
@@ -39,7 +39,7 @@ android {
 
 cargo {
     module = "../rust"
-    targets = ["x86_64", "darwin"] // "x86", "x86_64", "arm64"]
+    targets = ["x86_64", "linux-x86-64"] // "x86", "x86_64", "arm64"]
     libname = "rust"
 }
 

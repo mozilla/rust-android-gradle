@@ -1,14 +1,19 @@
+import groovy.json.JsonBuilder
+import org.gradle.util.VersionNumber
+
 plugins {
     id 'com.gradle.plugin-publish' version '0.14.0'
+    id "org.gradle.test-retry" version "1.2.0"
 }
 
 apply plugin: "java-gradle-plugin"
 apply plugin: "maven-publish"
+apply plugin: "groovy"
 apply plugin: "kotlin"
 
 gradlePlugin {
     plugins {
-        simplePlugin {
+        rustAndroidGradlePlugin {
             id = 'org.mozilla.rust-android-gradle'
             implementationClass = 'com.nishtahir.RustAndroidPlugin'
             displayName = 'Plugin for building Rust with Cargo in Android projects'
@@ -20,26 +25,40 @@ gradlePlugin {
 group 'org.mozilla.rust-android-gradle'
 version "$plugin_version"
 
+def isCI = (System.getenv('CI') ?: 'false').toBoolean()
+
+// Maps supported Android plugin versions to the versions of Gradle that support it
+def supportedVersions = [
+    "7.0.0": ["7.1.1"],
+    "4.2.2": ["6.8.3", "7.1.1"],
+    "4.1.3": ["6.5.1", "6.8.3"],
+    "4.0.2": ["6.1.1", "6.8.3"],
+    "3.6.4": ["5.6.4", "6.8.3"],
+    "3.5.4": ["5.4.1", "5.6.4", "6.8.3"],
+    "3.1.2": ["4.10.2"]
+]
+
+// A local repo we publish our library to for testing in order to workaround limitations
+// in the TestKit plugin classpath.
+def localRepo = file("$buildDir/local-repo")
 publishing {
     repositories {
         maven {
-            url "../samples/maven-repo"
-        }
-    }
-    publications {
-        maven(MavenPublication) {
-            groupId 'org.mozilla.rust-android-gradle'
-            artifactId 'rust-android'
-
-            from components.java
+            url = localRepo.toURI()
         }
     }
 }
 
 dependencies {
-    compileOnly gradleApi()
-    implementation "com.android.tools.build:gradle:$agp_version"
-    // implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation gradleApi()
+    compileOnly "com.android.tools.build:gradle:${agp_version}"
+
+    testImplementation gradleTestKit()
+    testImplementation "com.android.tools.build:gradle:${agp_version}"
+    testImplementation platform("org.spockframework:spock-bom:2.0-M5-groovy-3.0")
+    testImplementation("org.spockframework:spock-core") { exclude group: 'org.codehaus.groovy' }
+    testImplementation("org.spockframework:spock-junit4") { exclude group: 'org.codehaus.groovy' }
+    testImplementation "org.junit.jupiter:junit-jupiter-api"
 }
 
 compileKotlin {
@@ -54,12 +73,90 @@ pluginBundle {
     vcsUrl = 'https://github.com/mozilla/rust-android-gradle.git'
     tags = ['rust', 'cargo', 'android']
 
-    plugins {
-        rustAndroidPlugin {
-            id = 'org.mozilla.rust-android-gradle.rust-android'
-            displayName = 'Plugin for building Rust with Cargo in Android projects'
-            description = 'A plugin that helps build Rust JNI libraries with Cargo for use in Android projects.'
-            tags = ['rust', 'cargo', 'android']
-        }
+    mavenCoordinates {
+        groupId = "gradle.plugin.org.mozilla.rust-android-gradle"
     }
+}
+
+
+// Generate a json file that contains the matrix of Gradle and AGP versions to test against.
+def generatedResources = "$buildDir/generated-resources/main"
+tasks.register('generateVersions') {
+    def outputFile = file("$generatedResources/versions.json")
+    inputs.property "version", version
+    inputs.property "supportedVersions", supportedVersions
+    outputs.dir generatedResources
+    doLast {
+        outputFile.text = new JsonBuilder([
+            version: version,
+            supportedVersions: supportedVersions
+        ]).toPrettyString()
+    }
+}
+
+sourceSets {
+    main {
+        output.dir(generatedResources, builtBy: tasks.named('generateVersions'))
+    }
+}
+
+// This is used by github actions to split out jobs by Android version test task
+def generatedBuildResources = "$buildDir/build-resources"
+tasks.register('generateTestTasksJson') {
+    def outputFile = file("${generatedBuildResources}/androidTestTasks.json")
+    inputs.property "supportedVersions", supportedVersions
+    outputs.dir generatedBuildResources
+    doLast {
+        outputFile.text = new JsonBuilder(
+            // Fails in CI with issues invoking Java 11.  The single test that
+            // requires Java 11 succeeds.  To be investigated in the future.
+            // ['test'] +
+            (supportedVersions.keySet().collect {androidVersion -> androidTestTaskName(androidVersion) })
+        ).toString()
+    }
+}
+
+// Configuration common to all test tasks
+tasks.withType(Test).configureEach {
+    dependsOn publish
+    systemProperty "local.repo", localRepo.toURI()
+    useJUnitPlatform()
+    retry {
+        maxRetries = isCI ? 1 : 0
+        maxFailures = 20
+    }
+}
+
+// Generate a test task for each Android version and run the tests annotated with the MultiVersionTest category
+supportedVersions.keySet().each { androidVersion ->
+    def testTaskName = androidTestTaskName(androidVersion)
+    def jdkVersion = jdkVersionFor(androidVersion)
+    def versionSpecificTest = tasks.register(testTaskName, Test) {
+        description = "Runs the multi-version tests for AGP ${androidVersion}"
+        group = "verification"
+
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = jdkVersion
+        }
+
+        systemProperty 'org.gradle.android.testVersion', androidVersion
+    }
+
+    tasks.named('check').configure {
+        dependsOn versionSpecificTest
+    }
+}
+
+static def androidTestTaskName(String androidVersion) {
+    return "testAndroid${normalizeVersion(androidVersion)}"
+}
+
+static def normalizeVersion(String version) {
+    return version.replaceAll('[.\\-]', '_')
+}
+
+static def jdkVersionFor(String version) {
+    def jdkVersion = VersionNumber.parse(version) > VersionNumber.parse("7.0.0-alpha01") ? 11 : 8
+    
+    return JavaLanguageVersion.of(jdkVersion)
 }
