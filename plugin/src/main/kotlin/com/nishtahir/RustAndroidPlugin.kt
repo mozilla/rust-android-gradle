@@ -291,5 +291,11 @@ open class RustAndroidPlugin : Plugin<Project> {
             targetBuildTask.dependsOn(generateLinkerWrapper)
             buildTask.dependsOn(targetBuildTask)
         }
+
+        val cleanTask = tasks.maybeCreate("cargoClean",
+                CargoCleanTask::class.java).apply {
+            group = RUST_TASK_GROUP
+            description = "Deletes the target directory."
+        }
     }
 }
