@@ -59,6 +59,7 @@ jobs:
         rustup toolchain install stable
         rustup target add x86_64-linux-android
         rustup target add x86_64-unknown-linux-gnu
+        rustup target add aarch64-linux-android
 
     # Use Java 8
     - name: Setup Java 8
