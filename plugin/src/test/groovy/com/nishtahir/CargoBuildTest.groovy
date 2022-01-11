@@ -20,26 +20,10 @@ class CargoBuildTest extends AbstractTest {
                 .build()
                 .writeProject()
 
-        def cargoModule = this.class.classLoader.getResource("rust/Cargo.toml").path
-        cargoModule = new File(cargoModule).parent
-
-        file('app/build.gradle') << """
-            cargo {
-                module = "${cargoModule}"
-                targetDirectory = "${cargoModule}/../target"
-                targets = ["x86_64"]
-                libname = "rust"
-            }
-        """.stripIndent()
-
-        file('library/build.gradle') << """
-            cargo {
-                module = "${cargoModule}"
-                targetDirectory = "${cargoModule}/../target"
-                targets = ["x86_64"]
-                libname = "rust"
-            }
-        """.stripIndent()
+        SimpleCargoProject.builder(temporaryFolder.root)
+            .withTargets(["x86_64"])
+            .build()
+            .writeProject()
 
         when:
         BuildResult buildResult = withGradleVersion(gradleVersion.version)
