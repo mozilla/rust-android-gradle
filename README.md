@@ -59,7 +59,8 @@ rustup target add i686-linux-android        # for x86
 rustup target add aarch64-linux-android     # for arm64
 rustup target add x86_64-linux-android      # for x86_64
 rustup target add x86_64-unknown-linux-gnu  # for linux-x86-64
-rustup target add x86_64-apple-darwin       # for darwin (macOS)
+rustup target add x86_64-apple-darwin       # for darwin x86_64 (if you have an Intel MacOS)
+rustup target add aarch64-apple-darwin      # for darwin arm64 (if you have a M1 MacOS)
 rustup target add x86_64-pc-windows-gnu     # for win32-x86-64-gnu
 rustup target add x86_64-pc-windows-msvc    # for win32-x86-64-msvc
 ...
@@ -160,8 +161,22 @@ cargo {
 
 A list of Android targets to build with Cargo; required.
 
-Valid targets are `arm`, `arm64`, `x86`, `x86_64` (Android), and `'linux-x86-64'`, `'darwin'`,
-`'win32-x86-64-gnu'`, and `'win32-x86-64-msvc'` (Desktop).
+Valid targets for **Android** are:
+
+```
+'arm',
+'arm64',
+'x86',
+'x86_64'
+```
+Valid targets for **Desktop** are:
+```
+'linux-x86-64',
+'darwin-x86-64',
+'darwin-aarch64',
+'win32-x86-64-gnu',
+'win32-x86-64-msvc'
+```
 
 The desktop targets are useful for testing native code in Android unit tests that run on the host,
 not on the target device.  Better support for this feature is
@@ -481,6 +496,19 @@ $ ls -al samples/maven-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-and
 samples/maven-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-android-gradle.gradle.plugin/0.4.0/org.mozilla.rust-android-gradle.gradle.plugin-0.4.0.pom
 ```
 
+# Testing Local changes
+An easy way to locally test changes made in this plugin is to simply add this to your project's `settings.gradle`:
+
+```gradle
+// Switch this to point to your local plugin dir
+includeBuild('../rust-android-gradle') {
+    dependencySubstitution {
+        // As required.
+        substitute module('gradle.plugin.org.mozilla.rust-android-gradle:plugin') with project(':plugin')
+    }
+}
+```
+
 # Publishing
 
 ## Automatically via the release Github workflow
@@ -526,16 +554,16 @@ $ ls -al samples/library/build//outputs/aar/library-debug.aar
 
 To test in a real project, use the local Maven repository in your `build.gradle`, like:
 
-```
+```gradle
 buildscript {
     repositories {
         maven {
-            url "file:///Users/nalexander/Mozilla/rust-android-gradle/samples/maven-repo"
+            url "file:///Users/nalexander/Mozilla/rust-android-gradle/samples/local-repo"
         }
     }
 
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.3.0'
+        classpath 'org.mozilla.rust-android-gradle:plugin:0.10.0'
     }
 }
 ```
