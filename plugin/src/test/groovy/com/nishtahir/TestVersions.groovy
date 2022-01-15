@@ -17,6 +17,10 @@ class TestVersions {
     }
 
     static VersionNumber latestAndroidVersionForCurrentJDK() {
+        String currentJDKVersion = System.getProperty("java.version");
+        if (currentJDKVersion.startsWith("1.")) {
+            return allCandidateTestVersions.keySet().findAll {it < VersionNumber.parse("7.0.0-alpha01")}.max()
+        }
         return allCandidateTestVersions.keySet().max()
     }
 

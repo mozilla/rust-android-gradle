@@ -128,7 +128,7 @@ supportedVersions.keySet().each { androidVersion ->
     def testTaskName = androidTestTaskName(androidVersion)
     def jdkVersion = jdkVersionFor(androidVersion)
     def versionSpecificTest = tasks.register(testTaskName, Test) {
-        description = "Runs the multi-version tests for AGP ${androidVersion}"
+        description = "Runs the multi-version tests for AGP ${androidVersion} (JDK version ${jdkVersion})"
         group = "verification"
 
         javaLauncher = javaToolchains.launcherFor {
