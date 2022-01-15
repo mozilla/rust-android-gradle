@@ -29,6 +29,31 @@ jobs:
     outputs:
       matrix: ${{ steps.setup-matrix.outputs.matrix }}
 
+  android_unversioned_tests:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    - name: Setup Rust
+      run: |
+        rustup toolchain install stable
+        rustup target add x86_64-linux-android
+        rustup target add x86_64-unknown-linux-gnu
+        rustup target add aarch64-linux-android
+
+    # Use Java 8
+    - name: Setup Java 8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 8
+
+    - name: Gradle setup
+      run: |
+        ./gradlew -p plugin tasks --warning-mode all
+
+    - name: Gradle test
+      run: |
+        ./gradlew -p plugin --tests CargoTargetTest --info --warning-mode all
+
   android_version_tests:
     needs: [generate_versions] # , sanity_check]
 
