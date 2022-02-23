@@ -167,6 +167,10 @@ open class CargoBuildTask : DefaultTask() {
                 if (toolchain.type != ToolchainType.DESKTOP) {
                     val toolchainDirectory = if (toolchain.type == ToolchainType.ANDROID_PREBUILT) {
                         val ndkPath = app.ndkDirectory
+                        val ndkVersion = ndkPath.name
+                        val ndkVersionMajor = ndkVersion.split(".").first()
+                        environment("CARGO_NDK_MAJOR_VERSION", ndkVersionMajor)
+
                         val hostTag = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                             if (Os.isArch("x86_64") || Os.isArch("amd64")) {
                                 "windows-x86_64"
