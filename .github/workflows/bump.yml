@@ -2,6 +2,15 @@ name: Bump version
 
 on:
   workflow_dispatch:
+    inputs:
+      new_version:
+        type: string
+        description: New version number, like 'x.y.z'
+        required: true
+      changelog:
+        type: string
+        description: Details to prepend to `CHANGELOG.md`
+        required: true
 
 jobs:
   bump-version:
@@ -9,3 +18,49 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Bump version
+      run: |
+        old_version=$(sed -e 's/.*=//' version.properties)
+        echo "old version: _$old_version"_
+        echo "new version: _${{ github.event.inputs.new_version }}_"
+        echo "changelog: _${{ github.event.inputs.changelog }}_"
+
+        echo "# ${{ github.event.inputs.new_version }}" >> new_CHANGELOG.md
+        echo >> new_CHANGELOG.md
+        echo "${{ github.event.inputs.changelog }}" >> new_CHANGELOG.md
+        echo >> new_CHANGELOG.md
+        cat CHANGELOG.md >> new_CHANGELOG.md
+        mv new_CHANGELOG.md CHANGELOG.md
+
+        sed -i -e "s/$old_version/${{ github.event.inputs.new_version }}/" README.md version.properties
+
+        echo "version=${{ github.event.inputs.new_version }}" > version.properties
+
+        git diff
+
+# jobs:
+#   bump-version:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - uses: actions/checkout@v2
+
+#     - name: Set up JDK 8
+#       uses: actions/setup-java@v2
+#       with:
+#         java-version: '8'
+#         distribution: 'adopt'
+
+#     - name: Write gradle.properties
+#       env:
+#         GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+#         GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+#       run: |
+#         mkdir -p $HOME/.gradle/
+#         echo "gradle.publish.key=${GRADLE_PUBLISH_KEY}" >> ~/.gradle/gradle.properties
+#         echo "gradle.publish.secret=${GRADLE_PUBLISH_SECRET}" >> ~/.gradle/gradle.properties
+
+#     - name: Publish plugin
+#       run: |
+#         ./gradlew publishPlugins
