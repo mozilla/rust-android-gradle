@@ -1,3 +1,7 @@
+# 0.9.2
+
+- Support Android NDK 23.
+
 # 0.9.1
 
 - Add Desktop targets `darwin-x86-64`, which will supersede `darwin`, and `darwin-aarch64`.
