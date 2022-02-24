@@ -38,6 +38,17 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
       - uses: actions/checkout@v2
 
+      # Per https://github.com/actions/cache/blob/c7c46bcb6db3c571021a3a2dc2d2557b512ecace/examples.md#rust---cargo.
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            plugin/build/resources/test/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Setup Rust
         run: |
           rustup toolchain install stable
@@ -77,14 +88,17 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # # Sets up the NDK required by AGP 3.6.x
-      # - name: Setup NDK
-      #   run: sudo $ANDROID_HOME/tools/bin/sdkmanager 'ndk;20.0.5594570'
 
-      # - name: Install Rustup
-      #   run: |
-      #     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none
-      #     echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      # Per https://github.com/actions/cache/blob/c7c46bcb6db3c571021a3a2dc2d2557b512ecace/examples.md#rust---cargo.
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            plugin/build/resources/test/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Setup Rust
         run: |
