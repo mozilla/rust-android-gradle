@@ -511,14 +511,20 @@ includeBuild('../rust-android-gradle') {
 
 # Publishing
 
-## Automatically via the release Github workflow
+## Automatically via the Bump version Github Actions workflow
 
-You will need to be a collaborator.  First, push a preparatory commit updating version numbers and
-the changelog like [this
-one](https://github.com/mozilla/rust-android-gradle/commit/2a637d1797a5d0b5063b8d2f0a3d4a4938511154).
-Second, make a new Github Release with a name like `v0.8.4`.  The release Github workflow will build
-and publish the plugin, although it may take some days for it to be reflected on the Gradle plugin
-portal.
+You will need to be a collaborator.  First, manually invoke the [Bump version Github Actions
+workflow](https://github.com/mozilla/rust-android-gradle/actions/workflows/bump.yml).  Specify a
+version (like "x.y.z", without quotes) and a single line changelog entry.  (This entry will have a
+dash prepended, so that it would look normal in a list.  This is working around [the lack of a
+multi-line input in Github
+Actions](https://github.community/t/multiline-inputs-for-workflow-dispatch/163906).)  This will push
+a preparatory commit updating version numbers and the changelog like [this
+one](https://github.com/mozilla/rust-android-gradle/commit/2a637d1797a5d0b5063b8d2f0a3d4a4938511154),
+and make a **draft** Github Release with a name like `vx.y.z`.  After verifying that tests pass,
+navigate to [the releases panel](https://github.com/mozilla/rust-android-gradle/releases) and edit
+the release, finally pressing "Publish release".  The release Github workflow will build and publish
+the plugin, although it may take some days for it to be reflected on the Gradle plugin portal.
 
 ## By hand
 
