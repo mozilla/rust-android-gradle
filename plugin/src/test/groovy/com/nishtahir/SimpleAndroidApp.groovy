@@ -73,14 +73,16 @@ class SimpleAndroidApp {
                     <application android:label="@string/app_name" >
                         <activity
                             android:name=".${appActivity}"
-                            android:label="@string/app_name" >
+                            android:label="@string/app_name"
+                            android:exported="true" >
                             <intent-filter>
                                 <action android:name="android.intent.action.MAIN" />
                                 <category android:name="android.intent.category.LAUNCHER" />
                             </intent-filter>
                         </activity>
                         <activity
-                            android:name="${libPackage}.${libraryActivity}">
+                            android:name="${libPackage}.${libraryActivity}"
+                            android:exported="false" >
                         </activity>
                     </application>
 
