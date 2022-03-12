@@ -1,4 +1,4 @@
-package com.nishtahir;
+package com.nishtahir
 
 import com.android.build.gradle.*
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -20,10 +20,7 @@ open class CargoBuildTask : DefaultTask() {
     fun build() = with(project) {
         extensions[CargoExtension::class].apply {
             // Need to capture the value to dereference smoothly.
-            val toolchain = toolchain
-            if (toolchain == null) {
-                throw GradleException("toolchain cannot be null")
-            }
+            val toolchain = toolchain ?: throw GradleException("toolchain cannot be null")
 
             project.plugins.all {
                 when (it) {
@@ -86,16 +83,16 @@ open class CargoBuildTask : DefaultTask() {
             with(spec) {
                 standardOutput = System.out
                 val module = File(cargoExtension.module!!)
-                if (module.isAbsolute) {
-                    workingDir = module
+                workingDir = if (module.isAbsolute) {
+                    module
                 } else {
-                    workingDir = File(project.project.projectDir, module.path)
+                    File(project.project.projectDir, module.path)
                 }
                 workingDir = workingDir.canonicalFile
 
                 val theCommandLine = mutableListOf(cargoExtension.cargoCommand)
 
-                if (!cargoExtension.rustupChannel.isEmpty()) {
+                if (cargoExtension.rustupChannel.isNotEmpty()) {
                     val hasPlusSign = cargoExtension.rustupChannel.startsWith("+")
                     val maybePlusSign = if (!hasPlusSign) "+" else ""
 
@@ -110,25 +107,24 @@ open class CargoBuildTask : DefaultTask() {
                     theCommandLine.add("--verbose")
                 }
 
-                val features = cargoExtension.featureSpec.features
                 // We just pass this along to cargo as something space separated... AFAICT
                 // you're allowed to have featureSpec with spaces in them, but I don't think
                 // there's a way to specify them in the cargo command line -- rustc accepts
                 // them if passed in directly with `--cfg`, and cargo will pass them to rustc
                 // if you use them as default featureSpec.
-                when (features) {
+                when (val features = cargoExtension.featureSpec.features) {
                     is Features.All -> {
                         theCommandLine.add("--all-features")
                     }
                     is Features.DefaultAnd -> {
-                        if (!features.featureSet.isEmpty()) {
+                        if (features.featureSet.isNotEmpty()) {
                             theCommandLine.add("--features")
                             theCommandLine.add(features.featureSet.joinToString(" "))
                         }
                     }
                     is Features.NoDefaultBut -> {
                         theCommandLine.add("--no-default-features")
-                        if (!features.featureSet.isEmpty()) {
+                        if (features.featureSet.isNotEmpty()) {
                             theCommandLine.add("--features")
                             theCommandLine.add(features.featureSet.joinToString(" "))
                         }
@@ -150,8 +146,8 @@ open class CargoBuildTask : DefaultTask() {
 
                 // Target-specific environment configuration, passed through to
                 // the underlying `cargo build` invocation.
-                val toolchain_target = toolchain.target.toUpperCase().replace('-', '_')
-                val prefix = "RUST_ANDROID_GRADLE_TARGET_${toolchain_target}_"
+                val toolchainTarget = toolchain.target.toUpperCase().replace('-', '_')
+                val prefix = "RUST_ANDROID_GRADLE_TARGET_${toolchainTarget}_"
 
                 // For ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_TARGET_x_KEY=VALUE, set KEY=VALUE.
                 project.logger.info("Passing through project properties with prefix '${prefix}' (environment variables with prefix 'ORG_GRADLE_PROJECT_${prefix}'")
@@ -187,17 +183,17 @@ open class CargoBuildTask : DefaultTask() {
                         cargoExtension.toolchainDirectory
                     }
 
-                    val linker_wrapper =
+                    val linkerWrapper =
                     if (System.getProperty("os.name").startsWith("Windows")) {
                         File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.bat")
                     } else {
                         File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.sh")
                     }
-                    environment("CARGO_TARGET_${toolchain_target}_LINKER", linker_wrapper.path)
+                    environment("CARGO_TARGET_${toolchainTarget}_LINKER", linkerWrapper.path)
 
-                    val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
-                    val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path;
-                    val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
+                    val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path
+                    val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path
+                    val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel)}").path
 
                     // For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
                     // https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
@@ -259,8 +255,7 @@ fun getDefaultTargetTriple(project: Project, rustc: String): String? {
     val triplePrefix = "host: "
 
     val triple = output.split("\n")
-        .find { it.startsWith(triplePrefix) }
-        ?.let { it.substring(triplePrefix.length).trim() }
+        .find { it.startsWith(triplePrefix) }?.substring(triplePrefix.length)?.trim()
 
     if (triple == null) {
         project.logger.warn("Failed to parse `rustc -Vv` output! (Please report a rust-android-gradle bug)")

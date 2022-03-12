@@ -201,21 +201,17 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         // Ensure that an API level is specified for all targets
         val apiLevel = cargoExtension.apiLevel
-        if (cargoExtension.apiLevels.size > 0) {
+        if (cargoExtension.apiLevels.isNotEmpty()) {
             if (apiLevel != null) {
                 throw GradleException("Cannot set both `apiLevel` and `apiLevels`")
             }
         } else {
-            val default = if (apiLevel != null) {
-                apiLevel
-            } else {
-                extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
-            }
-            cargoExtension.apiLevels = cargoExtension.targets!!.map { it to default }.toMap()
+            val default = apiLevel ?: extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
+            cargoExtension.apiLevels = cargoExtension.targets!!.associateWith { default }
         }
         val missingApiLevelTargets = cargoExtension.targets!!.toSet().minus(
             cargoExtension.apiLevels.keys)
-        if (missingApiLevelTargets.size > 0) {
+        if (missingApiLevelTargets.isNotEmpty()) {
             throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
         }
 
@@ -237,7 +233,7 @@ open class RustAndroidPlugin : Plugin<Project> {
         val usePrebuilt =
             cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
             cargoExtension.prebuiltToolchains ?:
-            (ndkVersionMajor >= 19);
+            (ndkVersionMajor >= 19)
 
         if (usePrebuilt && ndkVersionMajor < 19) {
             throw GradleException("usePrebuilt = true requires NDK version 19+")
@@ -280,17 +276,15 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         cargoExtension.targets!!.forEach { target ->
             val theToolchain = toolchains
-                    .filter {
-                        if (usePrebuilt) {
-                            it.type != ToolchainType.ANDROID_GENERATED
-                        } else {
-                            it.type != ToolchainType.ANDROID_PREBUILT
-                        }
+                .filter {
+                    if (usePrebuilt) {
+                        it.type != ToolchainType.ANDROID_GENERATED
+                    } else {
+                        it.type != ToolchainType.ANDROID_PREBUILT
                     }
-                    .find { it.platform == target }
-            if (theToolchain == null) {
-                throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
-            }
+                }
+                .find { it.platform == target }
+                ?: throw GradleException("Target $target is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
 
             val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
                     CargoBuildTask::class.java).apply {

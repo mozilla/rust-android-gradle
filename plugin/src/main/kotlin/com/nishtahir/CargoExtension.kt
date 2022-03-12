@@ -2,13 +2,12 @@ package com.nishtahir
 
 import org.gradle.api.Action
 import org.gradle.api.GradleException
-import org.gradle.api.Project
 import org.gradle.process.ExecSpec
 import java.io.File
 import java.util.*
 
 sealed class Features {
-    class All() : Features()
+    object All : Features()
 
     data class DefaultAnd(val featureSet: Set<String>) : Features()
 
@@ -17,7 +16,7 @@ sealed class Features {
 
 data class FeatureSpec(var features: Features? = null) {
     fun all() {
-        this.features = Features.All()
+        this.features = Features.All
     }
 
     fun defaultAnd(featureSet: Array<String>) {
@@ -70,33 +69,26 @@ open class CargoExtension {
                 return File(globalDir).absoluteFile
             }
 
-            var defaultDir = File(System.getProperty("java.io.tmpdir"), "rust-android-ndk-toolchains")
-            return defaultDir.absoluteFile
+            return File(System.getProperty("java.io.tmpdir"), "rust-android-ndk-toolchains").absoluteFile
         }
 
     var cargoCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.cargoCommand", "RUST_ANDROID_GRADLE_CARGO_COMMAND") ?: "cargo"
             }
         }
 
     var rustupChannel: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.rustupChannel", "RUST_ANDROID_GRADLE_RUSTUP_CHANNEL") ?: ""
             }
         }
 
     var pythonCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
             }
         }
@@ -106,9 +98,7 @@ open class CargoExtension {
     // this isn't fatal, however.
     var rustcCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.rustcCommand", "RUST_ANDROID_GRADLE_RUSTC_COMMAND") ?: "rustc"
             }
         }
