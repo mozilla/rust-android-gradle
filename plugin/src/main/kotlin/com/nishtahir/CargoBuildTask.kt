@@ -183,13 +183,15 @@ open class CargoBuildTask : DefaultTask() {
                         cargoExtension.toolchainDirectory
                     }
 
-                    val linkerWrapper =
-                    if (System.getProperty("os.name").startsWith("Windows")) {
-                        File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.bat")
+                    val linkerWrapper = if (System.getProperty("os.name").startsWith("Windows")) {
+                        "linker-wrapper/linker-wrapper.bat"
                     } else {
-                        File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.sh")
+                        "linker-wrapper/linker-wrapper.sh"
                     }
-                    environment("CARGO_TARGET_${toolchainTarget}_LINKER", linkerWrapper.path)
+                    environment(
+                        "CARGO_TARGET_${toolchainTarget}_LINKER",
+                        File(project.rootProject.buildDir, linkerWrapper).path
+                    )
 
                     val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path
                     val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path
