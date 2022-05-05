@@ -143,8 +143,10 @@ data class Toolchain(val platform: String,
                 }
             }
 
-    fun ar(apiLevel: Int): File =
-            if (type == ToolchainType.ANDROID_PREBUILT) {
+    fun ar(apiLevel: Int, ndkVersionMajor: Int): File =
+            if (ndkVersionMajor >= 23) {
+                File("bin", "llvm-ar")
+            } else if (type == ToolchainType.ANDROID_PREBUILT) {
                 File("bin", "$binutilsTriple-ar")
             } else {
                 File("$platform-$apiLevel/bin", "$binutilsTriple-ar")
