@@ -60,13 +60,13 @@ jobs:
           java-version: 11
           cache: 'gradle'
 
-      - name: Assemble sample/app
+      - name: Assemble samples/app
         run: |
-          ./gradlew -p sample/app :assembleDebug --info --warning-mode all
+          ./gradlew -p samples/app :assembleDebug --info --warning-mode all
 
-      - name: Assemble sample/library
+      - name: Assemble samples/library
         run: |
-          ./gradlew -p sample/library :assembleDebug --info --warning-mode all
+          ./gradlew -p samples/library :assembleDebug --info --warning-mode all
 
   android_unversioned_tests:
     # The type of runner that the job will run on
