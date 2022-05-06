@@ -68,6 +68,11 @@ jobs:
         run: |
           ./gradlew -p samples/library :assembleDebug --info --warning-mode all
 
+      # Work around https://github.com/actions/cache/issues/454.
+      - name: Gradle stop
+        run: |
+          ./gradlew --stop
+
   android_unversioned_tests:
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
@@ -106,6 +111,11 @@ jobs:
       - name: Gradle test
         run: |
           ./gradlew -p plugin test --info --warning-mode all
+
+      # Work around https://github.com/actions/cache/issues/454.
+      - name: Gradle stop
+        run: |
+          ./gradlew --stop
 
   android_version_tests:
     needs: [generate_versions] # , sanity_check]
@@ -150,7 +160,7 @@ jobs:
         run: |
           ./gradlew -p plugin ${{ matrix.androidTestTask }} --info --warning-mode all
 
-      # # Gradle build
-      # - uses: eskatos/gradle-command-action@v1
-      #   with:
-      #     arguments: ${{ matrix.androidTestTask }} -I gradle/buildScanInit.gradle
+      # Work around https://github.com/actions/cache/issues/454.
+      - name: Gradle stop
+        run: |
+          ./gradlew --stop
