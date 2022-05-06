@@ -41,15 +41,22 @@ class SimpleCargoProject {
     }
 
     def writeProject() {
-        def cargoModule = this.class.classLoader.getResource("rust/Cargo.toml").path
-        cargoModule = new File(cargoModule).parent
+        def cargoModuleFile = new File(this.class.classLoader.getResource("rust/Cargo.toml").path).parentFile
+        def targetDirectoryFile = new File(cargoModuleFile.parentFile, "target")
+
+        // On Windows, path components are backslash-separated.  We need to
+        // express the path as Groovy source, which means backslashes need to be
+        // escaped.  The easiest way is to replace backslashes with forward
+        // slashes.
+        def module = cargoModuleFile.path.replace("\\", "/")
+        def targetDirectory = targetDirectoryFile.path.replace("\\", "/")
 
         def targetStrings = targets.collect({"\"${it}\"" }).join(", ")
 
         file('app/build.gradle') << """
                 cargo {
-                    module = "${cargoModule}"
-                    targetDirectory = "${cargoModule}/../target"
+                    module = "${module}"
+                    targetDirectory = "${targetDirectory}"
                     targets = [${targetStrings}]
                     libname = "rust"
                 }
@@ -57,8 +64,8 @@ class SimpleCargoProject {
 
         file('library/build.gradle') << """
                 cargo {
-                    module = "${cargoModule}"
-                    targetDirectory = "${cargoModule}/../target"
+                    module = "${module}"
+                    targetDirectory = "${targetDirectory}"
                     targets = [${targetStrings}]
                     libname = "rust"
                 }
