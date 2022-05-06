@@ -496,7 +496,28 @@ $ ls -al build/local-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-andro
 build/local-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-android-gradle.gradle.plugin/0.4.0/org.mozilla.rust-android-gradle.gradle.plugin-0.4.0.pom
 ```
 
-# Testing Local changes
+## Sample projects
+
+The easiest way to get started is to run the sample projects.  The sample projects have dependency
+substitutions configured so that changes made to `plugin/` are reflected in the sample projects
+immediately.
+
+```
+$ ./gradlew -p samples/library :assembleDebug
+...
+$ file samples/library/build/outputs/aar/library-debug.aar
+samples/library/build/outputs/aar/library-debug.aar: Zip archive data, at least v1.0 to extract
+```
+
+```
+$ ./gradlew -p samples/app :assembleDebug
+...
+$ file samples/app/build/outputs/apk/debug/app-debug.apk
+samples/app/build/outputs/apk/debug/app-debug.apk: Zip archive data, at least v?[0] to extract
+```
+
+## Testing Local changes
+
 An easy way to locally test changes made in this plugin is to simply add this to your project's `settings.gradle`:
 
 ```gradle
@@ -543,17 +564,6 @@ Publishing artifact build/libs/plugin-0.8.1-sources.jar
 Publishing artifact build/libs/plugin-0.8.1-javadoc.jar
 Publishing artifact build/publish-generated-resources/pom.xml
 Activating plugin org.mozilla.rust-android-gradle.rust-android version 0.8.1
-```
-
-## Sample projects
-
-To run the sample projects:
-
-```
-$ ./gradlew -p samples/library :assembleDebug
-...
-$ ls -al samples/library/build/outputs/aar/library-debug.aar
--rw-r--r--  1 nalexander  staff  8926315 18 Sep 10:22 samples/library/build/outputs/aar/library-debug.aar
 ```
 
 ## Real projects
