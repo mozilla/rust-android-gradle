@@ -27,6 +27,14 @@ class NdkVersionTest extends AbstractTest {
                 .build()
                 .writeProject()
 
+        // To ease debugging.
+        temporaryFolder.root.eachFileRecurse {
+            System.err.println("before> ${it}")
+            if (it.path.endsWith(".gradle")) {
+                System.err.println(it.text)
+            }
+        }
+
         when:
         BuildResult buildResult = withGradleVersion(TestVersions.latestSupportedGradleVersionFor(androidVersion).version)
                 .withProjectDir(temporaryFolder.root)
@@ -36,7 +44,7 @@ class NdkVersionTest extends AbstractTest {
 
         // To ease debugging.
         temporaryFolder.root.eachFileRecurse {
-            println(it)
+            System.err.println("after> ${it}")
         }
 
         then:
