@@ -1,3 +1,7 @@
+# 0.9.3
+
+- Fix issues with NDK 23+: use , support  rewriting on Windows.
+
 # 0.9.2
 
 - Support Android NDK 23.
