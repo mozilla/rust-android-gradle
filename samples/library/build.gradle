@@ -1,4 +1,5 @@
 buildscript {
+    ext.agp_version = '7.0.0'
     repositories {
         google()
         maven {
@@ -16,6 +17,7 @@ apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
     compileSdkVersion 27
+    ndkVersion "23.1.7779620"
 
     defaultConfig {
         minSdkVersion 21
@@ -24,7 +26,6 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
     }
     buildTypes {
         release {
@@ -36,7 +37,7 @@ android {
 
 cargo {
     module = "../rust"
-    targets = ["arm", "x86", "x86_64", "arm64"]
+    targets = ["x86_64", "arm64"]
     libname = "rust"
 
     features {
@@ -52,6 +53,7 @@ cargo {
 
 repositories {
     google()
+    mavenCentral()
 }
 
 dependencies {

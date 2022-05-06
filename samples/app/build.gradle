@@ -1,5 +1,5 @@
 buildscript {
-    ext.agp_version = '4.1.0'
+    ext.agp_version = '7.0.0'
     repositories {
         google()
         maven {
@@ -17,6 +17,8 @@ apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
     compileSdkVersion 27
+    ndkVersion "23.1.7779620"
+
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
         minSdkVersion 21
@@ -31,17 +33,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    ndkVersion "20.1.5948944"
 }
 
 cargo {
     module = "../rust"
-    targets = ["arm", "x86", "x86_64", "arm64"]
+    targets = ["x86_64", "arm64"]
     libname = "rust"
 }
 
 repositories {
     google()
+    mavenCentral()
 }
 
 dependencies {
