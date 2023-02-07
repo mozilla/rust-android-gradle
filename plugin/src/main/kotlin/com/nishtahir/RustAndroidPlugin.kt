@@ -312,7 +312,7 @@ open class RustAndroidPlugin : Plugin<Project> {
                 toolchain = theToolchain
                 inputs.dir("${cargoExtension.module}/src")
                 inputs.file("${cargoExtension.module}/Cargo.toml")
-                outputs.dir(outDir)
+                outputs.dirs(outDir, File(buildDir, "rustJniLibs/${theToolchain.folder}"))
             }
 
             if (!usePrebuilt) {
