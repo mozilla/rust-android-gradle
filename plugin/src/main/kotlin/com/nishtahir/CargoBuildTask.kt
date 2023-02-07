@@ -6,13 +6,13 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.ByteArrayOutputStream
 import java.io.File
 
 open class CargoBuildTask : DefaultTask() {
-    @Input
+    @Internal
     var toolchain: Toolchain? = null
 
     @Suppress("unused")

@@ -278,6 +278,8 @@ open class RustAndroidPlugin : Plugin<Project> {
                 DefaultTask::class.java).apply {
             group = RUST_TASK_GROUP
             description = "Build library (all targets)"
+            inputs.dir("${cargoExtension.module}/src")
+            inputs.file("${cargoExtension.module}/Cargo.toml")
         }
 
         cargoExtension.targets!!.forEach { target ->
@@ -294,11 +296,23 @@ open class RustAndroidPlugin : Plugin<Project> {
                 throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
             }
 
+            val targetDir = cargoExtension.getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
+                ?: cargoExtension.targetDirectory
+                ?: "${cargoExtension.module!!}/target"
+            val outDir = if (theToolchain.target == getDefaultTargetTriple(project, cargoExtension.rustcCommand)) {
+                "${targetDir}/${cargoExtension.profile}"
+            } else {
+                "${targetDir}/${theToolchain.target}/${cargoExtension.profile}"
+            }
+
             val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
                     CargoBuildTask::class.java).apply {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
                 toolchain = theToolchain
+                inputs.dir("${cargoExtension.module}/src")
+                inputs.file("${cargoExtension.module}/Cargo.toml")
+                outputs.dir(outDir)
             }
 
             if (!usePrebuilt) {
