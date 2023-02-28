@@ -133,6 +133,9 @@ open class CargoBuildTask : DefaultTask() {
                             theCommandLine.add(features.featureSet.joinToString(" "))
                         }
                     }
+                    else -> {
+                        // when() must be exhaustive
+                    }
                 }
 
                 if (cargoExtension.profile != "debug") {

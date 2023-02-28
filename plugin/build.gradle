@@ -61,6 +61,11 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api"
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
