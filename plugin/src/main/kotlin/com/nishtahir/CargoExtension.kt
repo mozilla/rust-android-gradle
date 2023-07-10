@@ -97,7 +97,7 @@ open class CargoExtension {
             return if (!field.isEmpty()) {
                 field
             } else {
-                getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
+                getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python3"
             }
         }
 
