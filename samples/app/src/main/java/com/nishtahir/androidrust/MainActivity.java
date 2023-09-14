@@ -5,6 +5,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Callback;
 public class MainActivity extends AppCompatActivity implements JNICallback {
 
     private static final String TAG = "MainActivity";
@@ -16,6 +19,12 @@ public class MainActivity extends AppCompatActivity implements JNICallback {
 
     TextView textView;
 
+    private final Callback viaJNA = new Callback() {
+        public void callback(String string) {
+            Log.i("rust","From JNA: " + string);
+            textView.setText("From JNA: " + string);
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,6 +32,7 @@ public class MainActivity extends AppCompatActivity implements JNICallback {
         textView = (TextView) findViewById(R.id.sample_text);
 
         invokeCallbackViaJNI(this);
+        LibService.instance.invokeCallbackViaJNA(viaJNA);
     }
 
     /**
@@ -33,6 +43,15 @@ public class MainActivity extends AppCompatActivity implements JNICallback {
 
     @Override
     public void callback(String string) {
+        Log.i("rust","From JNI: " + string);
         textView.append("From JNI: " + string + "\n");
     }
+
+}
+
+interface LibService extends Library {
+    public static final String JNALib = "rust";
+    public static final LibService instance = Native.loadLibrary(JNALib, LibService.class);
+
+    void invokeCallbackViaJNA(Callback callback);
 }
