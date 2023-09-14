@@ -1,7 +1,12 @@
 buildscript {
-    ext.agp_version = '7.0.0'
+    //ext.agp_version = '7.0.0'
+    //ext.agp_version = '4.0.1'
+    ext.agp_version = '7.1.1'
     repositories {
         google()
+        //maven {
+        //    url 'file://C:\\Users\\josel\\work\\qaxh3_dev\\fhe-windows\\rust-android-gradle\\plugin\\build\\libs'
+        //}
         maven {
             url "https://plugins.gradle.org/m2/"
         }
@@ -16,13 +21,13 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
-    compileSdkVersion 27
-    ndkVersion "23.1.7779620"
+    compileSdkVersion 31
+    ndkVersion "25.2.9519653"
 
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -37,8 +42,12 @@ android {
 
 cargo {
     module = "../rust"
-    targets = ["x86_64", "arm64"]
+    targets = ["x86_64", "arm64", "arm"]
     libname = "rust"
+    pythonCommand = "python"
+    cargoCommand = "C:\\Users\\josel\\.cargo\\bin\\cargo.exe"
+    rustcCommand = "C:\\Users\\josel\\.cargo\\bin\\rustc.exe"
+    rustupChannel = "stable"
 }
 
 repositories {
@@ -52,6 +61,7 @@ dependencies {
     })
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'net.java.dev.jna:jna:4.4.0@aar'
     testImplementation 'junit:junit:4.12'
 }
 
