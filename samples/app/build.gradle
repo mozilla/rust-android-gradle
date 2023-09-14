@@ -45,8 +45,8 @@ cargo {
     targets = ["x86_64", "arm64", "arm"]
     libname = "rust"
     pythonCommand = "python"
-    cargoCommand = "C:\\Users\\josel\\.cargo\\bin\\cargo.exe"
-    rustcCommand = "C:\\Users\\josel\\.cargo\\bin\\rustc.exe"
+    cargoCommand = System.properties['user.home'] + "\\.cargo\\bin\\cargo.exe"
+    rustcCommand = System.properties['user.home'] + "\\.cargo\\bin\\rustc.exe"
     rustupChannel = "stable"
 }
 
