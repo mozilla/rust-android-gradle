@@ -20,7 +20,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.0'
+        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.3'
     }
 }
 ```
@@ -33,7 +33,7 @@ buildscript {
 }
 
 plugins {
-    id "org.mozilla.rust-android-gradle.rust-android" version "0.9.0"
+    id "org.mozilla.rust-android-gradle.rust-android" version "0.9.3"
 }
 ```
 
@@ -59,7 +59,8 @@ rustup target add i686-linux-android        # for x86
 rustup target add aarch64-linux-android     # for arm64
 rustup target add x86_64-linux-android      # for x86_64
 rustup target add x86_64-unknown-linux-gnu  # for linux-x86-64
-rustup target add x86_64-apple-darwin       # for darwin (macOS)
+rustup target add x86_64-apple-darwin       # for darwin x86_64 (if you have an Intel MacOS)
+rustup target add aarch64-apple-darwin      # for darwin arm64 (if you have a M1 MacOS)
 rustup target add x86_64-pc-windows-gnu     # for win32-x86-64-gnu
 rustup target add x86_64-pc-windows-msvc    # for win32-x86-64-msvc
 ...
@@ -160,8 +161,22 @@ cargo {
 
 A list of Android targets to build with Cargo; required.
 
-Valid targets are `arm`, `arm64`, `x86`, `x86_64` (Android), and `'linux-x86-64'`, `'darwin'`,
-`'win32-x86-64-gnu'`, and `'win32-x86-64-msvc'` (Desktop).
+Valid targets for **Android** are:
+
+```
+'arm',
+'arm64',
+'x86',
+'x86_64'
+```
+Valid targets for **Desktop** are:
+```
+'linux-x86-64',
+'darwin-x86-64',
+'darwin-aarch64',
+'win32-x86-64-gnu',
+'win32-x86-64-msvc'
+```
 
 The desktop targets are useful for testing native code in Android unit tests that run on the host,
 not on the target device.  Better support for this feature is
@@ -471,26 +486,66 @@ target, corresponding to the "x86" target in the plugin).
 # Development
 
 At top-level, the `publish` Gradle task updates the Maven repository
-under `samples`:
+under `build/local-repo`:
 
 ```
 $ ./gradlew publish
 ...
-$ ls -al samples/maven-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-android-gradle.gradle.plugin/0.4.0/org.mozilla.rust-android-gradle.gradle.plugin-0.4.0.pom
+$ ls -al build/local-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-android-gradle.gradle.plugin/0.4.0/org.mozilla.rust-android-gradle.gradle.plugin-0.4.0.pom
 -rw-r--r--  1 nalexander  staff  670 18 Sep 10:09
-samples/maven-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-android-gradle.gradle.plugin/0.4.0/org.mozilla.rust-android-gradle.gradle.plugin-0.4.0.pom
+build/local-repo/org/mozilla/rust-android-gradle/org.mozilla.rust-android-gradle.gradle.plugin/0.4.0/org.mozilla.rust-android-gradle.gradle.plugin-0.4.0.pom
+```
+
+## Sample projects
+
+The easiest way to get started is to run the sample projects.  The sample projects have dependency
+substitutions configured so that changes made to `plugin/` are reflected in the sample projects
+immediately.
+
+```
+$ ./gradlew -p samples/library :assembleDebug
+...
+$ file samples/library/build/outputs/aar/library-debug.aar
+samples/library/build/outputs/aar/library-debug.aar: Zip archive data, at least v1.0 to extract
+```
+
+```
+$ ./gradlew -p samples/app :assembleDebug
+...
+$ file samples/app/build/outputs/apk/debug/app-debug.apk
+samples/app/build/outputs/apk/debug/app-debug.apk: Zip archive data, at least v?[0] to extract
+```
+
+## Testing Local changes
+
+An easy way to locally test changes made in this plugin is to simply add this to your project's `settings.gradle`:
+
+```gradle
+// Switch this to point to your local plugin dir
+includeBuild('../rust-android-gradle') {
+    dependencySubstitution {
+        // As required.
+        substitute module('gradle.plugin.org.mozilla.rust-android-gradle:plugin') with project(':plugin')
+    }
+}
 ```
 
 # Publishing
 
-## Automatically via the release Github workflow
+## Automatically via the Bump version Github Actions workflow
 
-You will need to be a collaborator.  First, push a preparatory commit updating version numbers and
-the changelog like [this
-one](https://github.com/mozilla/rust-android-gradle/commit/2a637d1797a5d0b5063b8d2f0a3d4a4938511154).
-Second, make a new Github Release with a name like `v0.8.4`.  The release Github workflow will build
-and publish the plugin, although it may take some days for it to be reflected on the Gradle plugin
-portal.
+You will need to be a collaborator.  First, manually invoke the [Bump version Github Actions
+workflow](https://github.com/mozilla/rust-android-gradle/actions/workflows/bump.yml).  Specify a
+version (like "x.y.z", without quotes) and a single line changelog entry.  (This entry will have a
+dash prepended, so that it would look normal in a list.  This is working around [the lack of a
+multi-line input in Github
+Actions](https://github.community/t/multiline-inputs-for-workflow-dispatch/163906).)  This will push
+a preparatory commit updating version numbers and the changelog like [this
+one](https://github.com/mozilla/rust-android-gradle/commit/2a637d1797a5d0b5063b8d2f0a3d4a4938511154),
+and make a **draft** Github Release with a name like `vx.y.z`.  After verifying that tests pass,
+navigate to [the releases panel](https://github.com/mozilla/rust-android-gradle/releases) and edit
+the release, finally pressing "Publish release".  The release Github workflow will build and publish
+the plugin, although it may take some days for it to be reflected on the Gradle plugin portal.
 
 ## By hand
 
@@ -511,31 +566,20 @@ Publishing artifact build/publish-generated-resources/pom.xml
 Activating plugin org.mozilla.rust-android-gradle.rust-android version 0.8.1
 ```
 
-## Sample projects
-
-To run the sample projects:
-
-```
-$ ./gradlew -p samples/library :assembleDebug
-...
-$ ls -al samples/library/build//outputs/aar/library-debug.aar
--rw-r--r--  1 nalexander  staff  8926315 18 Sep 10:22 samples/library/build//outputs/aar/library-debug.aar
-```
-
 ## Real projects
 
 To test in a real project, use the local Maven repository in your `build.gradle`, like:
 
-```
+```gradle
 buildscript {
     repositories {
         maven {
-            url "file:///Users/nalexander/Mozilla/rust-android-gradle/samples/maven-repo"
+            url "file:///Users/nalexander/Mozilla/rust-android-gradle/build/local-repo"
         }
     }
 
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.3.0'
+        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.0'
     }
 }
 ```

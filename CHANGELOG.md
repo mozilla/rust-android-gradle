@@ -1,3 +1,15 @@
+# 0.9.3
+
+- Fix issues with Android NDK 23+: use `llvm-ar`, support `-lgcc` rewriting on Windows.
+
+# 0.9.2
+
+- Support Android NDK 23.
+
+# 0.9.1
+
+- Add Desktop targets `darwin-x86-64`, which will supersede `darwin`, and `darwin-aarch64`.
+
 # 0.9.0
 
 - Support multiple Android Gradle Plugin versions.  Everything here is based on https://github.com/gradle/android-cache-fix-gradle-plugin; many thanks to that project for paving the way here.

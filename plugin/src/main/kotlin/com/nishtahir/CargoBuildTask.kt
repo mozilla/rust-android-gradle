@@ -165,8 +165,17 @@ open class CargoBuildTask : DefaultTask() {
 
                 // Cross-compiling to Android requires toolchain massaging.
                 if (toolchain.type != ToolchainType.DESKTOP) {
+                    val ndkPath = app.ndkDirectory
+                    val ndkVersion = ndkPath.name
+                    val ndkVersionMajor = try {
+                        ndkVersion.split(".").first().toInt()
+                    } catch (ex: NumberFormatException) {
+                        0 // Falls back to generic behaviour.
+                    }
+
                     val toolchainDirectory = if (toolchain.type == ToolchainType.ANDROID_PREBUILT) {
-                        val ndkPath = app.ndkDirectory
+                        environment("CARGO_NDK_MAJOR_VERSION", ndkVersionMajor)
+
                         val hostTag = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                             if (Os.isArch("x86_64") || Os.isArch("amd64")) {
                                 "windows-x86_64"
@@ -193,7 +202,7 @@ open class CargoBuildTask : DefaultTask() {
 
                     val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
                     val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path;
-                    val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel)}").path;
+                    val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel, ndkVersionMajor)}").path;
 
                     // For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
                     // https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.

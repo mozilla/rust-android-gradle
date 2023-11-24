@@ -9,14 +9,16 @@ class SimpleAndroidApp {
     final File projectDir
     private final File cacheDir
     final VersionNumber androidVersion
+    final VersionNumber ndkVersion
     final VersionNumber kotlinVersion
     private final boolean kotlinEnabled
     private final boolean kaptWorkersEnabled
 
-    private SimpleAndroidApp(File projectDir, File cacheDir, VersionNumber androidVersion, VersionNumber kotlinVersion, boolean kotlinEnabled, boolean kaptWorkersEnabled) {
+    private SimpleAndroidApp(File projectDir, File cacheDir, VersionNumber androidVersion, VersionNumber ndkVersion, VersionNumber kotlinVersion, boolean kotlinEnabled, boolean kaptWorkersEnabled) {
         this.projectDir = projectDir
         this.cacheDir = cacheDir
         this.androidVersion = androidVersion
+        this.ndkVersion = ndkVersion
         this.kotlinVersion = kotlinVersion
         this.kotlinEnabled = kotlinEnabled
         this.kaptWorkersEnabled = kaptWorkersEnabled
@@ -71,14 +73,16 @@ class SimpleAndroidApp {
                     <application android:label="@string/app_name" >
                         <activity
                             android:name=".${appActivity}"
-                            android:label="@string/app_name" >
+                            android:label="@string/app_name"
+                            android:exported="true" >
                             <intent-filter>
                                 <action android:name="android.intent.action.MAIN" />
                                 <category android:name="android.intent.category.LAUNCHER" />
                             </intent-filter>
                         </activity>
                         <activity
-                            android:name="${libPackage}.${libraryActivity}">
+                            android:name="${libPackage}.${libraryActivity}"
+                            android:exported="false" >
                         </activity>
                     </application>
 
@@ -136,7 +140,7 @@ class SimpleAndroidApp {
             }
 
             android {
-                ${ndkVersion}
+                ${maybeNdkVersion}
                 compileSdkVersion 28
                 buildToolsVersion "29.0.3"
                 defaultConfig {
@@ -151,10 +155,10 @@ class SimpleAndroidApp {
         """.stripIndent()
     }
 
-    private String getNdkVersion() {
+    private String getMaybeNdkVersion() {
         def isAndroid34x = androidVersion >= android("3.4.0")
         if (isAndroid34x) {
-            return """ndkVersion '21.4.7075529'"""
+            return """ndkVersion '${ndkVersion}'"""
         } else {
             return ""
         }
@@ -271,6 +275,8 @@ class SimpleAndroidApp {
         boolean kaptWorkersEnabled = true
 
         VersionNumber androidVersion = Versions.latestAndroidVersion()
+        VersionNumber ndkVersion = Versions.latestAndroidVersion() >= android("3.4.0") ? VersionNumber.parse("21.4.7075529") : null
+
         VersionNumber kotlinVersion = VersionNumber.parse("1.3.72")
         File projectDir
         File cacheDir
@@ -297,11 +303,23 @@ class SimpleAndroidApp {
 
         Builder withAndroidVersion(VersionNumber androidVersion) {
             this.androidVersion = androidVersion
+            if (this.androidVersion < android("3.4.0")) {
+                this.ndkVersion = null
+            }
             return this
         }
 
         Builder withAndroidVersion(String androidVersion) {
             return withAndroidVersion(android(androidVersion))
+        }
+
+        Builder withNdkVersion(VersionNumber ndkVersion) {
+            this.ndkVersion = ndkVersion
+            return this
+        }
+
+        Builder withNdkVersion(String ndkVersion) {
+            return withNdkVersion(VersionNumber.parse(ndkVersion))
         }
 
         Builder withProjectDir(File projectDir) {
@@ -315,7 +333,7 @@ class SimpleAndroidApp {
         }
 
         SimpleAndroidApp build() {
-            return new SimpleAndroidApp(projectDir, cacheDir, androidVersion, kotlinVersion, kotlinEnabled, kaptWorkersEnabled)
+            return new SimpleAndroidApp(projectDir, cacheDir, androidVersion, ndkVersion, kotlinVersion, kotlinEnabled, kaptWorkersEnabled)
         }
     }
 }

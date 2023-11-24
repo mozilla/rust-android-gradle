@@ -25,12 +25,26 @@ val toolchains = listOf(
                 "<compilerTriple>",
                 "<binutilsTriple>",
                 "desktop/linux-x86-64"),
+        // This should eventually go away: the darwin-x86-64 target will supersede it.
+        // https://github.com/mozilla/rust-android-gradle/issues/77
         Toolchain("darwin",
                 ToolchainType.DESKTOP,
                 "x86_64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
                 "desktop/darwin"),
+        Toolchain("darwin-x86-64",
+                ToolchainType.DESKTOP,
+                "x86_64-apple-darwin",
+                "<compilerTriple>",
+                "<binutilsTriple>",
+                "desktop/darwin-x86-64"),
+        Toolchain("darwin-aarch64",
+                ToolchainType.DESKTOP,
+                "aarch64-apple-darwin",
+                "<compilerTriple>",
+                "<binutilsTriple>",
+                "desktop/darwin-aarch64"),
         Toolchain("win32-x86-64-msvc",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-msvc",
@@ -129,8 +143,10 @@ data class Toolchain(val platform: String,
                 }
             }
 
-    fun ar(apiLevel: Int): File =
-            if (type == ToolchainType.ANDROID_PREBUILT) {
+    fun ar(apiLevel: Int, ndkVersionMajor: Int): File =
+            if (ndkVersionMajor >= 23) {
+                File("bin", "llvm-ar")
+            } else if (type == ToolchainType.ANDROID_PREBUILT) {
                 File("bin", "$binutilsTriple-ar")
             } else {
                 File("$platform-$apiLevel/bin", "$binutilsTriple-ar")
