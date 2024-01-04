@@ -1,5 +1,7 @@
 package com.nishtahir
 
+import com.android.build.api.dsl.CommonExtension
+import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -156,6 +158,7 @@ data class Toolchain(val platform: String,
 @Suppress("unused")
 open class RustAndroidPlugin : Plugin<Project> {
     internal lateinit var cargoExtension: CargoExtension
+    internal lateinit var buildWholeTask: DefaultTask
 
     override fun apply(project: Project) {
         with(project) {
@@ -174,36 +177,57 @@ open class RustAndroidPlugin : Plugin<Project> {
     }
 
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
-        cargoExtension.localProperties = Properties()
+        buildWholeTask = tasks.maybeCreate("cargoBuild", DefaultTask::class.java).apply {
+            group = RUST_TASK_GROUP
+            description = "Build library (all variants)"
+        }
+
+        val androidExtension = extensions[T::class]
+        when (androidExtension) {
+            is AppExtension -> androidExtension.applicationVariants.all { variant -> 
+                configureForVariant<T>(project, variant)
+            }
+            is LibraryExtension -> androidExtension.libraryVariants.all { variant ->
+                configureForVariant<T>(project, variant)
+            }
+        }
+
+    }
+
+    private inline fun <reified T: BaseExtension> configureForVariant(project: Project, variant: BaseVariant) = with(project) {
+        val capitalisedVariantName = variant.name.capitalize()
+        var config = cargoExtension.getConfig(variant)
+
+        config.localProperties = Properties()
 
         val localPropertiesFile = File(project.rootDir, "local.properties")
         if (localPropertiesFile.exists()) {
-            cargoExtension.localProperties.load(localPropertiesFile.inputStream())
+            config.localProperties.load(localPropertiesFile.inputStream())
         }
 
-        if (cargoExtension.module == null) {
+        if (config.module == null) {
             throw GradleException("module cannot be null")
         }
 
-        if (cargoExtension.libname == null) {
+        if (config.libname == null) {
             throw GradleException("libname cannot be null")
         }
 
         // Allow to set targets, including per-project, in local.properties.
         val localTargets: String? =
-                cargoExtension.localProperties.getProperty("rust.targets.${project.name}") ?:
-                cargoExtension.localProperties.getProperty("rust.targets")
+                config.localProperties.getProperty("rust.targets.${project.name}") ?:
+                config.localProperties.getProperty("rust.targets")
         if (localTargets != null) {
-            cargoExtension.targets = localTargets.split(',').map { it.trim() }
+            config.targets = localTargets.split(',').map { it.trim() }
         }
 
-        if (cargoExtension.targets == null) {
+        if (config.targets == null) {
             throw GradleException("targets cannot be null")
         }
 
         // Ensure that an API level is specified for all targets
-        val apiLevel = cargoExtension.apiLevel
-        if (cargoExtension.apiLevels.size > 0) {
+        val apiLevel = config.apiLevel
+        if (config.apiLevels.size > 0) {
             if (apiLevel != null) {
                 throw GradleException("Cannot set both `apiLevel` and `apiLevels`")
             }
@@ -213,10 +237,10 @@ open class RustAndroidPlugin : Plugin<Project> {
             } else {
                 extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
             }
-            cargoExtension.apiLevels = cargoExtension.targets!!.map { it to default }.toMap()
+            config.apiLevels = config.targets!!.map { it to default }.toMap()
         }
-        val missingApiLevelTargets = cargoExtension.targets!!.toSet().minus(
-            cargoExtension.apiLevels.keys)
+        val missingApiLevelTargets = config.targets!!.toSet().minus(
+            config.apiLevels.keys)
         if (missingApiLevelTargets.size > 0) {
             throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
         }
@@ -237,8 +261,8 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         // Determine whether to use prebuilt or generated toolchains
         val usePrebuilt =
-            cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
-            cargoExtension.prebuiltToolchains ?:
+            config.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
+            config.prebuiltToolchains ?:
             (ndkVersionMajor >= 19);
 
         if (usePrebuilt && ndkVersionMajor < 19) {
@@ -274,13 +298,15 @@ open class RustAndroidPlugin : Plugin<Project> {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
 
-        val buildTask = tasks.maybeCreate("cargoBuild",
+        val buildTask = tasks.maybeCreate("cargoBuild${capitalisedVariantName}",
                 DefaultTask::class.java).apply {
             group = RUST_TASK_GROUP
-            description = "Build library (all targets)"
+            description = "Build library for variant: ${capitalisedVariantName}"
         }
 
-        cargoExtension.targets!!.forEach { target ->
+        buildWholeTask.dependsOn(buildTask)
+
+        config.targets!!.forEach { target ->
             val theToolchain = toolchains
                     .filter {
                         if (usePrebuilt) {
@@ -294,11 +320,12 @@ open class RustAndroidPlugin : Plugin<Project> {
                 throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
             }
 
-            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
+            val targetBuildTask = tasks.maybeCreate("cargoBuild${capitalisedVariantName}${target.capitalize()}",
                     CargoBuildTask::class.java).apply {
                 group = RUST_TASK_GROUP
-                description = "Build library ($target)"
+                description = "Build library for variant: ${capitalisedVariantName} ($target)"
                 toolchain = theToolchain
+                cargoConfig = config
             }
 
             if (!usePrebuilt) {

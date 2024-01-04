@@ -1,10 +1,14 @@
 package com.nishtahir
 
+import com.android.build.gradle.api.BaseVariant
 import org.gradle.api.Action
 import org.gradle.api.GradleException
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.process.ExecSpec
 import java.io.File
 import java.util.*
+import javax.inject.Inject
 
 sealed class Features {
     class All() : Features()
@@ -29,14 +33,17 @@ data class FeatureSpec(var features: Features? = null) {
 }
 
 // `CargoExtension` is documented in README.md.
-open class CargoExtension {
+open class CargoConfig(val name: String){
+    @Inject
+    constructor (name: String, objectFactory: ObjectFactory): this(name)
+
     lateinit var localProperties: Properties
 
     var module: String? = null
     var libname: String? = null
     var targets: List<String>? = null
     var prebuiltToolchains: Boolean? = null
-    var profile: String = "debug"
+    var profile: String = "release"
     var verbose: Boolean? = null
     var targetDirectory: String? = null
     var targetIncludes: Array<String>? = null
@@ -69,33 +76,27 @@ open class CargoExtension {
                 return File(globalDir).absoluteFile
             }
 
-            var defaultDir = File(System.getProperty("java.io.tmpdir"), "rust-android-ndk-toolchains")
+            val defaultDir = File(System.getProperty("java.io.tmpdir"), "rust-android-ndk-toolchains")
             return defaultDir.absoluteFile
         }
 
     var cargoCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.cargoCommand", "RUST_ANDROID_GRADLE_CARGO_COMMAND") ?: "cargo"
             }
         }
 
     var rustupChannel: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.rustupChannel", "RUST_ANDROID_GRADLE_RUSTUP_CHANNEL") ?: ""
             }
         }
 
     var pythonCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
             }
         }
@@ -105,9 +106,7 @@ open class CargoExtension {
     // this isn't fatal, however.
     var rustcCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.rustcCommand", "RUST_ANDROID_GRADLE_RUSTC_COMMAND") ?: "rustc"
             }
         }
@@ -136,5 +135,38 @@ open class CargoExtension {
             return global
         }
         return null
+    }
+
+    fun merge(other: CargoConfig): CargoConfig {
+        val from = this
+        return CargoConfig(name).apply {
+            module = other.module ?: from.module
+            libname = other.libname ?: from.libname
+            targets = other.targets ?: from.targets
+            prebuiltToolchains = other.prebuiltToolchains ?: from.prebuiltToolchains
+            profile = other.profile ?: from.profile
+            verbose = other.verbose ?: from.verbose
+            targetDirectory = other.targetDirectory ?: from.targetDirectory
+            targetIncludes = other.targetIncludes ?: from.targetIncludes
+            apiLevel = other.apiLevel ?: from.apiLevel
+            apiLevels = other.apiLevels ?: from.apiLevels
+            extraCargoBuildArguments = other.extraCargoBuildArguments ?: from.extraCargoBuildArguments
+            exec = other.exec ?: from.exec
+            featureSpec = other.featureSpec ?: from.featureSpec
+        }
+    }
+}
+
+open class CargoExtension @Inject constructor(objectFactory: ObjectFactory): CargoConfig("", objectFactory) {
+    val buildTypes: NamedDomainObjectContainer<CargoConfig> =
+        objectFactory.domainObjectContainer(CargoConfig::class.java)
+
+    fun getConfig(variants: BaseVariant): CargoConfig {
+        val baseConfig = this as CargoConfig
+        val buildTypeConfig = buildTypes.findByName(variants.buildType.name)
+        if (buildTypeConfig is CargoConfig) {
+            return baseConfig.merge(buildTypeConfig)
+        }
+        return baseConfig
     }
 }

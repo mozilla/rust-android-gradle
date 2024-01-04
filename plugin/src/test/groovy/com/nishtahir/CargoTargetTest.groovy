@@ -21,6 +21,7 @@ class CargoTargetTest extends AbstractTest {
                 .withAndroidVersion(androidVersion)
                 .withNdkVersion(ndkVersion)
                 .withKotlinDisabled()
+                .withNdkVersion(ndkVersion)
         // TODO: .withCargo(...)
                 .build()
                 .writeProject()
