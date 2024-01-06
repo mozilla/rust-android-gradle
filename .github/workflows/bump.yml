@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     # Everything here was cribbed from or inspired by
     # https://github.com/oflynned/android-version-bump/blob/b9f6de7f8bdf25de3f695843265debf7c3919272.
