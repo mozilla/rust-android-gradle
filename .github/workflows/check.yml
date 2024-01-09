@@ -15,14 +15,14 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Gradle test
         run: |
           ./gradlew -p plugin generateTestTasksJson
 
       - id: setup-matrix
-        run: echo "::set-output name=matrix::$(cat plugin/build/build-resources/androidTestTasks.json)"
+        run: echo "matrix=$(cat plugin/build/build-resources/androidTestTasks.json)" >> $GITHUB_OUTPUT
 
       - name: debug
         run: echo ${{ steps.setup-matrix.outputs.matrix }}
@@ -44,17 +44,31 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Setup Rust
+      - name: Setup Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
+
+      - name: Setup Rust 1.67
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.67
+          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
+
+      - name: Setup NDK
+        env:
+          SDKMANAGER: /cmdline-tools/latest/bin/sdkmanager
         run: |
-          rustup toolchain install stable
-          rustup target add x86_64-linux-android
-          rustup target add x86_64-unknown-linux-gnu
-          rustup target add aarch64-linux-android
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            SDKMANAGER=$(echo $SDKMANAGER | tr '/' '\').bat
+          fi
+          ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
+        shell: bash
 
       - name: Setup Java 11
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 11
@@ -87,18 +101,32 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Setup Rust
+      - name: Setup Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
+
+      - name: Setup Rust 1.67
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.67
+          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
+
+      - name: Setup NDK
+        env:
+          SDKMANAGER: /cmdline-tools/latest/bin/sdkmanager
         run: |
-          rustup toolchain install stable
-          rustup target add x86_64-linux-android
-          rustup target add x86_64-unknown-linux-gnu
-          rustup target add aarch64-linux-android
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            SDKMANAGER=$(echo $SDKMANAGER | tr '/' '\').bat
+          fi
+          ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
+        shell: bash
 
       # Use Java 8
       - name: Setup Java 8
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 8
@@ -135,18 +163,32 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Setup Rust
+      - name: Setup NDK
+        env:
+          SDKMANAGER: /cmdline-tools/latest/bin/sdkmanager
         run: |
-          rustup toolchain install stable
-          rustup target add x86_64-linux-android
-          rustup target add x86_64-unknown-linux-gnu
-          rustup target add aarch64-linux-android
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            SDKMANAGER=$(echo $SDKMANAGER | tr '/' '\').bat
+          fi
+          ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
+        shell: bash
+
+      - name: Setup Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
+
+      - name: Setup Rust 1.67
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.67
+          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
 
       # Use Java 8
       - name: Setup Java 8
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 8
