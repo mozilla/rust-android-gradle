@@ -5,9 +5,9 @@ name: CI
 # branch (for testing).
 on:
   push:
-    branches: [master, citest]
+    branches: [main, citest]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   generate_versions:
