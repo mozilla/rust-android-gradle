@@ -30,6 +30,15 @@ class SimpleCargoProject {
             return this
         }
 
+        def selectChannelFromNdkVersion(ndkVersion) {
+            def ndkVersionMajor = ndkVersion.split('\\.')[0] as int
+            // Toolchain 1.68 or later versions are not compatible to old NDK prior to r23
+            // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
+            this.channel = ndkVersionMajor >= 23 ? "stable" : "1.67"
+            return this
+
+        }
+
         def build() {
             if (targets.isEmpty()) {
                 throw new IllegalStateException("No targets provided")

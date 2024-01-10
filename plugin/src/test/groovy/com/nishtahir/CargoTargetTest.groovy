@@ -12,10 +12,6 @@ class CargoTargetTest extends AbstractTest {
         given:
         def androidVersion = TestVersions.latestAndroidVersionForCurrentJDK()
         def ndkVersion = "21.4.7075529"
-        def ndkVersionMajor = ndkVersion.split('\\.')[0] as int
-        // Toolchain 1.68 or later versions are not compatible to old NDK prior to r23
-        // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
-        def channel = ndkVersionMajor >= 23 ? "stable" : "1.67"
 
         SimpleAndroidApp.builder(temporaryFolder.root, cacheDir)
                 .withAndroidVersion(androidVersion)
@@ -27,7 +23,7 @@ class CargoTargetTest extends AbstractTest {
 
         SimpleCargoProject.builder(temporaryFolder.root)
                 .withTargets([target])
-                .withChannel(channel)
+                .selectChannelFromNdkVersion(ndkVersion)
                 .build()
                 .writeProject()
 

@@ -13,15 +13,18 @@ class CargoBuildTest extends AbstractTest {
     @Unroll
     def "cargoBuild is invoked with #gradleVersion and Android plugin #androidVersion"() {
         given:
+        def ndkVersion = "21.4.7075529"
         SimpleAndroidApp.builder(temporaryFolder.root, cacheDir)
                 .withAndroidVersion(androidVersion)
                 .withKotlinDisabled()
+                .withNdkVersion(ndkVersion)
                 // TODO: .withCargo(...)
                 .build()
                 .writeProject()
 
         SimpleCargoProject.builder(temporaryFolder.root)
             .withTargets(["x86_64"])
+            .selectChannelFromNdkVersion(ndkVersion)
             .build()
             .writeProject()
 

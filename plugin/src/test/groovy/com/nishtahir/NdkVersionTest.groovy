@@ -13,10 +13,6 @@ class NdkVersionTest extends AbstractTest {
         def androidVersion = TestVersions.latestAndroidVersionForCurrentJDK()
         def target = "x86_64"
         def location = "android/x86_64/librust.so"
-        def ndkVersionMajor = ndkVersion.split('\\.')[0] as int
-        // Toolchain 1.68 or later versions are not compatible to old NDK prior to r23
-        // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
-        def channel = ndkVersionMajor >= 23 ? "stable" : "1.67"
 
         SimpleAndroidApp.builder(temporaryFolder.root, cacheDir)
                 .withAndroidVersion(androidVersion)
@@ -28,7 +24,7 @@ class NdkVersionTest extends AbstractTest {
 
         SimpleCargoProject.builder(temporaryFolder.root)
                 .withTargets([target])
-                .withChannel(channel)
+                .selectChannelFromNdkVersion(ndkVersion)
                 .build()
                 .writeProject()
 
