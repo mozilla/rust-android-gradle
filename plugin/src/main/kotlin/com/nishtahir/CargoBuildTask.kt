@@ -20,10 +20,7 @@ open class CargoBuildTask : DefaultTask() {
     fun build() = with(project) {
         extensions[CargoExtension::class].apply {
             // Need to capture the value to dereference smoothly.
-            val toolchain = toolchain
-            if (toolchain == null) {
-                throw GradleException("toolchain cannot be null")
-            }
+            val toolchain = toolchain ?: throw GradleException("toolchain cannot be null")
 
             project.plugins.all {
                 when (it) {
@@ -95,7 +92,7 @@ open class CargoBuildTask : DefaultTask() {
 
                 val theCommandLine = mutableListOf(cargoExtension.cargoCommand)
 
-                if (!cargoExtension.rustupChannel.isEmpty()) {
+                if (cargoExtension.rustupChannel.isNotEmpty()) {
                     val hasPlusSign = cargoExtension.rustupChannel.startsWith("+")
                     val maybePlusSign = if (!hasPlusSign) "+" else ""
 
@@ -133,6 +130,7 @@ open class CargoBuildTask : DefaultTask() {
                             theCommandLine.add(features.featureSet.joinToString(" "))
                         }
                     }
+                    null -> {}
                 }
 
                 if (cargoExtension.profile != "debug") {
@@ -192,13 +190,13 @@ open class CargoBuildTask : DefaultTask() {
                         cargoExtension.toolchainDirectory
                     }
 
-                    val linker_wrapper =
+                    val linkerWrapper =
                     if (System.getProperty("os.name").startsWith("Windows")) {
                         File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.bat")
                     } else {
                         File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.sh")
                     }
-                    environment("CARGO_TARGET_${toolchain_target}_LINKER", linker_wrapper.path)
+                    environment("CARGO_TARGET_${toolchain_target}_LINKER", linkerWrapper.path)
 
                     val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
                     val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path;

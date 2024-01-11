@@ -2,7 +2,7 @@ import groovy.json.JsonBuilder
 import org.gradle.util.VersionNumber
 
 plugins {
-    id 'com.gradle.plugin-publish' version '0.14.0'
+    id 'com.gradle.plugin-publish' version '1.2.1'
     id "org.gradle.test-retry" version "1.2.0"
 }
 
@@ -12,12 +12,16 @@ apply plugin: "groovy"
 apply plugin: "kotlin"
 
 gradlePlugin {
+    website = 'https://github.com/mozilla/rust-android-gradle'
+    vcsUrl = 'https://github.com/mozilla/rust-android-gradle.git'
+
     plugins {
         rustAndroidGradlePlugin {
             id = 'org.mozilla.rust-android-gradle.rust-android'
             implementationClass = 'com.nishtahir.RustAndroidPlugin'
             displayName = 'Plugin for building Rust with Cargo in Android projects'
             description = 'A plugin that helps build Rust JNI libraries with Cargo for use in Android projects.'
+            tags.set(['rust', 'cargo', 'android'])
         }
     }
 }
@@ -29,6 +33,7 @@ def isCI = (System.getenv('CI') ?: 'false').toBoolean()
 
 // Maps supported Android plugin versions to the versions of Gradle that support it
 def supportedVersions = [
+    "8.2.0": ["8.2.1"],
     "7.0.0": ["7.1.1"],
     "4.2.2": ["6.8.3", "7.1.1"],
     "4.1.3": ["6.5.1", "6.8.3"],
@@ -61,19 +66,17 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api"
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
-
-pluginBundle {
-    website = 'https://github.com/mozilla/rust-android-gradle'
-    vcsUrl = 'https://github.com/mozilla/rust-android-gradle.git'
-    tags = ['rust', 'cargo', 'android']
-}
-
 
 // Generate a json file that contains the matrix of Gradle and AGP versions to test against.
 def generatedResources = "$buildDir/generated-resources/main"
@@ -153,7 +156,13 @@ static def normalizeVersion(String version) {
 }
 
 static def jdkVersionFor(String version) {
-    def jdkVersion = VersionNumber.parse(version) > VersionNumber.parse("7.0.0-alpha01") ? 11 : 8
-    
+    def jdkVersion = 8
+    if (VersionNumber.parse(version) > VersionNumber.parse("7.0.0-alpha01")) {
+        jdkVersion = 11
+    }
+    if (VersionNumber.parse(version) > VersionNumber.parse("8.0.0")) {
+        jdkVersion = 17
+    }
+
     return JavaLanguageVersion.of(jdkVersion)
 }

@@ -50,7 +50,8 @@ class SimpleAndroidApp {
                         }
                     }
                     dependencies {
-                        classpath ('com.android.tools.build:gradle:$androidVersion') { force = true }
+                        //classpath ('com.android.tools.build:gradle:$androidVersion') { force = true }
+                        classpath ('com.android.tools.build:gradle') { version { strictly "$androidVersion" } }
                         classpath "org.mozilla.rust-android-gradle:plugin:${Versions.PLUGIN_VERSION}"
                         ${kotlinPluginDependencyIfEnabled}
                     }
@@ -97,7 +98,7 @@ class SimpleAndroidApp {
                 include ':${library}'
             """.stripIndent()
 
-        file("${app}/build.gradle") << subprojectConfiguration("com.android.application") << """
+        file("${app}/build.gradle") << subprojectConfiguration("com.android.application", appPackage) << """
                 android.defaultConfig.applicationId "org.gradle.android.test.app"
             """.stripIndent() << activityDependency() <<
             """
@@ -106,7 +107,7 @@ class SimpleAndroidApp {
                 }
             """.stripIndent()
 
-        file("${library}/build.gradle") << subprojectConfiguration("com.android.library") << activityDependency()
+        file("${library}/build.gradle") << subprojectConfiguration("com.android.library", libPackage) << activityDependency()
 
         file("gradle.properties") << """
                 android.useAndroidX=true
@@ -123,7 +124,9 @@ class SimpleAndroidApp {
         """ : ""
     }
 
-    private subprojectConfiguration(String androidPlugin) {
+    private subprojectConfiguration(String androidPlugin, String namespace) {
+        def maybeNamespace = androidVersion >= android("8.0.0") ? "namespace \"${namespace}\"" : ""
+
         """
             apply plugin: "$androidPlugin"
             ${kotlinPluginsIfEnabled}
@@ -139,6 +142,7 @@ class SimpleAndroidApp {
             }
 
             android {
+                ${maybeNamespace}
                 ${maybeNdkVersion}
                 compileSdkVersion 28
                 buildToolsVersion "29.0.3"
