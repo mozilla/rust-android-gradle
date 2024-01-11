@@ -1,6 +1,5 @@
 package com.nishtahir
 
-import org.gradle.api.GradleException
 import org.gradle.util.VersionNumber
 
 import static com.nishtahir.Versions.android
@@ -156,7 +155,7 @@ class SimpleAndroidApp {
     }
 
     private String getMaybeNdkVersion() {
-        if (ndkVersion != null) {
+        if (ndkVersion != null && androidVersion >= android("3.5.0")) {
             return """ndkVersion '${ndkVersion}'"""
         } else {
             return ""
@@ -246,17 +245,55 @@ class SimpleAndroidApp {
     }
 
     private void configureAndroidSdkHome() {
-        file('local.properties').text = ""
-        def env = System.getenv("ANDROID_HOME")
-        if (!env) {
-            def androidSdkHome = new File("${System.getProperty("user.home")}/Library/Android/sdk")
-            file('local.properties').text += "sdk.dir=${androidSdkHome.absolutePath.replace(File.separatorChar, '/' as char)}"
+        def sdkDir = getSdkDirectory()?.replace("\\", "\\\\")
+        def ndkDir = getNdkDirectory()?.replace("\\", "\\\\")
+        def maybeNdkDir = ndkDir != null ? "ndk.dir=$ndkDir" : ""
+        println("SDK directory: $sdkDir")
+        println("NDK directory: $ndkDir")
+        file('local.properties') << """
+            sdk.dir=$sdkDir
+            ${maybeNdkDir}
+        """.stripIndent()
+    }
+
+    // Get SDK directory from local.properties and environment variables
+    private static String getSdkDirectory() {
+        // get root project directory
+        def rootProjectDir = System.getProperty("local.root_project.dir")
+        def sdkDir = null
+
+        // get sdk directory from local.properties in root project
+        def localProperties = new File(rootProjectDir, "local.properties")
+        if (localProperties.exists()) {
+            Properties properties = new Properties()
+            localProperties.withInputStream { properties.load(it) }
+            sdkDir = properties.getProperty("sdk.dir")
         }
-        // def env = System.getenv("ANDROID_NDK_HOME")
-        // if (!env) {
-        //     def androidNdkHome = new File("${System.getProperty("user.home")}/Library/Android/sdk")
-        //     file('local.properties').text += "sdk.dir=${androidSdkHome.absolutePath.replace(File.separatorChar, '/' as char)}"
-        // }
+
+        // get sdk directory from environment variables
+        if (sdkDir == null) {
+            sdkDir = System.getenv("ANDROID_HOME")
+        }
+
+        // Fallback in MacOS
+        if (sdkDir == null) {
+            def androidSdkHome = new File(System.getProperty("user.home"), "Library/Android/sdk")
+            sdkDir = androidSdkHome.absolutePath.replace(File.separatorChar, '/' as char)
+        }
+
+        return sdkDir
+    }
+
+    private String getNdkDirectory() {
+        if (androidVersion >= android("3.5.0")) {
+            return null
+        }
+
+        if (sdkDirectory == null || ndkVersion == null) {
+            return null
+        }
+
+        return new File(sdkDirectory, "ndk/${ndkVersion}").absolutePath
     }
 
     def file(String path) {
@@ -274,7 +311,7 @@ class SimpleAndroidApp {
         boolean kaptWorkersEnabled = true
 
         VersionNumber androidVersion = Versions.latestAndroidVersion()
-        VersionNumber ndkVersion = null
+        VersionNumber ndkVersion = VersionNumber.parse("25.2.9519653")
 
         VersionNumber kotlinVersion = VersionNumber.parse("1.3.72")
         File projectDir
@@ -329,9 +366,6 @@ class SimpleAndroidApp {
         }
 
         SimpleAndroidApp build() {
-            if (ndkVersion == null && androidVersion >= android("3.4.0")) {
-                ndkVersion = VersionNumber.parse("21.4.7075529")
-            }
             return new SimpleAndroidApp(projectDir, cacheDir, androidVersion, ndkVersion, kotlinVersion, kotlinEnabled, kaptWorkersEnabled)
         }
     }

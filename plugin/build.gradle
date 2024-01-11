@@ -116,6 +116,7 @@ tasks.register('generateTestTasksJson') {
 tasks.withType(Test).configureEach {
     dependsOn publish
     systemProperty "local.repo", localRepo.toURI()
+    systemProperty "local.root_project.dir", rootProject.projectDir
     useJUnitPlatform()
     retry {
         maxRetries = isCI ? 1 : 0
