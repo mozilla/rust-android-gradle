@@ -35,7 +35,7 @@ class NdkVersionTest extends AbstractTest {
         // To ease debugging.
         temporaryFolder.root.eachFileRecurse {
             System.err.println("before> ${it}")
-            if (it.path.endsWith(".gradle")) {
+            if (it.path.endsWith(".gradle") || it.path.endsWith(".properties")) {
                 System.err.println(it.text)
             }
         }
