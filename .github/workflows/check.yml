@@ -201,10 +201,6 @@ jobs:
         run: |
           ./gradlew -p plugin tasks --warning-mode all
 
-      - name: List toolchains for debug
-        run: |
-          ./gradlew -p plugin :javaToolchains
-
       - name: Gradle test
         run: |
           ./gradlew -p plugin ${{ matrix.androidTestTask }} --info --warning-mode all
