@@ -50,7 +50,6 @@ class SimpleAndroidApp {
                         }
                     }
                     dependencies {
-                        //classpath ('com.android.tools.build:gradle:$androidVersion') { force = true }
                         classpath ('com.android.tools.build:gradle') { version { strictly "$androidVersion" } }
                         classpath "org.mozilla.rust-android-gradle:plugin:${Versions.PLUGIN_VERSION}"
                         ${kotlinPluginDependencyIfEnabled}
