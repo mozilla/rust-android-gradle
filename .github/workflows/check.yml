@@ -22,7 +22,7 @@ jobs:
           ./gradlew -p plugin generateTestTasksJson
 
       - id: setup-matrix
-        run: echo "::set-output name=matrix::$(cat plugin/build/build-resources/androidTestTasks.json)"
+        run: echo "matrix=$(cat plugin/build/build-resources/androidTestTasks.json)" >> $GITHUB_OUTPUT
 
       - name: debug
         run: echo ${{ steps.setup-matrix.outputs.matrix }}
