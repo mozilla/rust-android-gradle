@@ -40,6 +40,15 @@ cargo {
     module = "../rust"
     targets = ["x86_64", "arm64"]
     libname = "rust"
+
+    buildTypes {
+        debug {
+            profile = "dev"
+        }
+        release {
+            profile = "release"
+        }
+    }
 }
 
 repositories {

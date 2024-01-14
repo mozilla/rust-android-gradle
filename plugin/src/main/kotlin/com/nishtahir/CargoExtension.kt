@@ -3,12 +3,11 @@ package com.nishtahir
 import com.android.build.gradle.api.BaseVariant
 import org.gradle.api.Action
 import org.gradle.api.GradleException
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.Project
 import org.gradle.process.ExecSpec
 import java.io.File
-import java.util.*
-import javax.inject.Inject
+import java.util.Properties
 
 sealed class Features {
     class All() : Features()
@@ -18,6 +17,7 @@ sealed class Features {
     data class NoDefaultBut(val featureSet: Set<String>) : Features()
 }
 
+@Suppress("unused")
 data class FeatureSpec(var features: Features? = null) {
     fun all() {
         this.features = Features.All()
@@ -33,17 +33,15 @@ data class FeatureSpec(var features: Features? = null) {
 }
 
 // `CargoExtension` is documented in README.md.
+@Suppress("unused")
 open class CargoConfig(val name: String){
-    @Inject
-    constructor (name: String, objectFactory: ObjectFactory): this(name)
-
     lateinit var localProperties: Properties
 
     var module: String? = null
     var libname: String? = null
     var targets: List<String>? = null
     var prebuiltToolchains: Boolean? = null
-    var profile: String = "release"
+    var profile: String? = null
     var verbose: Boolean? = null
     var targetDirectory: String? = null
     var targetIncludes: Array<String>? = null
@@ -149,17 +147,19 @@ open class CargoConfig(val name: String){
             targetDirectory = other.targetDirectory ?: from.targetDirectory
             targetIncludes = other.targetIncludes ?: from.targetIncludes
             apiLevel = other.apiLevel ?: from.apiLevel
-            apiLevels = other.apiLevels ?: from.apiLevels
+            apiLevels = from.apiLevels.toMutableMap().apply {
+                other.apiLevels.forEach { (k, v) -> put(k, v) }
+            }
             extraCargoBuildArguments = other.extraCargoBuildArguments ?: from.extraCargoBuildArguments
             exec = other.exec ?: from.exec
-            featureSpec = other.featureSpec ?: from.featureSpec
+            featureSpec = FeatureSpec(other.featureSpec.features ?: from.featureSpec.features)
         }
     }
 }
 
-open class CargoExtension @Inject constructor(objectFactory: ObjectFactory): CargoConfig("", objectFactory) {
+open class CargoExtension(project: Project): CargoConfig("") {
     val buildTypes: NamedDomainObjectContainer<CargoConfig> =
-        objectFactory.domainObjectContainer(CargoConfig::class.java)
+        project.container(CargoConfig::class.java)
 
     fun getConfig(variants: BaseVariant): CargoConfig {
         val baseConfig = this as CargoConfig

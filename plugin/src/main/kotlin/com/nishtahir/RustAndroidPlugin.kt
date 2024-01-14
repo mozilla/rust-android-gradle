@@ -162,7 +162,7 @@ open class RustAndroidPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         with(project) {
-            cargoExtension = extensions.create("cargo", CargoExtension::class.java)
+            cargoExtension = extensions.create("cargo", CargoExtension::class.java, this)
 
             afterEvaluate {
                 plugins.all {

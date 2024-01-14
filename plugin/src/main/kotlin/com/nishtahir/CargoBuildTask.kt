@@ -27,6 +27,7 @@ open class CargoBuildTask : DefaultTask() {
             val toolchain = toolchain ?: throw GradleException("toolchain cannot be null")
 
             val config = cargoConfig ?: throw GradleException("config cannot be null")
+            config.profile = config.profile ?: "release"
 
             project.plugins.all {
                 when (it) {
