@@ -1,5 +1,5 @@
 buildscript {
-    ext.agp_version = '7.0.0'
+    ext.agp_version = '8.2.0'
     repositories {
         google()
         maven {
@@ -16,12 +16,13 @@ apply plugin: 'com.android.library'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
+    namespace "com.nishtahir.library"
     compileSdkVersion 27
     ndkVersion "23.1.7779620"
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 

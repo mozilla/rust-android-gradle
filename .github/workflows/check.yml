@@ -67,11 +67,11 @@ jobs:
           ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
         shell: bash
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 11
+          java-version: 17
           cache: 'gradle'
 
       - name: Assemble samples/app
@@ -186,12 +186,15 @@ jobs:
           toolchain: 1.67
           targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
 
-      # Use Java 8
-      - name: Setup Java 8
+      # Use Java 8 globally and Java 11/17 for tests
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 8
+          java-version: |
+            11
+            17
+            8
           cache: 'gradle'
 
       - name: Gradle setup
