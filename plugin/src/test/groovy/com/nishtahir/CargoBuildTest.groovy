@@ -1,12 +1,8 @@
 package com.nishtahir
 
-import org.gradle.api.GradleException
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Unroll
-
-import com.nishtahir.Versions
-
 
 @MultiVersionTest
 class CargoBuildTest extends AbstractTest {

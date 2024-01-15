@@ -4,8 +4,6 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Unroll
 
-import com.nishtahir.Versions
-
 class NdkVersionTest extends AbstractTest {
     @Unroll
     def "cargoBuild works with Android NDK version #ndkVersion"() {

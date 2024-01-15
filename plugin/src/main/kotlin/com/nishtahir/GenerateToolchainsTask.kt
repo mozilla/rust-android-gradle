@@ -21,7 +21,7 @@ open class GenerateToolchainsTask : DefaultTask() {
         }
     }
 
-    inline fun <reified T : BaseExtension> configureTask(project: Project) {
+    private inline fun <reified T : BaseExtension> configureTask(project: Project) {
         val cargoExtension = project.extensions[CargoExtension::class]
         val app = project.extensions[T::class]
         val ndkPath = app.ndkDirectory
@@ -37,13 +37,13 @@ open class GenerateToolchainsTask : DefaultTask() {
                      val apiLevel = cargoExtension.apiLevels[arch]!!
 
                      if (arch.endsWith("64") && apiLevel < 21) {
-                        throw GradleException("Can't target 64-bit ${arch} with API level < 21 (${apiLevel})")
+                        throw GradleException("Can't target 64-bit $arch with API level < 21 (${apiLevel})")
                     }
 
                     // Always regenerate the toolchain, even if it exists
                     // already. It is fast to do so and fixes any issues
                     // with partially reclaimed temporary files.
-                    val dir = File(cargoExtension.toolchainDirectory, arch + "-" + apiLevel)
+                    val dir = File(cargoExtension.toolchainDirectory, "$arch-$apiLevel")
                     project.exec { spec ->
                         spec.standardOutput = System.out
                         spec.errorOutput = System.out
