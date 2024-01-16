@@ -12,10 +12,6 @@ buildscript {
     }
 }
 
-plugins {
-    id "com.dorongold.task-tree" version "2.1.1"
-}
-
 apply plugin: 'com.android.application'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
