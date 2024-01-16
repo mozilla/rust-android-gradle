@@ -15,8 +15,6 @@ buildscript {
 apply plugin: 'com.android.library'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
-println "lib: ${agp_version}"
-
 android {
     namespace "com.nishtahir.library"
     compileSdkVersion 27
@@ -85,7 +83,6 @@ afterEvaluate {
             productFlavor += "${it.name.capitalize()}"
         }
         def buildType = "${variant.buildType.name.capitalize()}"
-        // tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild"])
-        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild${buildType}"])
+        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
     }
 }

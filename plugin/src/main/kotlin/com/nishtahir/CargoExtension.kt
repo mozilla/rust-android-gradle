@@ -32,7 +32,6 @@ data class FeatureSpec(var features: Features? = null) {
     }
 }
 
-// `CargoExtension` is documented in README.md.
 @Suppress("unused")
 open class CargoConfig(val name: String){
     lateinit var localProperties: Properties
@@ -155,11 +154,30 @@ open class CargoConfig(val name: String){
             featureSpec = FeatureSpec(other.featureSpec.features ?: from.featureSpec.features)
         }
     }
+
+    fun clone(): CargoConfig {
+        val from = this
+        return CargoConfig(name).apply {
+            module = from.module
+            libname = from.libname
+            targets = from.targets
+            prebuiltToolchains = from.prebuiltToolchains
+            profile = from.profile
+            verbose = from.verbose
+            targetDirectory = from.targetDirectory
+            targetIncludes = from.targetIncludes
+            apiLevel = from.apiLevel
+            apiLevels = from.apiLevels
+            extraCargoBuildArguments = from.extraCargoBuildArguments
+            exec = from.exec
+            featureSpec = FeatureSpec(from.featureSpec.features)
+        }
+    }
 }
 
+// `CargoExtension` is documented in README.md.
 open class CargoExtension(project: Project): CargoConfig("") {
-    val buildTypes: NamedDomainObjectContainer<CargoConfig> =
-        project.container(CargoConfig::class.java)
+    val buildTypes: NamedDomainObjectContainer<CargoConfig> = project.container(CargoConfig::class.java)
 
     fun getConfig(variants: BaseVariant): CargoConfig {
         val baseConfig = this as CargoConfig
@@ -167,6 +185,6 @@ open class CargoExtension(project: Project): CargoConfig("") {
         if (buildTypeConfig is CargoConfig) {
             return baseConfig.merge(buildTypeConfig)
         }
-        return baseConfig
+        return baseConfig.clone()
     }
 }

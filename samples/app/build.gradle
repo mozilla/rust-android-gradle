@@ -12,6 +12,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.dorongold.task-tree" version "2.1.1"
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
@@ -40,15 +44,6 @@ cargo {
     module = "../rust"
     targets = ["x86_64", "arm64"]
     libname = "rust"
-
-    buildTypes {
-        debug {
-            profile = "dev"
-        }
-        release {
-            profile = "release"
-        }
-    }
 }
 
 repositories {
@@ -73,6 +68,6 @@ afterEvaluate {
             productFlavor += "${it.name.capitalize()}"
         }
         def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild"])
+        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
     }
 }

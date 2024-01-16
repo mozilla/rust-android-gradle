@@ -36,8 +36,10 @@ class CargoBuildTest extends AbstractTest {
         then:
         buildResult.task(':app:cargoBuild').outcome == TaskOutcome.SUCCESS
         buildResult.task(':library:cargoBuild').outcome == TaskOutcome.SUCCESS
-        new File(temporaryFolder.root, "app/build/rustJniLibs/android/x86_64/librust.so").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/android/x86_64/librust.so").exists()
+        new File(temporaryFolder.root, "app/build/rustJniLibs/debug/android/x86_64/librust.so").exists()
+        new File(temporaryFolder.root, "app/build/rustJniLibs/release/android/x86_64/librust.so").exists()
+        new File(temporaryFolder.root, "library/build/rustJniLibs/debug/android/x86_64/librust.so").exists()
+        new File(temporaryFolder.root, "library/build/rustJniLibs/release/android/x86_64/librust.so").exists()
 
         where:
         [androidVersion, gradleVersion] << TestVersions.allCandidateTestVersions.entries().collect { [it.key, it.value] }

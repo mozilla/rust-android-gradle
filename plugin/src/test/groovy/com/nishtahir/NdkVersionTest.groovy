@@ -53,8 +53,10 @@ class NdkVersionTest extends AbstractTest {
         then:
         buildResult.task(':app:cargoBuild').outcome == TaskOutcome.SUCCESS
         buildResult.task(':library:cargoBuild').outcome == TaskOutcome.SUCCESS
-        new File(temporaryFolder.root, "app/build/rustJniLibs/${location}").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/${location}").exists()
+        new File(temporaryFolder.root, "app/build/rustJniLibs/debug/${location}").exists()
+        new File(temporaryFolder.root, "app/build/rustJniLibs/release/${location}").exists()
+        new File(temporaryFolder.root, "library/build/rustJniLibs/debug/${location}").exists()
+        new File(temporaryFolder.root, "library/build/rustJniLibs/release/${location}").exists()
 
         where:
         ndkVersion << [

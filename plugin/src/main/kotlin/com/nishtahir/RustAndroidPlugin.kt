@@ -25,7 +25,7 @@ val toolchains = listOf(
                 "x86_64-unknown-linux-gnu",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/linux-x86-64"),
+                "linux-x86-64"),
         // This should eventually go away: the darwin-x86-64 target will supersede it.
         // https://github.com/mozilla/rust-android-gradle/issues/77
         Toolchain("darwin",
@@ -33,79 +33,79 @@ val toolchains = listOf(
                 "x86_64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/darwin"),
+                "darwin"),
         Toolchain("darwin-x86-64",
                 ToolchainType.DESKTOP,
                 "x86_64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/darwin-x86-64"),
+                "darwin-x86-64"),
         Toolchain("darwin-aarch64",
                 ToolchainType.DESKTOP,
                 "aarch64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/darwin-aarch64"),
+                "darwin-aarch64"),
         Toolchain("win32-x86-64-msvc",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-msvc",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/win32-x86-64"),
+                "win32-x86-64"),
         Toolchain("win32-x86-64-gnu",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-gnu",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/win32-x86-64"),
+                "win32-x86-64"),
         Toolchain("arm",
                 ToolchainType.ANDROID_GENERATED,
                 "armv7-linux-androideabi",
                 "arm-linux-androideabi",
                 "arm-linux-androideabi",
-                "android/armeabi-v7a"),
+                "armeabi-v7a"),
         Toolchain("arm64",
                 ToolchainType.ANDROID_GENERATED,
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "aarch64-linux-android",
-                "android/arm64-v8a"),
+                "arm64-v8a"),
         Toolchain("x86",
                 ToolchainType.ANDROID_GENERATED,
                 "i686-linux-android",
                 "i686-linux-android",
                 "i686-linux-android",
-                "android/x86"),
+                "x86"),
         Toolchain("x86_64",
                 ToolchainType.ANDROID_GENERATED,
                 "x86_64-linux-android",
                 "x86_64-linux-android",
                 "x86_64-linux-android",
-                "android/x86_64"),
+                "x86_64"),
         Toolchain("arm",
                 ToolchainType.ANDROID_PREBUILT,
                 "armv7-linux-androideabi",  // This is correct.  "Note: For 32-bit ARM, the compiler is prefixed with
                 "armv7a-linux-androideabi", // armv7a-linux-androideabi, but the binutils tools are prefixed with
                 "arm-linux-androideabi",    // arm-linux-androideabi. For other architectures, the prefixes are the same
-                "android/armeabi-v7a"),     // for all tools."  (Ref: https://developer.android.com/ndk/guides/other_build_systems#overview )
+                "armeabi-v7a"),     // for all tools."  (Ref: https://developer.android.com/ndk/guides/other_build_systems#overview )
         Toolchain("arm64",
                 ToolchainType.ANDROID_PREBUILT,
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "aarch64-linux-android",
-                "android/arm64-v8a"),
+                "arm64-v8a"),
         Toolchain("x86",
                 ToolchainType.ANDROID_PREBUILT,
                 "i686-linux-android",
                 "i686-linux-android",
                 "i686-linux-android",
-                "android/x86"),
+                "x86"),
         Toolchain("x86_64",
                 ToolchainType.ANDROID_PREBUILT,
                 "x86_64-linux-android",
                 "x86_64-linux-android",
                 "x86_64-linux-android",
-                "android/x86_64")
+                "x86_64")
 )
 
 data class Toolchain(val platform: String,
@@ -189,7 +189,6 @@ open class RustAndroidPlugin : Plugin<Project> {
                 configureForVariant<T>(project, variant)
             }
         }
-
     }
 
     private inline fun <reified T: BaseExtension> configureForVariant(project: Project, variant: BaseVariant) = with(project) {
@@ -210,6 +209,8 @@ open class RustAndroidPlugin : Plugin<Project> {
         if (config.libname == null) {
             throw GradleException("libname cannot be null")
         }
+
+        config.profile = config.profile ?: (if (variant.buildType.isDebuggable) { "dev" } else { "release" })
 
         // Allow to set targets, including per-project, in local.properties.
         val localTargets: String? =
@@ -239,9 +240,11 @@ open class RustAndroidPlugin : Plugin<Project> {
             throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
         }
 
+        val buildTypeName = variant.buildType.name
+        val destDir = File("$buildDir/rustJniLibs/${buildTypeName}")
         extensions[T::class].apply {
-            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/android"))
-            sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
+            sourceSets.getByName(buildTypeName).jniLibs.srcDir(File(destDir, "android"))
+            sourceSets.getByName("test").resources.srcDir(File(destDir, "desktop"))
         }
 
         // Determine the NDK version, if present
@@ -319,6 +322,7 @@ open class RustAndroidPlugin : Plugin<Project> {
                 description = "Build library for variant: $capitalisedVariantName ($target)"
                 toolchain = theToolchain
                 cargoConfig = config
+                destinationDir = destDir.toString()
             }
 
             if (!usePrebuilt) {

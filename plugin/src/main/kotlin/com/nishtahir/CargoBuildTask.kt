@@ -19,6 +19,9 @@ open class CargoBuildTask : DefaultTask() {
     @Input
     var cargoConfig: CargoConfig? = null
 
+    @Input
+    var destinationDir: String? = null
+
     @Suppress("unused")
     @TaskAction
     fun build() = with(project) {
@@ -27,7 +30,6 @@ open class CargoBuildTask : DefaultTask() {
             val toolchain = toolchain ?: throw GradleException("toolchain cannot be null")
 
             val config = cargoConfig ?: throw GradleException("config cannot be null")
-            config.profile = config.profile ?: "release"
 
             project.plugins.all {
                 when (it) {
@@ -49,17 +51,26 @@ open class CargoBuildTask : DefaultTask() {
 
             val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
 
+            // cargo.profile is non-null here
+            val targetDirectoryProfile = getTargetDirectoryFromProfile(config.profile!!)
+
             var cargoOutputDir = File(if (toolchain.target == defaultTargetTriple) {
-                "${target}/${profile}"
+                "${target}/${targetDirectoryProfile}"
             } else {
-                "${target}/${toolchain.target}/${profile}"
+                "${target}/${toolchain.target}/${targetDirectoryProfile}"
             })
             if (!cargoOutputDir.isAbsolute) {
                 cargoOutputDir = File(project.project.projectDir, cargoOutputDir.path)
             }
             cargoOutputDir = cargoOutputDir.canonicalFile
 
-            val intoDir = File(buildDir, "rustJniLibs/${toolchain.folder}")
+            val folder = when (toolchain.type) {
+                ToolchainType.ANDROID_GENERATED -> "android"
+                ToolchainType.ANDROID_PREBUILT -> "android"
+                ToolchainType.DESKTOP -> "desktop"
+            } .let { "${it}/${toolchain.folder}" }
+
+            val intoDir = File(destinationDir, folder)
             intoDir.mkdirs()
 
             copy { spec ->
@@ -276,4 +287,11 @@ fun getDefaultTargetTriple(project: Project, rustc: String): String? {
         project.logger.info("Default rust target triple: $triple")
     }
     return triple
+}
+
+fun getTargetDirectoryFromProfile(profile: String): String {
+    return when (profile) {
+        "dev" -> "debug"
+        else -> profile
+    }
 }
