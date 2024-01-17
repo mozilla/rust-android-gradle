@@ -20,7 +20,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.3'
+        classpath 'io.github.emakryo.rust-android-gradle:plugin:0.9.3'
     }
 }
 ```
@@ -33,7 +33,7 @@ buildscript {
 }
 
 plugins {
-    id "org.mozilla.rust-android-gradle.rust-android" version "0.9.3"
+    id "io.github.emakryo.rust-android-gradle.rust-android" version "0.9.3"
 }
 ```
 
@@ -42,7 +42,7 @@ In your *project's* build.gradle, `apply plugin` and add the `cargo` configurati
 ```groovy
 android { ... }
 
-apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
+apply plugin: 'io.github.emakryo.rust-android-gradle.rust-android'
 
 cargo {
     module  = "../rust"       // Or whatever directory contains your Cargo.toml
@@ -554,7 +554,7 @@ An easy way to locally test changes made in this plugin is to simply add this to
 includeBuild('../rust-android-gradle') {
     dependencySubstitution {
         // As required.
-        substitute module('gradle.plugin.org.mozilla.rust-android-gradle:plugin') with project(':plugin')
+        substitute module('io.github.emakryo.rust-android-gradle:plugin') with project(':plugin')
     }
 }
 ```
@@ -608,7 +608,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.0'
+        classpath 'io.github.emakryo.rust-android-gradle:plugin:0.9.0'
     }
 }
 ```

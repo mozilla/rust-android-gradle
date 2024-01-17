@@ -8,12 +8,12 @@ buildscript {
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${agp_version}"
-        classpath 'org.mozilla.rust-android-gradle:rust-android:+'
+        classpath 'io.github.emakryo.rust-android-gradle:rust-android:+'
     }
 }
 
 apply plugin: 'com.android.application'
-apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
+apply plugin: 'io.github.emakryo.rust-android-gradle.rust-android'
 
 android {
     compileSdkVersion 27
@@ -96,12 +96,12 @@ afterEvaluate {
             productFlavor += "${it.name.capitalize()}"
         }
         def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild"])
+        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild${buildType}"])
 
         // Don't merge the jni lib folders until after the Rust libraries have been built.
-        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild"])
+        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
 
         // For unit tests.
-        tasks["process${productFlavor}${buildType}UnitTestJavaRes"].dependsOn(tasks["cargoBuild"])
+        tasks["process${productFlavor}${buildType}UnitTestJavaRes"].dependsOn(tasks["cargoBuild${buildType}"])
     }
 }

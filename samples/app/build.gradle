@@ -8,12 +8,12 @@ buildscript {
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$agp_version"
-        classpath 'org.mozilla.rust-android-gradle:rust-android:+'
+        classpath 'io.github.emakryo.rust-android-gradle:rust-android:+'
     }
 }
 
 apply plugin: 'com.android.application'
-apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
+apply plugin: 'io.github.emakryo.rust-android-gradle.rust-android'
 
 android {
     namespace "com.nishtahir.androidrust"
