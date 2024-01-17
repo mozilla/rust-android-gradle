@@ -1,5 +1,6 @@
 package com.nishtahir
 
+import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -7,7 +8,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
 import java.io.File
-import java.util.Properties
+import java.util.*
 
 const val RUST_TASK_GROUP = "rust"
 
@@ -24,7 +25,7 @@ val toolchains = listOf(
                 "x86_64-unknown-linux-gnu",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/linux-x86-64"),
+                "linux-x86-64"),
         // This should eventually go away: the darwin-x86-64 target will supersede it.
         // https://github.com/mozilla/rust-android-gradle/issues/77
         Toolchain("darwin",
@@ -32,79 +33,79 @@ val toolchains = listOf(
                 "x86_64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/darwin"),
+                "darwin"),
         Toolchain("darwin-x86-64",
                 ToolchainType.DESKTOP,
                 "x86_64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/darwin-x86-64"),
+                "darwin-x86-64"),
         Toolchain("darwin-aarch64",
                 ToolchainType.DESKTOP,
                 "aarch64-apple-darwin",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/darwin-aarch64"),
+                "darwin-aarch64"),
         Toolchain("win32-x86-64-msvc",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-msvc",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/win32-x86-64"),
+                "win32-x86-64"),
         Toolchain("win32-x86-64-gnu",
                 ToolchainType.DESKTOP,
                 "x86_64-pc-windows-gnu",
                 "<compilerTriple>",
                 "<binutilsTriple>",
-                "desktop/win32-x86-64"),
+                "win32-x86-64"),
         Toolchain("arm",
                 ToolchainType.ANDROID_GENERATED,
                 "armv7-linux-androideabi",
                 "arm-linux-androideabi",
                 "arm-linux-androideabi",
-                "android/armeabi-v7a"),
+                "armeabi-v7a"),
         Toolchain("arm64",
                 ToolchainType.ANDROID_GENERATED,
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "aarch64-linux-android",
-                "android/arm64-v8a"),
+                "arm64-v8a"),
         Toolchain("x86",
                 ToolchainType.ANDROID_GENERATED,
                 "i686-linux-android",
                 "i686-linux-android",
                 "i686-linux-android",
-                "android/x86"),
+                "x86"),
         Toolchain("x86_64",
                 ToolchainType.ANDROID_GENERATED,
                 "x86_64-linux-android",
                 "x86_64-linux-android",
                 "x86_64-linux-android",
-                "android/x86_64"),
+                "x86_64"),
         Toolchain("arm",
                 ToolchainType.ANDROID_PREBUILT,
                 "armv7-linux-androideabi",  // This is correct.  "Note: For 32-bit ARM, the compiler is prefixed with
                 "armv7a-linux-androideabi", // armv7a-linux-androideabi, but the binutils tools are prefixed with
                 "arm-linux-androideabi",    // arm-linux-androideabi. For other architectures, the prefixes are the same
-                "android/armeabi-v7a"),     // for all tools."  (Ref: https://developer.android.com/ndk/guides/other_build_systems#overview )
+                "armeabi-v7a"),     // for all tools."  (Ref: https://developer.android.com/ndk/guides/other_build_systems#overview )
         Toolchain("arm64",
                 ToolchainType.ANDROID_PREBUILT,
                 "aarch64-linux-android",
                 "aarch64-linux-android",
                 "aarch64-linux-android",
-                "android/arm64-v8a"),
+                "arm64-v8a"),
         Toolchain("x86",
                 ToolchainType.ANDROID_PREBUILT,
                 "i686-linux-android",
                 "i686-linux-android",
                 "i686-linux-android",
-                "android/x86"),
+                "x86"),
         Toolchain("x86_64",
                 ToolchainType.ANDROID_PREBUILT,
                 "x86_64-linux-android",
                 "x86_64-linux-android",
                 "x86_64-linux-android",
-                "android/x86_64")
+                "x86_64")
 )
 
 data class Toolchain(val platform: String,
@@ -155,11 +156,12 @@ data class Toolchain(val platform: String,
 
 @Suppress("unused")
 open class RustAndroidPlugin : Plugin<Project> {
-    internal lateinit var cargoExtension: CargoExtension
+    private lateinit var cargoExtension: CargoExtension
+    private lateinit var buildWholeTask: DefaultTask
 
     override fun apply(project: Project) {
         with(project) {
-            cargoExtension = extensions.create("cargo", CargoExtension::class.java)
+            cargoExtension = extensions.create("cargo", CargoExtension::class.java, this)
 
             afterEvaluate {
                 plugins.all {
@@ -174,56 +176,75 @@ open class RustAndroidPlugin : Plugin<Project> {
     }
 
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
-        cargoExtension.localProperties = Properties()
+        buildWholeTask = tasks.maybeCreate("cargoBuild", DefaultTask::class.java).apply {
+            group = RUST_TASK_GROUP
+            description = "Build library (all variants)"
+        }
+
+        when (val androidExtension = extensions[T::class]) {
+            is AppExtension -> androidExtension.applicationVariants.all { variant -> 
+                configureForVariant<T>(project, variant)
+            }
+            is LibraryExtension -> androidExtension.libraryVariants.all { variant ->
+                configureForVariant<T>(project, variant)
+            }
+        }
+    }
+
+    private inline fun <reified T: BaseExtension> configureForVariant(project: Project, variant: BaseVariant) = with(project) {
+        val capitalisedVariantName = variant.name.replaceFirstChar { it.uppercase() }
+        val config = cargoExtension.getConfig(variant)
+
+        config.localProperties = Properties()
 
         val localPropertiesFile = File(project.rootDir, "local.properties")
         if (localPropertiesFile.exists()) {
-            cargoExtension.localProperties.load(localPropertiesFile.inputStream())
+            config.localProperties.load(localPropertiesFile.inputStream())
         }
 
-        if (cargoExtension.module == null) {
+        if (config.module == null) {
             throw GradleException("module cannot be null")
         }
 
-        if (cargoExtension.libname == null) {
+        if (config.libname == null) {
             throw GradleException("libname cannot be null")
         }
 
+        config.profile = config.profile ?: (if (variant.buildType.isDebuggable) { "dev" } else { "release" })
+
         // Allow to set targets, including per-project, in local.properties.
         val localTargets: String? =
-                cargoExtension.localProperties.getProperty("rust.targets.${project.name}") ?:
-                cargoExtension.localProperties.getProperty("rust.targets")
+                config.localProperties.getProperty("rust.targets.${project.name}") ?:
+                config.localProperties.getProperty("rust.targets")
         if (localTargets != null) {
-            cargoExtension.targets = localTargets.split(',').map { it.trim() }
+            config.targets = localTargets.split(',').map { it.trim() }
         }
 
-        if (cargoExtension.targets == null) {
+        if (config.targets == null) {
             throw GradleException("targets cannot be null")
         }
 
         // Ensure that an API level is specified for all targets
-        val apiLevel = cargoExtension.apiLevel
-        if (cargoExtension.apiLevels.size > 0) {
+        val apiLevel = config.apiLevel
+        if (config.apiLevels.isNotEmpty()) {
             if (apiLevel != null) {
                 throw GradleException("Cannot set both `apiLevel` and `apiLevels`")
             }
         } else {
-            val default = if (apiLevel != null) {
-                apiLevel
-            } else {
-                extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
-            }
-            cargoExtension.apiLevels = cargoExtension.targets!!.map { it to default }.toMap()
+            val default = apiLevel ?: extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
+            config.apiLevels = config.targets!!.associateWith { default }
         }
-        val missingApiLevelTargets = cargoExtension.targets!!.toSet().minus(
-            cargoExtension.apiLevels.keys)
-        if (missingApiLevelTargets.size > 0) {
+        val missingApiLevelTargets = config.targets!!.toSet().minus(
+            config.apiLevels.keys)
+        if (missingApiLevelTargets.isNotEmpty()) {
             throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
         }
 
+        val buildTypeName = variant.buildType.name
+        val destDir = File("$buildDir/rustJniLibs/${buildTypeName}")
         extensions[T::class].apply {
-            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/android"))
-            sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
+            sourceSets.getByName(buildTypeName).jniLibs.srcDir(File(destDir, "android"))
+            sourceSets.getByName("test").resources.srcDir(File(destDir, "desktop"))
         }
 
         // Determine the NDK version, if present
@@ -237,9 +258,9 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         // Determine whether to use prebuilt or generated toolchains
         val usePrebuilt =
-            cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
-            cargoExtension.prebuiltToolchains ?:
-            (ndkVersionMajor >= 19);
+            config.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
+            config.prebuiltToolchains ?:
+            (ndkVersionMajor >= 19)
 
         if (usePrebuilt && ndkVersionMajor < 19) {
             throw GradleException("usePrebuilt = true requires NDK version 19+")
@@ -274,31 +295,34 @@ open class RustAndroidPlugin : Plugin<Project> {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
 
-        val buildTask = tasks.maybeCreate("cargoBuild",
+        val buildTask = tasks.maybeCreate("cargoBuild${capitalisedVariantName}",
                 DefaultTask::class.java).apply {
             group = RUST_TASK_GROUP
-            description = "Build library (all targets)"
+            description = "Build library for variant: $capitalisedVariantName"
         }
 
-        cargoExtension.targets!!.forEach { target ->
-            val theToolchain = toolchains
-                    .filter {
-                        if (usePrebuilt) {
-                            it.type != ToolchainType.ANDROID_GENERATED
-                        } else {
-                            it.type != ToolchainType.ANDROID_PREBUILT
-                        }
-                    }
-                    .find { it.platform == target }
-            if (theToolchain == null) {
-                throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
-            }
+        buildWholeTask.dependsOn(buildTask)
 
-            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
+        config.targets!!.forEach { target ->
+            val theToolchain = toolchains
+                .filter {
+                    if (usePrebuilt) {
+                        it.type != ToolchainType.ANDROID_GENERATED
+                    } else {
+                        it.type != ToolchainType.ANDROID_PREBUILT
+                    }
+                }
+                .find { it.platform == target }
+                ?: throw GradleException("Target $target is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
+
+            val targetBuildTask = tasks.maybeCreate(
+                    "cargoBuild${capitalisedVariantName}${target.replaceFirstChar { it.uppercase() }}",
                     CargoBuildTask::class.java).apply {
                 group = RUST_TASK_GROUP
-                description = "Build library ($target)"
+                description = "Build library for variant: $capitalisedVariantName ($target)"
                 toolchain = theToolchain
+                cargoConfig = config
+                destinationDir = destDir.toString()
             }
 
             if (!usePrebuilt) {

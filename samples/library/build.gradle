@@ -50,6 +50,16 @@ cargo {
     exec = { spec, toolchain ->
         spec.environment("TEST", "test")
     }
+
+    buildTypes {
+        release {
+            profile = "release"
+        }
+
+        debug {
+            profile = "dev"
+        }
+    }
 }
 
 repositories {
@@ -73,6 +83,6 @@ afterEvaluate {
             productFlavor += "${it.name.capitalize()}"
         }
         def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild"])
+        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
     }
 }

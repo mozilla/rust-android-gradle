@@ -364,6 +364,35 @@ cargo {
 }
 ```
 
+### Build types
+
+The plugin supports building for multiple build types.  The build types are compatible with the
+[android plugin's build types](https://developer.android.com/build/build-variants#build-types),
+and are specified in the `buildTypes` block. Any configuration above can be specified per build.
+For configuration value of `profile`, `dev` profile is used for debuggable build types (e.g. `debug` build type),
+and `release` is used otherwise (e.g. `release` build type).
+`buildTypes` block is useful to specify different features for different build types.
+
+```groovy
+cargo {
+    features {
+        defaultAnd "x"
+    }
+    buildTypes {
+        debug {
+            features {
+                defaultAnd "y"
+            }
+        }
+        release {
+            features {
+                noDefaultBut "z"
+            }
+        }
+    }
+}
+```
+
 ## Specifying NDK toolchains
 
 The plugin can either use prebuilt NDK toolchain binaries, or search for (and if missing, build)

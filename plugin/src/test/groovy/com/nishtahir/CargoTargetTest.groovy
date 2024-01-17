@@ -4,8 +4,6 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Unroll
 
-import com.nishtahir.Versions
-
 class CargoTargetTest extends AbstractTest {
     @Unroll
     def "cargoBuild produces #location for target #target"() {
@@ -46,8 +44,10 @@ class CargoTargetTest extends AbstractTest {
         then:
         buildResult.task(':app:cargoBuild').outcome == TaskOutcome.SUCCESS
         buildResult.task(':library:cargoBuild').outcome == TaskOutcome.SUCCESS
-        new File(temporaryFolder.root, "app/build/rustJniLibs/${location}").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/${location}").exists()
+        new File(temporaryFolder.root, "app/build/rustJniLibs/debug/${location}").exists()
+        new File(temporaryFolder.root, "app/build/rustJniLibs/release/${location}").exists()
+        new File(temporaryFolder.root, "library/build/rustJniLibs/debug/${location}").exists()
+        new File(temporaryFolder.root, "library/build/rustJniLibs/release/${location}").exists()
 
         where:
         [target, location] << [

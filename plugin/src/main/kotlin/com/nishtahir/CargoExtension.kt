@@ -1,10 +1,13 @@
 package com.nishtahir
 
+import com.android.build.gradle.api.BaseVariant
 import org.gradle.api.Action
 import org.gradle.api.GradleException
+import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.Project
 import org.gradle.process.ExecSpec
 import java.io.File
-import java.util.*
+import java.util.Properties
 
 sealed class Features {
     class All() : Features()
@@ -14,6 +17,7 @@ sealed class Features {
     data class NoDefaultBut(val featureSet: Set<String>) : Features()
 }
 
+@Suppress("unused")
 data class FeatureSpec(var features: Features? = null) {
     fun all() {
         this.features = Features.All()
@@ -28,15 +32,15 @@ data class FeatureSpec(var features: Features? = null) {
     }
 }
 
-// `CargoExtension` is documented in README.md.
-open class CargoExtension {
+@Suppress("unused")
+open class CargoConfig(val name: String){
     lateinit var localProperties: Properties
 
     var module: String? = null
     var libname: String? = null
     var targets: List<String>? = null
     var prebuiltToolchains: Boolean? = null
-    var profile: String = "debug"
+    var profile: String? = null
     var verbose: Boolean? = null
     var targetDirectory: String? = null
     var targetIncludes: Array<String>? = null
@@ -69,33 +73,27 @@ open class CargoExtension {
                 return File(globalDir).absoluteFile
             }
 
-            var defaultDir = File(System.getProperty("java.io.tmpdir"), "rust-android-ndk-toolchains")
+            val defaultDir = File(System.getProperty("java.io.tmpdir"), "rust-android-ndk-toolchains")
             return defaultDir.absoluteFile
         }
 
     var cargoCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.cargoCommand", "RUST_ANDROID_GRADLE_CARGO_COMMAND") ?: "cargo"
             }
         }
 
     var rustupChannel: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.rustupChannel", "RUST_ANDROID_GRADLE_RUSTUP_CHANNEL") ?: ""
             }
         }
 
     var pythonCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
             }
         }
@@ -105,9 +103,7 @@ open class CargoExtension {
     // this isn't fatal, however.
     var rustcCommand: String = ""
         get() {
-            return if (!field.isEmpty()) {
-                field
-            } else {
+            return field.ifEmpty {
                 getProperty("rust.rustcCommand", "RUST_ANDROID_GRADLE_RUSTC_COMMAND") ?: "rustc"
             }
         }
@@ -136,5 +132,59 @@ open class CargoExtension {
             return global
         }
         return null
+    }
+
+    fun merge(other: CargoConfig): CargoConfig {
+        val from = this
+        return CargoConfig(name).apply {
+            module = other.module ?: from.module
+            libname = other.libname ?: from.libname
+            targets = other.targets ?: from.targets
+            prebuiltToolchains = other.prebuiltToolchains ?: from.prebuiltToolchains
+            profile = other.profile ?: from.profile
+            verbose = other.verbose ?: from.verbose
+            targetDirectory = other.targetDirectory ?: from.targetDirectory
+            targetIncludes = other.targetIncludes ?: from.targetIncludes
+            apiLevel = other.apiLevel ?: from.apiLevel
+            apiLevels = from.apiLevels.toMutableMap().apply {
+                other.apiLevels.forEach { (k, v) -> put(k, v) }
+            }
+            extraCargoBuildArguments = other.extraCargoBuildArguments ?: from.extraCargoBuildArguments
+            exec = other.exec ?: from.exec
+            featureSpec = FeatureSpec(other.featureSpec.features ?: from.featureSpec.features)
+        }
+    }
+
+    fun clone(): CargoConfig {
+        val from = this
+        return CargoConfig(name).apply {
+            module = from.module
+            libname = from.libname
+            targets = from.targets
+            prebuiltToolchains = from.prebuiltToolchains
+            profile = from.profile
+            verbose = from.verbose
+            targetDirectory = from.targetDirectory
+            targetIncludes = from.targetIncludes
+            apiLevel = from.apiLevel
+            apiLevels = from.apiLevels
+            extraCargoBuildArguments = from.extraCargoBuildArguments
+            exec = from.exec
+            featureSpec = FeatureSpec(from.featureSpec.features)
+        }
+    }
+}
+
+// `CargoExtension` is documented in README.md.
+open class CargoExtension(project: Project): CargoConfig("") {
+    val buildTypes: NamedDomainObjectContainer<CargoConfig> = project.container(CargoConfig::class.java)
+
+    fun getConfig(variants: BaseVariant): CargoConfig {
+        val baseConfig = this as CargoConfig
+        val buildTypeConfig = buildTypes.findByName(variants.buildType.name)
+        if (buildTypeConfig is CargoConfig) {
+            return baseConfig.merge(buildTypeConfig)
+        }
+        return baseConfig.clone()
     }
 }
