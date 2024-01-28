@@ -52,7 +52,17 @@ def localRepo = file("$buildDir/local-repo")
 publishing {
     repositories {
         maven {
+            name = 'local'
             url = localRepo.toURI()
+        }
+        maven {
+            name = 'GitHubPackages'
+            url = 'https://maven.pkg.github.com/emakryo/rust-android-gradle'
+
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv('GITHUB_USERNAME')
+                password = project.findProperty("gpr.key") ?: System.getenv('GITHUB_TOKEN')
+            }
         }
     }
 }
@@ -120,7 +130,7 @@ tasks.register('generateTestTasksJson') {
 
 // Configuration common to all test tasks
 tasks.withType(Test).configureEach {
-    dependsOn publish
+    dependsOn tasks.named("publishAllPublicationsToLocalRepository")
     systemProperty "local.repo", localRepo.toURI()
     systemProperty "local.root_project.dir", rootProject.projectDir
     useJUnitPlatform()

@@ -20,7 +20,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'io.github.emakryo.rust-android-gradle:plugin:0.9.3'
+        classpath 'io.github.emakryo.rust-android-gradle:plugin:0.1.0'
     }
 }
 ```
@@ -33,7 +33,7 @@ buildscript {
 }
 
 plugins {
-    id "io.github.emakryo.rust-android-gradle.rust-android" version "0.9.3"
+    id "io.github.emakryo.rust-android-gradle.rust-android" version "0.1.0"
 }
 ```
 

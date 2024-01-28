@@ -1,0 +1,80 @@
+name: Create release
+
+on:
+  push:
+    tags:
+      - v*.*.* # version-like tags
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check version in file and tag
+        run: diff version.properties <(echo "version=${GITHUB_REF_NAME#v}")
+
+      - name: Parse semantic versioning
+        id: semver
+        shell: python
+        run: |
+          import os, re
+          pat = r'^v(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
+          match = re.match(pat, os.environ["GITHUB_REF_NAME"])
+          output = open(os.environ["GITHUB_OUTPUT"], "w")
+          if match:
+              print(f"major={match.group('major') or ''}", file=output)
+              print(f"minor={match.group('minor') or ''}", file=output)
+              print(f"patch={match.group('patch') or ''}", file=output)
+              print(f"prerelease={match.group('prerelease') or ''}", file=output)
+              print(f"buildmetadata={match.group('buildmetadata') or ''}", file=output)
+          else:
+              raise Exception("Version tag is not valid semantic versioning.")
+
+      - name: Debug
+        run: |
+          echo ${{ steps.semver.outputs.major }}
+          echo ${{ steps.semver.outputs.minor }}
+          echo ${{ steps.semver.outputs.patch }}
+          echo ${{ steps.semver.outputs.prerelease }}
+          echo ${{ steps.semver.outputs.buildmetadata }}
+
+      - name: Generate notes file
+        shell: python
+        run: |
+          import re
+          doc = open("CHANGELOG.md").readlines()
+          output = []
+          if "${{ steps.semver.outputs.prerelease }}":
+            target_h2 = "Unreleased"
+          else:
+            target_h2 = "v${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}"
+          
+          include = False
+          for line in doc:
+            if re.match(rf"^## .*{target_h2}.*", line):
+              include = True
+            elif re.match(r"^## .*", line):
+              include = False
+            elif include:
+              output.append(line)
+            
+          notes = open("notes.txt", "w")
+          
+          while output[0] == "\n":
+            output = output[1:]
+          
+          for line in output:
+            print(line, end="", file=notes)
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRE_RELEASE: ${{ steps.semver.outputs.prerelease }}
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title ${{ github.ref_name }} \
+            --notes "Release ${{ github.ref_name }}" \
+            --draft \
+            --verify-tag \
+            --notes-file notes.txt \
+            ${PRE_RELEASE:+--prerelease}

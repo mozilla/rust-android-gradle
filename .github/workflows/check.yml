@@ -22,7 +22,7 @@ jobs:
           ./gradlew -p plugin generateTestTasksJson
 
       - id: setup-matrix
-        run: echo "matrix=$(cat plugin/build/build-resources/androidTestTasks.json)" >> $GITHUB_OUTPUT
+        run: echo "matrix=$(cat plugin/build/build-resources/androidTestTasks.json)" >> "$GITHUB_OUTPUT"
 
       - name: debug
         run: echo ${{ steps.setup-matrix.outputs.matrix }}
@@ -62,9 +62,9 @@ jobs:
           SDKMANAGER: /cmdline-tools/latest/bin/sdkmanager
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            SDKMANAGER=$(echo $SDKMANAGER | tr '/' '\').bat
+            SDKMANAGER=$(echo "$SDKMANAGER" | tr '/' '\').bat
           fi
-          ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
+          "${ANDROID_HOME}${SDKMANAGER}" --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
         shell: bash
 
       - name: Setup Java 17
@@ -119,9 +119,9 @@ jobs:
           SDKMANAGER: /cmdline-tools/latest/bin/sdkmanager
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            SDKMANAGER=$(echo $SDKMANAGER | tr '/' '\').bat
+            SDKMANAGER=$(echo "$SDKMANAGER" | tr '/' '\').bat
           fi
-          ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
+          "${ANDROID_HOME}${SDKMANAGER}" --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
         shell: bash
 
       # Use Java 8
@@ -170,9 +170,9 @@ jobs:
           SDKMANAGER: /cmdline-tools/latest/bin/sdkmanager
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            SDKMANAGER=$(echo $SDKMANAGER | tr '/' '\').bat
+            SDKMANAGER=$(echo "$SDKMANAGER" | tr '/' '\').bat
           fi
-          ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
+          "${ANDROID_HOME}${SDKMANAGER}" --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
         shell: bash
 
       - name: Setup Rust stable

@@ -17,15 +17,8 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-    - name: Write gradle.properties
-      env:
-        GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
-        GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
-      run: |
-        mkdir -p $HOME/.gradle/
-        echo "gradle.publish.key=${GRADLE_PUBLISH_KEY}" >> ~/.gradle/gradle.properties
-        echo "gradle.publish.secret=${GRADLE_PUBLISH_SECRET}" >> ~/.gradle/gradle.properties
-
     - name: Publish plugin
-      run: |
-        ./gradlew publishPlugins
+      env:
+        GITHUB_USERNAME: ${{ env.GITHUB_ACTOR }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: ./gradlew publishAllPublicationsToGitHubPackagesRepository
