@@ -3,12 +3,19 @@ buildscript {
     repositories {
         google()
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url = uri("https://plugins.gradle.org/m2/")
+        }
+        maven {
+            url = uri("https://maven.pkg.github.com/emakryo/rust-android-gradle")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            }
         }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$agp_version"
-        classpath 'io.github.emakryo.rust-android-gradle:rust-android:+'
+        classpath 'io.github.emakryo.rust-android-gradle:plugin:+'
     }
 }
 
