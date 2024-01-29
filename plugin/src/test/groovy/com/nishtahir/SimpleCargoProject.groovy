@@ -3,15 +3,18 @@ package com.nishtahir
 class SimpleCargoProject {
     File projectDir
     List<String> targets
+    String channel
 
-    SimpleCargoProject(File projectDir, List<String> targets) {
+    SimpleCargoProject(File projectDir, List<String> targets, String channel) {
         this.projectDir = projectDir
         this.targets = targets
+        this.channel = channel
     }
 
     static class Builder {
         File projectDir
         List<String> targets
+        String channel
 
         Builder(File projectDir) {
             this.projectDir = projectDir
@@ -22,11 +25,16 @@ class SimpleCargoProject {
             return this
         }
 
+        def withChannel(channel) {
+            this.channel = channel
+            return this
+        }
+
         def build() {
             if (targets.isEmpty()) {
                 throw new IllegalStateException("No targets provided")
             }
-            return new SimpleCargoProject(this.projectDir, this.targets)
+            return new SimpleCargoProject(this.projectDir, this.targets, this.channel)
         }
     }
 
@@ -70,5 +78,11 @@ class SimpleCargoProject {
                     libname = "rust"
                 }
             """.stripIndent()
+
+        if (channel != null) {
+            file('local.properties') << """
+                rust.rustupChannel=${channel}
+            """.stripIndent()
+        }
     }
 }
