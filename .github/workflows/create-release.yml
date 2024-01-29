@@ -47,7 +47,7 @@ jobs:
           if "${{ steps.semver.outputs.prerelease }}":
             target_h2 = "Unreleased"
           else:
-            target_h2 = "v${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}"
+            target_h2 = "${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}.${{ steps.semver.outputs.patch }}"
           
           include = False
           for line in doc:
