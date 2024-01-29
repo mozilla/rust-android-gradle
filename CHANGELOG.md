@@ -1,61 +1,26 @@
-# 0.9.3
+# Changelog
 
-- Fix issues with Android NDK 23+: use `llvm-ar`, support `-lgcc` rewriting on Windows.
+All notable changes to this project will be documented in this file.
 
-# 0.9.2
+This project is forked from
+[Mozilla's rust-android-gradle plugin](https://github.com/mozilla/rust-android-gradle).
+The last version of the original project is
+[0.9.3](https://github.com/mozilla/rust-android-gradle/commit/4fba4b9db16d56ba4e4f9aef2c028a4c2d6a9126).
+The initial release of this project has started from 0.1.0, ignoring the original project's releases.
+For the changes from the original project,
+see [CHANGELOG.md of the original project](https://github.com/mozilla/rust-android-gradle/blob/4fba4b9db16d56ba4e4f9aef2c028a4c2d6a9126/CHANGELOG.md).
 
-- Support Android NDK 23.
+## [Unreleased]
 
-# 0.9.1
+### Added
 
-- Add Desktop targets `darwin-x86-64`, which will supersede `darwin`, and `darwin-aarch64`.
+- Add configuration options and build for different profiles depending on android plugin's build type.
+- Support Android Gradle Plugin 8.2/8.1/8.0 and Gradle 8.2/8.0.
 
-# 0.9.0
+### Changed
 
-- Support multiple Android Gradle Plugin versions.  Everything here is based on https://github.com/gradle/android-cache-fix-gradle-plugin; many thanks to that project for paving the way here.
-- Allow `module` and `targetDirectory` to be absolute paths.  This is used in the test harness at the moment.
+- Use GitHub package registry for publishing.
 
-# 0.8.7
+### Fixed
 
-- Use per-platform API level for selecting toolchain.
-
-# 0.8.6
-
-- Revert a change that prevented publishing.
-
-# 0.8.5
-
-- Allow to use `+nightly`, etc, with `cargo { rustupChannel = "..." }`. Fixes #24.
-- Allow to set `cargo { (cargo|python|rustc)Command = "..." }`. Fixes #48.
-
-# 0.8.4
-
-- The plugin tries to interoperate with Rust bindgen out of the box by setting `CLANG_PATH`.
-- We no longer invoke `cargo` for the Gradle `clean` target.
-
-# 0.8.3
-
-- Plugin now supports using prebuilt NDK toolchains.
-
-# 0.8.2
-
-- Avoid passing `--target` to cargo for the default target.
-- The `exec` callback is now invoked as late as possible.
-- The `CARGO_TARGET_DIR` environment variable should now be respected, if it is set.
-- Various parts of the plugin's documentation have been improved.
-
-# 0.8.1
-
-- Added `extraCargoBuildArguments`.
-
-# 0.8.0
-
-- **breaking** Further split "win32-x86-64" into "win32-x86-64-{gnu,msvc}".
-- Fixed bug with DLL libraries in with JNA: expect "foo.dll" instead
-  of "libfoo.dll".
-
-# 0.7.0
-
-- Added per-target pass-through variables.
-- Separated "default" target into multiple Desktop targets:
-  "linux-x86-64, "darwin", "win32-x86-64".
+- Fix CI to support latest GitHub Actions environment.

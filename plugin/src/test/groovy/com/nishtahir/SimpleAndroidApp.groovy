@@ -51,7 +51,7 @@ class SimpleAndroidApp {
                     }
                     dependencies {
                         classpath ('com.android.tools.build:gradle') { version { strictly "$androidVersion" } }
-                        classpath "org.mozilla.rust-android-gradle:plugin:${Versions.PLUGIN_VERSION}"
+                        classpath "io.github.emakryo.rust-android-gradle:plugin:${Versions.PLUGIN_VERSION}"
                         ${kotlinPluginDependencyIfEnabled}
                     }
                 }
@@ -129,7 +129,7 @@ class SimpleAndroidApp {
         """
             apply plugin: "$androidPlugin"
             ${kotlinPluginsIfEnabled}
-            apply plugin: "org.mozilla.rust-android-gradle.rust-android"
+            apply plugin: "io.github.emakryo.rust-android-gradle.rust-android"
 
             repositories {
                 google()

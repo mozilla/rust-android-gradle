@@ -10,45 +10,86 @@ Cross compile Rust Cargo projects for Android targets.
 
 # Usage
 
-Add the plugin to your root `build.gradle`, like:
+You must set GitHub credentials in `gradle.properties` or in your environment variables
+because GitHub packages currently does not support access from unauthorized users.
+
+```properties
+gpr.user=<your_github_username>
+gpr.key=<your_github_token>
+```
+
+or
+
+```sh
+export GITHUB_USERNAME=<your_github_username>
+export GITHUB_TOKEN=<your_github_token>
+```
+
+In case of using `buildscript`, add the following to your *root's* `build.gradle`:
 
 ```groovy
 buildscript {
     repositories {
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url uri("https://maven.pkg.github.com/emakryo/rust-android-gradle")
+            credentials {
+               username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+               password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            }
         }
     }
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.3'
+        classpath 'io.github.emakryo.rust-android-gradle:plugin:0.1.0'
     }
 }
 ```
 
-or 
+and in your *project's* `build.gradle`:
 
 ```groovy
-buildscript {
-    //...
+apply plugin: 'io.github.emakryo.rust-android-gradle.rust-android'
+
+cargo {
+   module  = "../rust"       // Or whatever directory contains your Cargo.toml
+   libname = "rust"          // Or whatever matches Cargo.toml's [package] name.
+   targets = ["arm", "x86"]  // See bellow for a longer list of options
 }
 
-plugins {
-    id "org.mozilla.rust-android-gradle.rust-android" version "0.9.3"
+android { ... }
+```
+
+or in case of using `plugins`, add the following to your *root's* `settings.gradle`:
+
+```groovy
+// in settings.gradle
+pluginManagement {
+   repositories {
+      gradlePluginPortal()
+        maven {
+            url = uri("https://maven.pkg.github.com/emakryo/rust-android-gradle")
+            credentials {
+                username = settings.hasProperties('gpr.user') ? settings['gpr.user'] : System.getenv("GITHUB_USERNAME")
+                password = settings.hasProperties('gpr.key') ? settings['gpr.key'] : System.getenv("GITHUB_TOKEN")
+            }
+        }
+   }
 }
 ```
 
-In your *project's* build.gradle, `apply plugin` and add the `cargo` configuration:
+and in your *project's* `build.gradle`:
 
 ```groovy
-android { ... }
-
-apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
+plugins {
+   id 'io.github.emakryo.rust-android-gradle.rust-android' version '0.1.0'
+}
 
 cargo {
     module  = "../rust"       // Or whatever directory contains your Cargo.toml
     libname = "rust"          // Or whatever matches Cargo.toml's [package] name.
     targets = ["arm", "x86"]  // See bellow for a longer list of options
 }
+
+android { ... }
 ```
 
 Install the rust toolchains for your target platforms:
@@ -73,8 +114,10 @@ Finally, run the `cargoBuild` task to cross compile:
 Or add it as a dependency to one of your other build tasks, to build your rust code when you normally build your project:
 ```gradle
 tasks.whenTaskAdded { task ->
-    if ((task.name == 'javaPreCompileDebug' || task.name == 'javaPreCompileRelease')) {
-        task.dependsOn 'cargoBuild'
+    if (task.name == 'javaPreCompileDebug') {
+        task.dependsOn 'cargoBuildDebug'
+    } else if (task.name == 'javaPreCompileRelease') {
+        task.dependsOn 'cargoBuildRelease'
     }
 }
 ```
@@ -222,7 +265,7 @@ cargo {
 
 The Cargo [release profile](https://doc.rust-lang.org/book/second-edition/ch14-01-release-profiles.html#customizing-builds-with-release-profiles) to build.
 
-Defaults to `"debug"`.
+Default values are depending on build type: for `debug` builds, `dev`; for `release` builds, `release`.
 
 ```groovy
 cargo {
@@ -554,45 +597,38 @@ An easy way to locally test changes made in this plugin is to simply add this to
 includeBuild('../rust-android-gradle') {
     dependencySubstitution {
         // As required.
-        substitute module('gradle.plugin.org.mozilla.rust-android-gradle:plugin') with project(':plugin')
+        substitute module('io.github.emakryo.rust-android-gradle:plugin') with project(':plugin')
     }
 }
 ```
 
 # Publishing
 
-## Automatically via the Bump version Github Actions workflow
+## Github Actions workflows automatically create a release and publish the release 
 
-You will need to be a collaborator.  First, manually invoke the [Bump version Github Actions
-workflow](https://github.com/mozilla/rust-android-gradle/actions/workflows/bump.yml).  Specify a
-version (like "x.y.z", without quotes) and a single line changelog entry.  (This entry will have a
-dash prepended, so that it would look normal in a list.  This is working around [the lack of a
-multi-line input in Github
-Actions](https://github.community/t/multiline-inputs-for-workflow-dispatch/163906).)  This will push
-a preparatory commit updating version numbers and the changelog like [this
-one](https://github.com/mozilla/rust-android-gradle/commit/2a637d1797a5d0b5063b8d2f0a3d4a4938511154),
-and make a **draft** Github Release with a name like `vx.y.z`.  After verifying that tests pass,
-navigate to [the releases panel](https://github.com/mozilla/rust-android-gradle/releases) and edit
-the release, finally pressing "Publish release".  The release Github workflow will build and publish
-the plugin, although it may take some days for it to be reflected on the Gradle plugin portal.
+First, manually bump the version in `version.properties` (e.g. `version=0.1.0`) and
+update `CHANGELOG.md` with the changes from the previous release.
+Then, commit the changes and tag the commit with the version number (e.g. `git tag v0.1.0`).
+Pushing the tag to Github will trigger the Github Actions workflow to create a release draft.
+The version described in `version.properties` must match with the tag name.
+After verifying that tests pass, navigate to
+[the releases panel](https://github.com/emakryo/rust-android-gradle/releases) and edit
+the release, finally pressing "Publish release".
+The release Github workflow will build and publish the plugin.
 
 ## By hand
 
-You will need credentials to publish to the [Gradle plugin portal](https://plugins.gradle.org/) in
-the appropriate place for the [`plugin-publish`](https://plugins.gradle.org/docs/publish-plugin) to
-find them.  Usually, that's in `~/.gradle/gradle.properties`.
+You will need credentials to publish to the GitHub packages
+in gradle properties or in environment variables.
+For environment variables, `GITHUB_USERNAME` and `GITHUB_TOKEN` are required to be set appropriately.
+For gradle properties, `gpr.user` and `gpr.key` are required
+and they are in `~/.gradle/gradle.properties` usually.
 
-At top-level, the `publishPlugins` Gradle task publishes the plugin for consumption:
+At top-level, the `publishAllPublicationsToGitHubPackagesRepository` Gradle task publishes
+the plugin for consumption:
 
 ```
-$ ./gradlew publishPlugins
-...
-Publishing plugin org.mozilla.rust-android-gradle.rust-android version 0.8.1
-Publishing artifact build/libs/plugin-0.8.1.jar
-Publishing artifact build/libs/plugin-0.8.1-sources.jar
-Publishing artifact build/libs/plugin-0.8.1-javadoc.jar
-Publishing artifact build/publish-generated-resources/pom.xml
-Activating plugin org.mozilla.rust-android-gradle.rust-android version 0.8.1
+$ ./gradlew publishAllPublicationsToGitHubPackagesRepository
 ```
 
 ## Real projects
@@ -603,12 +639,12 @@ To test in a real project, use the local Maven repository in your `build.gradle`
 buildscript {
     repositories {
         maven {
-            url "file:///Users/nalexander/Mozilla/rust-android-gradle/build/local-repo"
+            url "file:///Users/emakryo/rust-android-gradle/build/local-repo"
         }
     }
 
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.0'
+        classpath 'io.github.emakryo.rust-android-gradle:plugin:0.1.0'
     }
 }
 ```
