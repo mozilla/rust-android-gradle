@@ -10,7 +10,7 @@ The initial release of this project has started from 0.1.0, ignoring the origina
 For the changes from the original project,
 see [CHANGELOG.md of the original project](https://github.com/mozilla/rust-android-gradle/blob/4fba4b9db16d56ba4e4f9aef2c028a4c2d6a9126/CHANGELOG.md).
 
-## [Unreleased]
+## [0.1.0] - 2024-01-29
 
 ### Added
 
