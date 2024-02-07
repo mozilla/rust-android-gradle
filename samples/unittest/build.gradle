@@ -1,10 +1,8 @@
 buildscript {
-    ext.agp_version = '4.0.1'
+    ext.agp_version = '8.2.0'
     repositories {
         google()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
+        mavenCentral()
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${agp_version}"
@@ -16,11 +14,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.github.emakryo.rust-android-gradle.rust-android'
 
 android {
+    namespace "com.nishtahir.androidrust"
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -31,22 +30,39 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    ndkVersion "22.1.7171670"
+    ndkVersion '26.1.10909125'
     sourceSets {
         test.resources.srcDirs += "$buildDir/rustJniLibs/desktop"
     }
 }
 
+def arch = System.getProperty('os.arch')
+def os = System.getProperty('os.name').toLowerCase()
+
 cargo {
     module = "../rust"
-    targets = ["x86_64", "linux-x86-64"] // "x86", "x86_64", "arm64"]
+    if (arch == "aarch64" && os.contains("mac os x")) {
+        targets = ["arm64", "darwin-aarch64"]
+    } else if ((arch == "x86_64" || arch == "amd64") && os.contains("mac os x")) {
+        targets = ["arm64", "darwin-x86-64"]
+    } else if ((arch == "x86_64" || arch == "amd64") && os.contains("linux")) {
+        targets = ["arm64", "linux-x86-64"]
+    } else {
+        throw new GradleException("Unsupported platform: arch=$arch, os=$os")
+    }
     libname = "rust"
 }
 
 repositories {
     google()
+    mavenCentral {
+        metadataSources {
+            // This is required to resolve the JNA dependency correctly.
+            artifact()
+            mavenPom()
+        }
+    }
 }
-
 
 configurations {
     // There's an interaction between Gradle's resolution of dependencies with different types
@@ -66,8 +82,8 @@ configurations {
 }
 
 dependencies {
-    jnaForTest "net.java.dev.jna:jna:5.6.0@jar"
-    implementation "net.java.dev.jna:jna:5.6.0@aar"
+    jnaForTest "net.java.dev.jna:jna:5.14.0@jar"
+    implementation "net.java.dev.jna:jna:5.14.0@aar"
 
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
@@ -85,23 +101,19 @@ dependencies {
     // avoiding other configurations from being resolved.  Tricky!
     testImplementation files(configurations.jnaForTest.copyRecursive().files)
     // testImplementation "androidx.test.ext:junit:$versions.androidx_junit"
-    testImplementation "org.robolectric:robolectric:4.2.1"
+    testImplementation "org.robolectric:robolectric:4.11.1"
 }
 
 afterEvaluate {
     // The `cargoBuild` task isn't available until after evaluation.
     android.applicationVariants.all { variant ->
-        def productFlavor = ""
-        variant.productFlavors.each {
-            productFlavor += "${it.name.capitalize()}"
-        }
         def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild${buildType}"])
+        tasks["generate${variant.name.capitalize()}Assets"].dependsOn(tasks["cargoBuild${buildType}"])
 
         // Don't merge the jni lib folders until after the Rust libraries have been built.
-        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
+        tasks["merge${variant.name.capitalize()}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
 
         // For unit tests.
-        tasks["process${productFlavor}${buildType}UnitTestJavaRes"].dependsOn(tasks["cargoBuild${buildType}"])
+        tasks["process${variant.name.capitalize()}UnitTestJavaRes"].dependsOn(tasks["cargoBuild${buildType}"])
     }
 }

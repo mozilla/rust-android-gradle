@@ -1,6 +1,6 @@
 includeBuild('../..') {
     dependencySubstitution {
         // As required.
-        substitute module('io.github.emakryo.rust-android-gradle:rust-android') with project(':plugin')
+        substitute module('io.github.emakryo.rust-android-gradle:rust-android') using project(':plugin')
     }
 }
