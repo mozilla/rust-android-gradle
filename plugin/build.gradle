@@ -2,14 +2,13 @@ import groovy.json.JsonBuilder
 import org.gradle.util.VersionNumber
 
 plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.8.20'
     id 'com.gradle.plugin-publish' version '1.2.1'
     id "org.gradle.test-retry" version "1.2.0"
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'groovy'
 }
-
-apply plugin: "java-gradle-plugin"
-apply plugin: "maven-publish"
-apply plugin: "groovy"
-apply plugin: "kotlin"
 
 gradlePlugin {
     website = 'https://github.com/emakryo/rust-android-gradle'
