@@ -33,8 +33,8 @@ buildscript {
         maven {
             url uri("https://maven.pkg.github.com/emakryo/rust-android-gradle")
             credentials {
-               username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
-               password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
             }
         }
     }
@@ -50,9 +50,9 @@ and in your *project's* `build.gradle`:
 apply plugin: 'io.github.emakryo.rust-android-gradle.rust-android'
 
 cargo {
-   module  = "../rust"       // Or whatever directory contains your Cargo.toml
-   libname = "rust"          // Or whatever matches Cargo.toml's [package] name.
-   targets = ["arm", "x86"]  // See bellow for a longer list of options
+    module  = "../rust"       // Or whatever directory contains your Cargo.toml
+    libname = "rust"          // Or whatever matches Cargo.toml's [package] name.
+    targets = ["arm", "x86"]  // See bellow for a longer list of options
 }
 
 android { ... }
@@ -63,8 +63,8 @@ or in case of using `plugins`, add the following to your *root's* `settings.grad
 ```groovy
 // in settings.gradle
 pluginManagement {
-   repositories {
-      gradlePluginPortal()
+    repositories {
+        gradlePluginPortal()
         maven {
             url = uri("https://maven.pkg.github.com/emakryo/rust-android-gradle")
             credentials {
@@ -72,7 +72,7 @@ pluginManagement {
                 password = settings.hasProperties('gpr.key') ? settings['gpr.key'] : System.getenv("GITHUB_TOKEN")
             }
         }
-   }
+    }
 }
 ```
 
@@ -80,7 +80,7 @@ and in your *project's* `build.gradle`:
 
 ```groovy
 plugins {
-   id 'io.github.emakryo.rust-android-gradle.rust-android' version '0.1.0'
+    id 'io.github.emakryo.rust-android-gradle.rust-android' version '0.1.0'
 }
 
 cargo {
