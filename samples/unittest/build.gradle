@@ -10,6 +10,10 @@ buildscript {
     }
 }
 
+plugins {
+  id("com.dorongold.task-tree") version "2.1.1"
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'io.github.emakryo.rust-android-gradle.rust-android'
 
@@ -31,9 +35,7 @@ android {
         }
     }
     ndkVersion '26.1.10909125'
-    sourceSets {
-        test.resources.srcDirs += "$buildDir/rustJniLibs/desktop"
-    }
+
 }
 
 def arch = System.getProperty('os.arch')
@@ -47,6 +49,8 @@ cargo {
         targets = ["arm64", "darwin-x86-64"]
     } else if ((arch == "x86_64" || arch == "amd64") && os.contains("linux")) {
         targets = ["arm64", "linux-x86-64"]
+    } else if ((arch == "x86_64" || arch == "amd64") && os.contains("windows")) {
+        targets = ["arm64", "win32-x86-64-msvc"]
     } else {
         throw new GradleException("Unsupported platform: arch=$arch, os=$os")
     }
@@ -104,16 +108,40 @@ dependencies {
     testImplementation "org.robolectric:robolectric:4.11.1"
 }
 
-afterEvaluate {
-    // The `cargoBuild` task isn't available until after evaluation.
-    android.applicationVariants.all { variant ->
-        def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["generate${variant.name.capitalize()}Assets"].dependsOn(tasks["cargoBuild${buildType}"])
+// TODO: Remove this when the plugin supports this.
+android.applicationVariants.all { variant ->
+    def buildType = "${variant.buildType.name.capitalize()}"
 
-        // Don't merge the jni lib folders until after the Rust libraries have been built.
-        tasks["merge${variant.name.capitalize()}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
+    def libsDir = files("$buildDir/rustJniLibs/debug/desktop")
+    libsDir.builtBy("cargoBuild${buildType}")
+    tasks.named("generate${variant.name.capitalize()}Assets") {
+        dependsOn "cargoBuild${buildType}"
+    }
 
-        // For unit tests.
-        tasks["process${variant.name.capitalize()}UnitTestJavaRes"].dependsOn(tasks["cargoBuild${buildType}"])
+    // Don't merge the jni lib folders until after the Rust libraries have been built.
+    tasks.named("merge${variant.name.capitalize()}JniLibFolders") {
+        dependsOn "cargoBuild${buildType}"
+    }
+
+    // For unit tests.
+    tasks.named("process${variant.name.capitalize()}UnitTestJavaRes") {
+        dependsOn "cargoBuild${buildType}"
+    }
+    variant.registerGeneratedResFolders(libsDir)
+
+    // Hacky sync of the Rust JNI libraries to the Java resources for unit tests
+    // since process*JavaRes doesn't sync the JNI libraries (.so files).
+    if (os.contains("linux")) {
+        def sync = tasks.register("sync${buildType}RustJniLibToJavaRes", Sync) {
+            from libsDir
+            into file("$buildDir/intermediates/java_res/${variant.name}UnitTest/out")
+            dependsOn "cargoBuild${buildType}"
+            dependsOn "process${variant.name.capitalize()}UnitTestJavaRes"
+        }
+        tasks.named("test${buildType}UnitTest") {
+            dependsOn sync
+        }
     }
 }
+
+
