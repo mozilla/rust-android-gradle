@@ -85,11 +85,7 @@ dependencies {
 afterEvaluate {
     // The `cargoBuild` task isn't available until after evaluation.
     android.libraryVariants.all { variant ->
-        def productFlavor = ""
-        variant.productFlavors.each {
-            productFlavor += "${it.name.capitalize()}"
-        }
         def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
+        tasks["merge${variant.name.capitalize()}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
     }
 }

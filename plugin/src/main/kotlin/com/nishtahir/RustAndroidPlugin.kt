@@ -216,7 +216,7 @@ open class RustAndroidPlugin : Plugin<Project> {
         val localTargets: String? =
                 config.localProperties.getProperty("rust.targets.${project.name}") ?:
                 config.localProperties.getProperty("rust.targets")
-        if (localTargets != null) {
+        if (config.targets == null && localTargets != null) {
             config.targets = localTargets.split(',').map { it.trim() }
         }
 
