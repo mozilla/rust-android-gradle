@@ -2,10 +2,7 @@ package com.nishtahir
 
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.*
-import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
-import org.gradle.api.Plugin
-import org.gradle.api.Project
+import org.gradle.api.*
 import org.gradle.api.file.DuplicatesStrategy
 import java.io.File
 import java.util.*
@@ -157,7 +154,9 @@ data class Toolchain(val platform: String,
 @Suppress("unused")
 open class RustAndroidPlugin : Plugin<Project> {
     private lateinit var cargoExtension: CargoExtension
-    private lateinit var buildWholeTask: DefaultTask
+
+    private val androidBuildTask = "cargoBuildAndroid"
+    private val hostBuildTask = "cargoBuildHost"
 
     override fun apply(project: Project) {
         with(project) {
@@ -176,9 +175,14 @@ open class RustAndroidPlugin : Plugin<Project> {
     }
 
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
-        buildWholeTask = tasks.maybeCreate("cargoBuild", DefaultTask::class.java).apply {
+        tasks.register(androidBuildTask, DefaultTask::class.java) {
             group = RUST_TASK_GROUP
-            description = "Build library (all variants)"
+            description = "Build library for android"
+        }
+
+        tasks.register(hostBuildTask, DefaultTask::class.java) {
+            group = RUST_TASK_GROUP
+            description = "Build library for host"
         }
 
         when (val androidExtension = extensions[T::class]) {
@@ -240,12 +244,18 @@ open class RustAndroidPlugin : Plugin<Project> {
             throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
         }
 
-        val buildTypeName = variant.buildType.name
-        val destDir = File("$buildDir/rustJniLibs/${buildTypeName}")
-        extensions[T::class].apply {
-            sourceSets.getByName(buildTypeName).jniLibs.srcDir(File(destDir, "android"))
-            sourceSets.getByName("test").resources.srcDir(File(destDir, "desktop"))
-        }
+        // Cargo's target directory is set by the following precedence:
+        // 1. The `targetDirectory` property in the `CargoExtension` block.
+        // 2. The `rust.cargoTargetDir` property in the `local.properties` file.
+        // 3. The `CARGO_TARGET_DIR` environment variable.
+        // 4. The `${buildDir}/cargoTarget` directory.
+        //
+        // We allow this to be specified in `local.properties`, not because this is
+        // something you should ever need to do currently, but we don't want it to ruin anyone's
+        // day if it turns out we're wrong about that.
+        config.targetDirectory = config.targetDirectory
+            ?: config.getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
+            ?: "${buildDir}/cargoTarget"
 
         // Determine the NDK version, if present
         val ndkSourceProperties = Properties()
@@ -295,16 +305,37 @@ open class RustAndroidPlugin : Plugin<Project> {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
 
-        val buildTask = tasks.maybeCreate("cargoBuild${capitalisedVariantName}",
-                DefaultTask::class.java).apply {
-            group = RUST_TASK_GROUP
-            description = "Build library for variant: $capitalisedVariantName"
+        val destDir = "${buildDir}/rustJniLibs/${variant.name}"
+        val buildTypeName = variant.buildType.name
+        val buildTypeNameCapitalized = buildTypeName.replaceFirstChar { it.uppercase() }
+        extensions[T::class].apply {
+            sourceSets.getByName(buildTypeName).jniLibs.srcDir(File(destDir, "android"))
+            sourceSets.getByName("test${buildTypeNameCapitalized}").resources.srcDir(File(destDir, "desktop"))
         }
 
-        buildWholeTask.dependsOn(buildTask)
+        val variantAndroidBuildTask = "cargoBuildAndroid${capitalisedVariantName}"
+        val variantDesktopBuildTask = "cargoBuildDesktop${capitalisedVariantName}"
+
+        tasks.register(variantAndroidBuildTask) {
+            group = RUST_TASK_GROUP
+            description = "Build Rust code for Android (${variant.name})"
+            it.extensions.add("outDir", "${destDir}/android")
+        }
+        tasks.named(androidBuildTask) {
+            it.dependsOn(variantAndroidBuildTask)
+        }
+
+        tasks.register(variantDesktopBuildTask) {
+            group = RUST_TASK_GROUP
+            description = "Build Rust code for desktop (${variant.name})"
+            it.extensions.add("outDir", "${destDir}/desktop")
+        }
+        tasks.named(hostBuildTask) {
+            it.dependsOn(variantDesktopBuildTask)
+        }
 
         config.targets!!.forEach { target ->
-            val theToolchain = toolchains
+            val toolchain = toolchains
                 .filter {
                     if (usePrebuilt) {
                         it.type != ToolchainType.ANDROID_GENERATED
@@ -315,21 +346,37 @@ open class RustAndroidPlugin : Plugin<Project> {
                 .find { it.platform == target }
                 ?: throw GradleException("Target $target is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
 
-            val targetBuildTask = tasks.maybeCreate(
-                    "cargoBuild${capitalisedVariantName}${target.replaceFirstChar { it.uppercase() }}",
-                    CargoBuildTask::class.java).apply {
+            val buildTask = "cargoBuild${capitalisedVariantName}${target.replaceFirstChar { it.uppercase() }}"
+
+            val destinationDir = when (toolchain.type) {
+                ToolchainType.ANDROID_GENERATED -> "android"
+                ToolchainType.ANDROID_PREBUILT -> "android"
+                ToolchainType.DESKTOP -> "desktop"
+            } .let { "${destDir}/${it}/${toolchain.folder}" }
+
+            tasks.register(buildTask, CargoBuildTask::class.java, toolchain, config).configure {
                 group = RUST_TASK_GROUP
                 description = "Build library for variant: $capitalisedVariantName ($target)"
-                toolchain = theToolchain
-                cargoConfig = config
-                destinationDir = destDir.toString()
-            }
+                it.manifestDir.set(file(config.module!!))
+                it.destinationDir.set(file(destinationDir))
 
-            if (!usePrebuilt) {
-                targetBuildTask.dependsOn(generateToolchain!!)
+                if (!usePrebuilt) {
+                    it.dependsOn(generateToolchain!!)
+                }
+                it.dependsOn(generateLinkerWrapper)
+
             }
-            targetBuildTask.dependsOn(generateLinkerWrapper)
-            buildTask.dependsOn(targetBuildTask)
+            if (toolchain.type == ToolchainType.DESKTOP) {
+                tasks.named(variantDesktopBuildTask) {
+                    it.dependsOn(buildTask)
+                    it.inputs.dir(destinationDir)
+                }
+            } else {
+                tasks.named(variantAndroidBuildTask) {
+                    it.dependsOn(buildTask)
+                    it.inputs.dir(destinationDir)
+                }
+            }
         }
     }
 }

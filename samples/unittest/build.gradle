@@ -110,35 +110,28 @@ dependencies {
 
 // TODO: Remove this when the plugin supports this.
 android.applicationVariants.all { variant ->
-    def buildType = "${variant.buildType.name.capitalize()}"
-
-    def libsDir = files("$buildDir/rustJniLibs/debug/desktop")
-    libsDir.builtBy("cargoBuild${buildType}")
-    tasks.named("generate${variant.name.capitalize()}Assets") {
-        dependsOn "cargoBuild${buildType}"
-    }
+    def capitalizedVariantName = "${variant.name.capitalize()}"
 
     // Don't merge the jni lib folders until after the Rust libraries have been built.
-    tasks.named("merge${variant.name.capitalize()}JniLibFolders") {
-        dependsOn "cargoBuild${buildType}"
+    tasks.named("merge${capitalizedVariantName}JniLibFolders") {
+        dependsOn "cargoBuildAndroid${capitalizedVariantName}"
     }
 
     // For unit tests.
-    tasks.named("process${variant.name.capitalize()}UnitTestJavaRes") {
-        dependsOn "cargoBuild${buildType}"
+    tasks.named("process${capitalizedVariantName}UnitTestJavaRes") {
+        dependsOn "cargoBuildDesktop${capitalizedVariantName}"
     }
-    variant.registerGeneratedResFolders(libsDir)
 
     // Hacky sync of the Rust JNI libraries to the Java resources for unit tests
     // since process*JavaRes doesn't sync the JNI libraries (.so files).
     if (os.contains("linux")) {
-        def sync = tasks.register("sync${buildType}RustJniLibToJavaRes", Sync) {
-            from libsDir
+        def sync = tasks.register("sync${capitalizedVariantName}RustJniLibToJavaRes", Sync) {
+            from tasks.named("cargoBuildDesktop${capitalizedVariantName}").get().property("outDir")
             into file("$buildDir/intermediates/java_res/${variant.name}UnitTest/out")
-            dependsOn "cargoBuild${buildType}"
-            dependsOn "process${variant.name.capitalize()}UnitTestJavaRes"
+            dependsOn "cargoBuildDesktop${capitalizedVariantName}"
+            dependsOn "process${capitalizedVariantName}UnitTestJavaRes"
         }
-        tasks.named("test${buildType}UnitTest") {
+        tasks.named("test${capitalizedVariantName}UnitTest") {
             dependsOn sync
         }
     }

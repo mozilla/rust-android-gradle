@@ -24,7 +24,7 @@ class CargoBuildTest extends AbstractTest {
         when:
         BuildResult buildResult = withGradleVersion(gradleVersion.version)
                 .withProjectDir(temporaryFolder.root)
-                .withArguments('cargoBuild', '--info', '--stacktrace')
+                .withArguments('cargoBuildAndroid', '--info', '--stacktrace')
                 // .withDebug(true)
                 .build()
 
@@ -34,8 +34,8 @@ class CargoBuildTest extends AbstractTest {
         }
 
         then:
-        buildResult.task(':app:cargoBuild').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':library:cargoBuild').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':app:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':library:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
         new File(temporaryFolder.root, "app/build/rustJniLibs/debug/android/x86_64/librust.so").exists()
         new File(temporaryFolder.root, "app/build/rustJniLibs/release/android/x86_64/librust.so").exists()
         new File(temporaryFolder.root, "library/build/rustJniLibs/debug/android/x86_64/librust.so").exists()
