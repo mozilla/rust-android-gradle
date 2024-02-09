@@ -2,9 +2,7 @@ buildscript {
     ext.agp_version = '8.2.0'
     repositories {
         google()
-        maven {
-            url = uri("https://plugins.gradle.org/m2/")
-        }
+        mavenCentral()
         maven {
             url = uri("https://maven.pkg.github.com/emakryo/rust-android-gradle")
             credentials {
@@ -33,7 +31,7 @@ android {
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -49,28 +47,27 @@ cargo {
     libname = "rust"
 }
 
+android.applicationVariants.all { variant ->
+    def variantName = variant.name.capitalize()
+    def buildType = "${variant.buildType.name.capitalize()}"
+    tasks.named("merge${variantName}JniLibFolders") {
+        dependsOn "cargoBuild${buildType}"
+    }
+}
+
 repositories {
     google()
     mavenCentral()
 }
 
 dependencies {
-    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test:core:1.5.0'
+    androidTestImplementation "androidx.test.ext:junit:1.1.5"
+    androidTestImplementation "androidx.test.ext:truth:1.5.0"
+    androidTestImplementation "androidx.test:runner:1.5.2"
+    androidTestImplementation "androidx.test:orchestrator:1.4.2"
 }
 
-afterEvaluate {
-    // The `cargoBuild` task isn't available until after evaluation.
-    android.applicationVariants.all { variant ->
-        def productFlavor = ""
-        variant.productFlavors.each {
-            productFlavor += "${it.name.capitalize()}"
-        }
-        def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild${buildType}"])
-    }
-}

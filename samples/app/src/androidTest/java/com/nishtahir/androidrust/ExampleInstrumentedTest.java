@@ -1,8 +1,10 @@
 package com.nishtahir.androidrust;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import android.widget.TextView;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+import androidx.test.core.app.ActivityScenario;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,5 +24,16 @@ public class ExampleInstrumentedTest {
         Context appContext = InstrumentationRegistry.getTargetContext();
 
         assertEquals("com.nishtahir.androidrust", appContext.getPackageName());
+    }
+
+    @Test
+    public void testJNI() throws Exception {
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            scenario.onActivity(activity -> {
+                TextView textView = activity.findViewById(R.id.sample_text);
+                String text = textView.getText().toString();
+                assertEquals("From JNI: Hello from Rust\n", text);
+            });
+        }
     }
 }
