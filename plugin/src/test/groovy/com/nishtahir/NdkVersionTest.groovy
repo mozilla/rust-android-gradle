@@ -41,7 +41,7 @@ class NdkVersionTest extends AbstractTest {
         when:
         BuildResult buildResult = withGradleVersion(TestVersions.latestSupportedGradleVersionFor(androidVersion).version)
                 .withProjectDir(temporaryFolder.root)
-                .withArguments('cargoBuild', '--info', '--stacktrace')
+                .withArguments('cargoBuildAndroid', '--info', '--stacktrace', '--rerun-tasks')
         // .withDebug(true)
                 .build()
 
@@ -51,8 +51,8 @@ class NdkVersionTest extends AbstractTest {
         }
 
         then:
-        buildResult.task(':app:cargoBuild').outcome == TaskOutcome.SUCCESS
-        buildResult.task(':library:cargoBuild').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':app:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':library:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
         new File(temporaryFolder.root, "app/build/rustJniLibs/debug/${location}").exists()
         new File(temporaryFolder.root, "app/build/rustJniLibs/release/${location}").exists()
         new File(temporaryFolder.root, "library/build/rustJniLibs/debug/${location}").exists()

@@ -3,109 +3,83 @@ package com.nishtahir
 import com.android.build.gradle.*
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.InputDirectory
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
+import javax.inject.Inject
 
-open class CargoBuildTask : DefaultTask() {
-    @Input
-    var toolchain: Toolchain? = null
 
-    @Input
-    var cargoConfig: CargoConfig? = null
+open class CargoBuildTask @Inject constructor(
+    private val toolchain: Toolchain,
+    private val cargoConfig: CargoConfig,
+): DefaultTask() {
 
-    @Input
-    var destinationDir: String? = null
+    @get:InputDirectory
+    lateinit var manifestDir: File
 
-    @Suppress("unused")
+    @get:OutputDirectory
+    lateinit var destinationDir: File
+
     @TaskAction
-    fun build() = with(project) {
-        cargoConfig!!.apply {
+    fun taskAction() = cargoConfig.apply {
+        project.plugins.all {
+            when (it) {
+                is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, cargoConfig)
+                is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, cargoConfig)
+            }
+        }
+
+        val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
+
+        // cargo.profile is non-null here
+        val targetDirectoryProfile = getTargetDirectoryFromProfile(cargoConfig.profile!!)
+
+        var cargoOutputDir = File(if (toolchain.target == defaultTargetTriple) {
+            "${targetDirectory}/${targetDirectoryProfile}"
+        } else {
+            "${targetDirectory}/${toolchain.target}/${targetDirectoryProfile}"
+        })
+        if (!cargoOutputDir.isAbsolute) {
+            cargoOutputDir = File(project.project.projectDir, cargoOutputDir.path)
+        }
+        cargoOutputDir = cargoOutputDir.canonicalFile
+
+        destinationDir.mkdirs()
+
+        project.copy { spec ->
+            spec.from(cargoOutputDir)
+            spec.into(destinationDir)
+
             // Need to capture the value to dereference smoothly.
-            val toolchain = toolchain ?: throw GradleException("toolchain cannot be null")
-
-            val config = cargoConfig ?: throw GradleException("config cannot be null")
-
-            project.plugins.all {
-                when (it) {
-                    is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, config)
-                    is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, config)
-                }
-            }
-            // CARGO_TARGET_DIR can be used to force the use of a global, shared target directory
-            // across all rust projects on a machine. Use it if it's set, otherwise use the
-            // configured `targetDirectory` value, and fall back to `${module}/target`.
-            //
-            // We also allow this to be specified in `local.properties`, not because this is
-            // something you should ever need to do currently, but we don't want it to ruin anyone's
-            // day if it turns out we're wrong about that.
-            val target =
-                getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
-                ?: targetDirectory
-                ?: "${module!!}/target"
-
-            val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
-
-            // cargo.profile is non-null here
-            val targetDirectoryProfile = getTargetDirectoryFromProfile(config.profile!!)
-
-            var cargoOutputDir = File(if (toolchain.target == defaultTargetTriple) {
-                "${target}/${targetDirectoryProfile}"
+            val targetIncludes = targetIncludes
+            if (targetIncludes != null) {
+                spec.include(targetIncludes.asIterable())
             } else {
-                "${target}/${toolchain.target}/${targetDirectoryProfile}"
-            })
-            if (!cargoOutputDir.isAbsolute) {
-                cargoOutputDir = File(project.project.projectDir, cargoOutputDir.path)
-            }
-            cargoOutputDir = cargoOutputDir.canonicalFile
-
-            val folder = when (toolchain.type) {
-                ToolchainType.ANDROID_GENERATED -> "android"
-                ToolchainType.ANDROID_PREBUILT -> "android"
-                ToolchainType.DESKTOP -> "desktop"
-            } .let { "${it}/${toolchain.folder}" }
-
-            val intoDir = File(destinationDir, folder)
-            intoDir.mkdirs()
-
-            copy { spec ->
-                spec.from(cargoOutputDir)
-                spec.into(intoDir)
-
-                // Need to capture the value to dereference smoothly.
-                val targetIncludes = targetIncludes
-                if (targetIncludes != null) {
-                    spec.include(targetIncludes.asIterable())
-                } else {
-                    // It's safe to unwrap, since we bailed at configuration time if this is unset.
-                    val libname = libname!!
-                    spec.include("lib${libname}.so")
-                    spec.include("lib${libname}.dylib")
-                    spec.include("${libname}.dll")
-                }
+                // It's safe to unwrap, since we bailed at configuration time if this is unset.
+                val libname = libname!!
+                spec.include("lib${libname}.so")
+                spec.include("lib${libname}.dylib")
+                spec.include("${libname}.dll")
             }
         }
     }
 
-    inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoConfig: CargoConfig) {
+    private inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoConfig: CargoConfig) {
         val app = project.extensions[T::class]
         val apiLevel = cargoConfig.apiLevels[toolchain.platform]!!
         val defaultTargetTriple = getDefaultTargetTriple(project, cargoConfig.rustcCommand)
 
-        project.exec { spec ->
-            with(spec) {
+        project.exec {
+            with(it) {
                 standardOutput = System.out
-                val module = File(cargoConfig.module!!)
-                workingDir = if (module.isAbsolute) {
-                    module
-                } else {
-                    File(project.project.projectDir, module.path)
-                }.canonicalFile
+                workingDir = manifestDir
+
+                environment("CARGO_TARGET_DIR", cargoConfig.targetDirectory)
 
                 val theCommandLine = mutableListOf(cargoConfig.cargoCommand)
 
@@ -120,8 +94,10 @@ open class CargoBuildTask : DefaultTask() {
 
                 // Respect `verbose` if it is set; otherwise, log if asked to
                 // with `--info` or `--debug` from the command line.
-                if (cargoConfig.verbose ?: project.logger.isEnabled(LogLevel.INFO)) {
+                if (cargoConfig.verbose ?: project.logger.isEnabled(LogLevel.DEBUG)) {
                     theCommandLine.add("--verbose")
+                } else if (project.logger.isEnabled(LogLevel.LIFECYCLE)) {
+                    theCommandLine.add("--quiet")
                 }
 
                 // We just pass this along to cargo as something space separated... AFAICT
@@ -248,11 +224,11 @@ open class CargoBuildTask : DefaultTask() {
                     theCommandLine.addAll(it)
                 }
 
-                println(theCommandLine)
+                project.logger.info("cargo command: ${theCommandLine}")
                 commandLine = theCommandLine
             }
             if (cargoConfig.exec != null) {
-                (cargoConfig.exec!!)(spec, toolchain)
+                (cargoConfig.exec!!)(it, toolchain)
             }
         }.assertNormalExitValue()
     }

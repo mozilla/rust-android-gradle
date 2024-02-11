@@ -82,15 +82,15 @@ jobs:
 
       - name: Assemble samples/app
         run: |
-          ./gradlew -p samples/app :assembleDebug --info --warning-mode all
+          ./gradlew -p samples/app :assemble --info --warning-mode all
 
       - name: Assemble samples/library
         run: |
-          ./gradlew -p samples/library :assembleDebug --info --warning-mode all
+          ./gradlew -p samples/library :assemble --info --warning-mode all
 
       - name: Run samples/unittest
         run: |
-          ./gradlew -p samples/unittest :check --info --warning-mode all
+          ./gradlew -p samples/unittest :build --info --warning-mode all
 
       # Work around https://github.com/actions/cache/issues/454.
       - name: Gradle stop
