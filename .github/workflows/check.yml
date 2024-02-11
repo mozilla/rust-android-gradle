@@ -72,13 +72,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
-          cache: 'gradle'
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            samples/rust -> samples/rust/target
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Assemble samples/app
         run: |
@@ -140,17 +136,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 8
-          cache: 'gradle'
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            samples/rust -> samples/rust/target
-
-      - name: Gradle setup
-        run: |
-          ./gradlew -p plugin tasks --warning-mode all
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Gradle test
         run: |
@@ -211,21 +199,13 @@ jobs:
             11
             17
             8
-          cache: 'gradle'
 
-      - name: Gradle setup
-        run: |
-          ./gradlew -p plugin tasks --warning-mode all
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Gradle test
         run: |
           ./gradlew -p plugin ${{ matrix.androidTestTask }} --info --warning-mode all
-
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            samples/rust -> samples/rust/target
 
       # Work around https://github.com/actions/cache/issues/454.
       - name: Gradle stop
