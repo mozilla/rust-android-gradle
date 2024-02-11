@@ -4,7 +4,6 @@ import com.android.build.gradle.*
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
-import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -14,15 +13,17 @@ import java.io.File
 import java.util.*
 import javax.inject.Inject
 
-abstract class CargoBuildTask @Inject constructor(
+
+open class CargoBuildTask @Inject constructor(
     private val toolchain: Toolchain,
     private val cargoConfig: CargoConfig,
 ): DefaultTask() {
+
     @get:InputDirectory
-    abstract val manifestDir: DirectoryProperty
+    lateinit var manifestDir: File
 
     @get:OutputDirectory
-    abstract val destinationDir: DirectoryProperty
+    lateinit var destinationDir: File
 
     @TaskAction
     fun taskAction() = cargoConfig.apply {
@@ -48,12 +49,11 @@ abstract class CargoBuildTask @Inject constructor(
         }
         cargoOutputDir = cargoOutputDir.canonicalFile
 
-        val intoDir = destinationDir.get().asFile
-        intoDir.mkdirs()
+        destinationDir.mkdirs()
 
         project.copy { spec ->
             spec.from(cargoOutputDir)
-            spec.into(intoDir)
+            spec.into(destinationDir)
 
             // Need to capture the value to dereference smoothly.
             val targetIncludes = targetIncludes
@@ -77,7 +77,7 @@ abstract class CargoBuildTask @Inject constructor(
         project.exec {
             with(it) {
                 standardOutput = System.out
-                workingDir = manifestDir.get().asFile
+                workingDir = manifestDir
 
                 environment("CARGO_TARGET_DIR", cargoConfig.targetDirectory)
 

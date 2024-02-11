@@ -24,7 +24,7 @@ class CargoBuildTest extends AbstractTest {
         when:
         BuildResult buildResult = withGradleVersion(gradleVersion.version)
                 .withProjectDir(temporaryFolder.root)
-                .withArguments('cargoBuildAndroid', '--info', '--stacktrace')
+                .withArguments('cargoBuildAndroid', '--info', '--stacktrace', '--rerun-tasks')
                 // .withDebug(true)
                 .build()
 

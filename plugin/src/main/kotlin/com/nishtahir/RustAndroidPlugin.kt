@@ -157,10 +157,30 @@ open class RustAndroidPlugin : Plugin<Project> {
 
     private val androidBuildTask = "cargoBuildAndroid"
     private val hostBuildTask = "cargoBuildHost"
+    private val generateLinkerWrapperTask = "generateLinkerWrapper"
 
     override fun apply(project: Project) {
         with(project) {
             cargoExtension = extensions.create("cargo", CargoExtension::class.java, this)
+
+            // Fish linker wrapper scripts from our Java resources.
+            tasks.register(generateLinkerWrapperTask, GenerateLinkerWrapperTask::class.java).configure {
+                group = RUST_TASK_GROUP
+                description = "Generate shared linker wrapper script"
+
+                with(it) {
+                    // From https://stackoverflow.com/a/320595.
+                    from(rootProject.zipTree(File(RustAndroidPlugin::class.java.protectionDomain.codeSource.location.toURI()).path))
+                    include("**/linker-wrapper*")
+                    into(File(rootProject.buildDir, "linker-wrapper"))
+                    eachFile { file ->
+                        file.path = file.path.replaceFirst("com/nishtahir", "")
+                    }
+                    fileMode = 493 // 0755 in decimal; Kotlin doesn't have octal literals (!).
+                    includeEmptyDirs = false
+                    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                }
+            }
 
             afterEvaluate {
                 plugins.all {
@@ -276,33 +296,12 @@ open class RustAndroidPlugin : Plugin<Project> {
             throw GradleException("usePrebuilt = true requires NDK version 19+")
         }
 
-        val generateToolchain = if (!usePrebuilt) {
-            tasks.maybeCreate("generateToolchains",
-                    GenerateToolchainsTask::class.java).apply {
-                group = RUST_TASK_GROUP
-                description = "Generate standard toolchain for given architectures"
-            }
-        } else {
-            null
-        }
+        val generateToolchainsTask = "generateToolchains${capitalisedVariantName}"
+        val ndkDir = extensions[T::class].ndkDirectory
 
-        // Fish linker wrapper scripts from our Java resources.
-        val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
+        tasks.register(generateToolchainsTask, GenerateToolchainsTask::class.java, config, ndkDir).configure {
             group = RUST_TASK_GROUP
-            description = "Generate shared linker wrapper script"
-        }
-
-        generateLinkerWrapper.apply {
-            // From https://stackoverflow.com/a/320595.
-            from(rootProject.zipTree(File(RustAndroidPlugin::class.java.protectionDomain.codeSource.location.toURI()).path))
-            include("**/linker-wrapper*")
-            into(File(rootProject.buildDir, "linker-wrapper"))
-            eachFile {
-                it.path = it.path.replaceFirst("com/nishtahir", "")
-            }
-            fileMode = 493 // 0755 in decimal; Kotlin doesn't have octal literals (!).
-            includeEmptyDirs = false
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            description = "Generate standard toolchain for given architectures"
         }
 
         val destDir = "${buildDir}/rustJniLibs/${variant.name}"
@@ -321,7 +320,7 @@ open class RustAndroidPlugin : Plugin<Project> {
             description = "Build Rust code for Android (${variant.name})"
             it.extensions.add("outDir", "${destDir}/android")
         }
-        tasks.named(androidBuildTask) {
+        tasks.named(androidBuildTask).configure {
             it.dependsOn(variantAndroidBuildTask)
         }
 
@@ -330,7 +329,7 @@ open class RustAndroidPlugin : Plugin<Project> {
             description = "Build Rust code for desktop (${variant.name})"
             it.extensions.add("outDir", "${destDir}/desktop")
         }
-        tasks.named(hostBuildTask) {
+        tasks.named(hostBuildTask).configure {
             it.dependsOn(variantDesktopBuildTask)
         }
 
@@ -357,22 +356,22 @@ open class RustAndroidPlugin : Plugin<Project> {
             tasks.register(buildTask, CargoBuildTask::class.java, toolchain, config).configure {
                 group = RUST_TASK_GROUP
                 description = "Build library for variant: $capitalisedVariantName ($target)"
-                it.manifestDir.set(file(config.module!!))
-                it.destinationDir.set(file(destinationDir))
+                it.manifestDir = file(config.module!!)
+                it.destinationDir = file(destinationDir)
 
                 if (!usePrebuilt) {
-                    it.dependsOn(generateToolchain!!)
+                    it.dependsOn(generateToolchainsTask)
                 }
-                it.dependsOn(generateLinkerWrapper)
-
+                it.dependsOn(generateLinkerWrapperTask)
             }
+
             if (toolchain.type == ToolchainType.DESKTOP) {
-                tasks.named(variantDesktopBuildTask) {
+                tasks.named(variantDesktopBuildTask).configure {
                     it.dependsOn(buildTask)
                     it.inputs.dir(destinationDir)
                 }
             } else {
-                tasks.named(variantAndroidBuildTask) {
+                tasks.named(variantAndroidBuildTask).configure {
                     it.dependsOn(buildTask)
                     it.inputs.dir(destinationDir)
                 }
