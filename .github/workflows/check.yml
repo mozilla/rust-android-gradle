@@ -83,6 +83,12 @@ jobs:
         with:
           cache-read-only: false
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            sample/unittest -> samples/unittest/target
+
       - name: Assemble samples/app
         run: |
           ./gradlew -p samples/app :assemble --build-cache --info --warning-mode all
@@ -149,6 +155,12 @@ jobs:
         with:
           cache-read-only: false
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            plugin/src/test/resources/rust -> plugin/build/resources/test/target
+
       - name: Gradle test
         run: |
           ./gradlew -p plugin test --build-cache --info --warning-mode all
@@ -213,6 +225,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            plugin/src/test/resources/rust -> plugin/build/resources/test/target
 
       - name: Gradle test
         run: |

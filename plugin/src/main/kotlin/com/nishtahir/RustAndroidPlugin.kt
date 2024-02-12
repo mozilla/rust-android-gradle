@@ -275,7 +275,7 @@ open class RustAndroidPlugin : Plugin<Project> {
         // day if it turns out we're wrong about that.
         config.targetDirectory = config.targetDirectory
             ?: config.getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
-            ?: "${buildDir}/cargoTarget"
+            ?: "${config.module}/target"
 
         // Determine the NDK version, if present
         val ndkSourceProperties = Properties()
@@ -356,7 +356,10 @@ open class RustAndroidPlugin : Plugin<Project> {
             tasks.register(buildTask, CargoBuildTask::class.java, toolchain, config).configure {
                 group = RUST_TASK_GROUP
                 description = "Build library for variant: $capitalisedVariantName ($target)"
-                it.manifestDir = file(config.module!!)
+                it.manifestDir = fileTree(config.module!!).apply {
+                    // Exclude cargo build directories
+                    exclude("target/**")
+                }
                 it.destinationDir = file(destinationDir)
 
                 if (!usePrebuilt) {

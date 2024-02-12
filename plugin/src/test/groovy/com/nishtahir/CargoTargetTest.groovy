@@ -32,22 +32,22 @@ class CargoTargetTest extends AbstractTest {
         when:
         BuildResult buildResult = withGradleVersion(TestVersions.latestSupportedGradleVersionFor(androidVersion).version)
                 .withProjectDir(temporaryFolder.root)
-                .withArguments('cargoBuildAndroid', '--info', '--stacktrace', '--rerun-tasks')
+                .withArguments('cargoBuildAndroid', '--stacktrace', '--rerun-tasks', '--build-cache')
         // .withDebug(true)
                 .build()
 
         // To ease debugging.
-        temporaryFolder.root.eachFileRecurse {
-            println(it)
-        }
+//        temporaryFolder.root.eachFileRecurse {
+//            println(it)
+//        }
 
         then:
         buildResult.task(':app:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
         buildResult.task(':library:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
-        new File(temporaryFolder.root, "app/build/rustJniLibs/debug/${location}").exists()
-        new File(temporaryFolder.root, "app/build/rustJniLibs/release/${location}").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/debug/${location}").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/release/${location}").exists()
+        file("app/build/rustJniLibs/debug/${location}").exists()
+        file("app/build/rustJniLibs/release/${location}").exists()
+        file("library/build/rustJniLibs/debug/${location}").exists()
+        file("library/build/rustJniLibs/release/${location}").exists()
 
         where:
         [target, location] << [

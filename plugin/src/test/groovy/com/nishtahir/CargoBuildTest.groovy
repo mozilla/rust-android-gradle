@@ -24,22 +24,22 @@ class CargoBuildTest extends AbstractTest {
         when:
         BuildResult buildResult = withGradleVersion(gradleVersion.version)
                 .withProjectDir(temporaryFolder.root)
-                .withArguments('cargoBuildAndroid', '--info', '--stacktrace', '--rerun-tasks')
+                .withArguments('cargoBuildAndroid', '--stacktrace', '--rerun-tasks', '--build-cache')
                 // .withDebug(true)
                 .build()
 
         // To ease debugging.
-        temporaryFolder.root.eachFileRecurse {
-            println(it)
-        }
+//        temporaryFolder.root.eachFileRecurse {
+//            println(it)
+//        }
 
         then:
         buildResult.task(':app:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
         buildResult.task(':library:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
-        new File(temporaryFolder.root, "app/build/rustJniLibs/debug/android/x86_64/librust.so").exists()
-        new File(temporaryFolder.root, "app/build/rustJniLibs/release/android/x86_64/librust.so").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/debug/android/x86_64/librust.so").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/release/android/x86_64/librust.so").exists()
+        file("app/build/rustJniLibs/debug/android/x86_64/librust.so").exists()
+        file("app/build/rustJniLibs/release/android/x86_64/librust.so").exists()
+        file("library/build/rustJniLibs/debug/android/x86_64/librust.so").exists()
+        file("library/build/rustJniLibs/release/android/x86_64/librust.so").exists()
 
         where:
         [androidVersion, gradleVersion] << TestVersions.allCandidateTestVersions.entries().collect { [it.key, it.value] }

@@ -31,32 +31,32 @@ class NdkVersionTest extends AbstractTest {
                 .writeProject()
 
         // To ease debugging.
-        temporaryFolder.root.eachFileRecurse {
-            System.err.println("before> ${it}")
-            if (it.path.endsWith(".gradle") || it.path.endsWith(".properties")) {
-                System.err.println(it.text)
-            }
-        }
+//        temporaryFolder.root.eachFileRecurse {
+//            System.err.println("before> ${it}")
+//            if (it.path.endsWith(".gradle") || it.path.endsWith(".properties")) {
+//                System.err.println(it.text)
+//            }
+//        }
 
         when:
         BuildResult buildResult = withGradleVersion(TestVersions.latestSupportedGradleVersionFor(androidVersion).version)
                 .withProjectDir(temporaryFolder.root)
-                .withArguments('cargoBuildAndroid', '--info', '--stacktrace', '--rerun-tasks')
+                .withArguments('cargoBuildAndroid', '--stacktrace', '--rerun-tasks', '--build-cache')
         // .withDebug(true)
                 .build()
 
         // To ease debugging.
-        temporaryFolder.root.eachFileRecurse {
-            System.err.println("after> ${it}")
-        }
+//        temporaryFolder.root.eachFileRecurse {
+//            System.err.println("after> ${it}")
+//        }
 
         then:
         buildResult.task(':app:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
         buildResult.task(':library:cargoBuildAndroid').outcome == TaskOutcome.SUCCESS
-        new File(temporaryFolder.root, "app/build/rustJniLibs/debug/${location}").exists()
-        new File(temporaryFolder.root, "app/build/rustJniLibs/release/${location}").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/debug/${location}").exists()
-        new File(temporaryFolder.root, "library/build/rustJniLibs/release/${location}").exists()
+        file("app/build/rustJniLibs/debug/${location}").exists()
+        file("app/build/rustJniLibs/release/${location}").exists()
+        file("library/build/rustJniLibs/debug/${location}").exists()
+        file("library/build/rustJniLibs/release/${location}").exists()
 
         where:
         ndkVersion << [
