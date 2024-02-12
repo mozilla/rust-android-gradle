@@ -17,6 +17,9 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
       - uses: actions/checkout@v4
 
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Gradle test
         run: |
           ./gradlew -p plugin generateTestTasksJson
