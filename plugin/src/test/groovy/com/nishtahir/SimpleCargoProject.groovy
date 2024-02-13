@@ -50,7 +50,7 @@ class SimpleCargoProject {
 
     def writeProject() {
         def cargoModuleFile = new File(this.class.classLoader.getResource("rust/Cargo.toml").path).parentFile
-        def targetDirectoryFile = new File(cargoModuleFile.parentFile, "target")
+        def targetDirectoryFile = new File(cargoModuleFile.parentFile, "target/${channel}")
 
         // On Windows, path components are backslash-separated.  We need to
         // express the path as Groovy source, which means backslashes need to be
