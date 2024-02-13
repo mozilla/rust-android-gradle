@@ -10,7 +10,8 @@ class AbstractTest extends Specification {
     File cacheDir
 
     def setup() {
-        cacheDir = temporaryFolder.newFolder()
+//        cacheDir = temporaryFolder.newFolder()
+        cacheDir = new File(System.getProperty("user.home"), ".gradle/caches")
     }
 
     def withGradleVersion(String gradleVersion) {

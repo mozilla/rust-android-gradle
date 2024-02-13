@@ -4,10 +4,11 @@ import com.android.build.gradle.*
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
@@ -18,36 +19,39 @@ open class CargoBuildTask @Inject constructor(
     private val toolchain: Toolchain,
     private val cargoConfig: CargoConfig,
 ): DefaultTask() {
+    private lateinit var ndkDirectory: File
 
-    @get:InputDirectory
-    lateinit var manifestDir: File
+    @get:InputFiles
+    lateinit var manifestDir: ConfigurableFileTree
 
     @get:OutputDirectory
     lateinit var destinationDir: File
 
     @TaskAction
-    fun taskAction() = cargoConfig.apply {
+    fun taskAction() {
         project.plugins.all {
             when (it) {
-                is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, cargoConfig)
-                is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, cargoConfig)
+                is AppPlugin -> {
+                    ndkDirectory = project.extensions[AppExtension::class].ndkDirectory
+                    buildProjectForTarget(project, toolchain, cargoConfig)
+                }
+                is LibraryPlugin -> {
+                    ndkDirectory = project.extensions[LibraryExtension::class].ndkDirectory
+                    buildProjectForTarget(project, toolchain, cargoConfig)
+                }
             }
         }
 
-        val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
+        val defaultTargetTriple = getDefaultTargetTriple(project, cargoConfig.rustcCommand)
 
         // cargo.profile is non-null here
         val targetDirectoryProfile = getTargetDirectoryFromProfile(cargoConfig.profile!!)
 
-        var cargoOutputDir = File(if (toolchain.target == defaultTargetTriple) {
-            "${targetDirectory}/${targetDirectoryProfile}"
+        val cargoOutputDir = project.file(if (toolchain.target == defaultTargetTriple) {
+            "${cargoConfig.targetDirectory}/${targetDirectoryProfile}"
         } else {
-            "${targetDirectory}/${toolchain.target}/${targetDirectoryProfile}"
+            "${cargoConfig.targetDirectory}/${toolchain.target}/${targetDirectoryProfile}"
         })
-        if (!cargoOutputDir.isAbsolute) {
-            cargoOutputDir = File(project.project.projectDir, cargoOutputDir.path)
-        }
-        cargoOutputDir = cargoOutputDir.canonicalFile
 
         destinationDir.mkdirs()
 
@@ -56,28 +60,27 @@ open class CargoBuildTask @Inject constructor(
             spec.into(destinationDir)
 
             // Need to capture the value to dereference smoothly.
-            val targetIncludes = targetIncludes
+            val targetIncludes = cargoConfig.targetIncludes
             if (targetIncludes != null) {
                 spec.include(targetIncludes.asIterable())
             } else {
                 // It's safe to unwrap, since we bailed at configuration time if this is unset.
-                val libname = libname!!
-                spec.include("lib${libname}.so")
-                spec.include("lib${libname}.dylib")
-                spec.include("${libname}.dll")
+                val libName = cargoConfig.libname!!
+                spec.include("lib${libName}.so")
+                spec.include("lib${libName}.dylib")
+                spec.include("${libName}.dll")
             }
         }
     }
 
-    private inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoConfig: CargoConfig) {
-        val app = project.extensions[T::class]
+    private fun buildProjectForTarget(project: Project, toolchain: Toolchain, cargoConfig: CargoConfig) {
         val apiLevel = cargoConfig.apiLevels[toolchain.platform]!!
         val defaultTargetTriple = getDefaultTargetTriple(project, cargoConfig.rustcCommand)
 
         project.exec {
             with(it) {
                 standardOutput = System.out
-                workingDir = manifestDir
+                workingDir = manifestDir.dir
 
                 environment("CARGO_TARGET_DIR", cargoConfig.targetDirectory)
 
@@ -144,16 +147,16 @@ open class CargoBuildTask @Inject constructor(
                 // For ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_TARGET_x_KEY=VALUE, set KEY=VALUE.
                 project.logger.info("Passing through project properties with prefix '${prefix}' (environment variables with prefix 'ORG_GRADLE_PROJECT_${prefix}'")
                 project.properties.forEach { (key, value) ->
-                                             if (key.startsWith(prefix)) {
-                                                 val realKey = key.substring(prefix.length)
-                                                 project.logger.debug("Passing through environment variable '${key}' as '${realKey}=${value}'")
-                                                 environment(realKey, value)
-                                             }
+                    if (key.startsWith(prefix)) {
+                        val realKey = key.substring(prefix.length)
+                        project.logger.debug("Passing through environment variable '${key}' as '${realKey}=${value}'")
+                        environment(realKey, value)
+                    }
                 }
 
                 // Cross-compiling to Android requires toolchain massaging.
                 if (toolchain.type != ToolchainType.DESKTOP) {
-                    val ndkPath = app.ndkDirectory
+                    val ndkPath = ndkDirectory
                     val ndkVersion = ndkPath.name
                     val ndkVersionMajor = try {
                         ndkVersion.split(".").first().toInt()
@@ -220,11 +223,11 @@ open class CargoBuildTask @Inject constructor(
                     environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${cargoConfig.libname!!}.so")
                 }
 
-                cargoConfig.extraCargoBuildArguments?.let {
-                    theCommandLine.addAll(it)
+                cargoConfig.extraCargoBuildArguments?.let { args ->
+                    theCommandLine.addAll(args)
                 }
 
-                project.logger.info("cargo command: ${theCommandLine}")
+                project.logger.info("cargo command: $theCommandLine")
                 commandLine = theCommandLine
             }
             if (cargoConfig.exec != null) {

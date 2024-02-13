@@ -17,9 +17,14 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
       - uses: actions/checkout@v4
 
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
       - name: Gradle test
         run: |
-          ./gradlew -p plugin generateTestTasksJson
+          ./gradlew -p plugin generateTestTasksJson --build-cache 
 
       - id: setup-matrix
         run: echo "matrix=$(cat plugin/build/build-resources/androidTestTasks.json)" >> "$GITHUB_OUTPUT"
@@ -75,18 +80,26 @@ jobs:
 
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            sample/unittest -> samples/unittest/target
 
       - name: Assemble samples/app
         run: |
-          ./gradlew -p samples/app :assemble --info --warning-mode all
+          ./gradlew -p samples/app :assemble --build-cache --info --warning-mode all
 
       - name: Assemble samples/library
         run: |
-          ./gradlew -p samples/library :assemble --info --warning-mode all
+          ./gradlew -p samples/library :assemble --build-cache --info --warning-mode all
 
       - name: Run samples/unittest
         run: |
-          ./gradlew -p samples/unittest :build --info --warning-mode all
+          ./gradlew -p samples/unittest :build --build-cache --info --warning-mode all
 
       # Work around https://github.com/actions/cache/issues/454.
       - name: Gradle stop
@@ -139,10 +152,18 @@ jobs:
 
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            plugin/src/test/resources/rust -> plugin/build/resources/test/target
 
       - name: Gradle test
         run: |
-          ./gradlew -p plugin test --info --warning-mode all
+          ./gradlew -p plugin test --build-cache --info --warning-mode all
 
       # Work around https://github.com/actions/cache/issues/454.
       - name: Gradle stop
@@ -202,10 +223,18 @@ jobs:
 
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            plugin/src/test/resources/rust -> plugin/build/resources/test/target
 
       - name: Gradle test
         run: |
-          ./gradlew -p plugin ${{ matrix.androidTestTask }} --info --warning-mode all
+          ./gradlew -p plugin ${{ matrix.androidTestTask }} --build-cache --info --warning-mode all
 
       # Work around https://github.com/actions/cache/issues/454.
       - name: Gradle stop

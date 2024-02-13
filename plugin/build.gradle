@@ -127,6 +127,8 @@ tasks.register('generateTestTasksJson') {
     }
 }
 
+def nproc = Runtime.getRuntime().availableProcessors()
+
 // Configuration common to all test tasks
 tasks.withType(Test).configureEach {
     dependsOn tasks.named("publishAllPublicationsToLocalRepository")
@@ -137,6 +139,7 @@ tasks.withType(Test).configureEach {
         maxRetries = isCI ? 1 : 0
         maxFailures = 20
     }
+    maxParallelForks = (nproc / 2).max(1)
 }
 
 // Generate a test task for each Android version and run the tests annotated with the MultiVersionTest category
@@ -152,6 +155,7 @@ supportedVersions.keySet().each { androidVersion ->
         }
 
         systemProperty 'org.gradle.android.testVersion', androidVersion
+        maxParallelForks = (nproc / 2).max(1)
     }
 
     tasks.named('check').configure {
@@ -167,12 +171,12 @@ static def normalizeVersion(String version) {
     return version.replaceAll('[.\\-]', '_')
 }
 
-static def jdkVersionFor(String version) {
+static def jdkVersionFor(String androidVersion) {
     def jdkVersion = 8
-    if (VersionNumber.parse(version) > VersionNumber.parse("7.0.0-alpha01")) {
+    if (VersionNumber.parse(androidVersion) > VersionNumber.parse("7.0.0-alpha01")) {
         jdkVersion = 11
     }
-    if (VersionNumber.parse(version) > VersionNumber.parse("8.0.0")) {
+    if (VersionNumber.parse(androidVersion) > VersionNumber.parse("8.0.0")) {
         jdkVersion = 17
     }
 
