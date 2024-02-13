@@ -19,8 +19,6 @@ open class CargoBuildTask @Inject constructor(
     private val toolchain: Toolchain,
     private val cargoConfig: CargoConfig,
 ): DefaultTask() {
-    private lateinit var ndkDirectory: File
-
     @get:InputFiles
     lateinit var manifestDir: ConfigurableFileTree
 
@@ -32,12 +30,12 @@ open class CargoBuildTask @Inject constructor(
         project.plugins.all {
             when (it) {
                 is AppPlugin -> {
-                    ndkDirectory = project.extensions[AppExtension::class].ndkDirectory
-                    buildProjectForTarget(project, toolchain, cargoConfig)
+                    val ndkDirectory = project.extensions[AppExtension::class].ndkDirectory
+                    buildProjectForTarget(project, toolchain, cargoConfig, ndkDirectory)
                 }
                 is LibraryPlugin -> {
-                    ndkDirectory = project.extensions[LibraryExtension::class].ndkDirectory
-                    buildProjectForTarget(project, toolchain, cargoConfig)
+                    val ndkDirectory = project.extensions[LibraryExtension::class].ndkDirectory
+                    buildProjectForTarget(project, toolchain, cargoConfig, ndkDirectory)
                 }
             }
         }
@@ -73,7 +71,7 @@ open class CargoBuildTask @Inject constructor(
         }
     }
 
-    private fun buildProjectForTarget(project: Project, toolchain: Toolchain, cargoConfig: CargoConfig) {
+    private fun buildProjectForTarget(project: Project, toolchain: Toolchain, cargoConfig: CargoConfig, ndkDirectory: File) {
         val apiLevel = cargoConfig.apiLevels[toolchain.platform]!!
         val defaultTargetTriple = getDefaultTargetTriple(project, cargoConfig.rustcCommand)
 
@@ -156,8 +154,7 @@ open class CargoBuildTask @Inject constructor(
 
                 // Cross-compiling to Android requires toolchain massaging.
                 if (toolchain.type != ToolchainType.DESKTOP) {
-                    val ndkPath = ndkDirectory
-                    val ndkVersion = ndkPath.name
+                    val ndkVersion = ndkDirectory.name
                     val ndkVersionMajor = try {
                         ndkVersion.split(".").first().toInt()
                     } catch (ex: NumberFormatException) {
@@ -178,7 +175,7 @@ open class CargoBuildTask @Inject constructor(
                         } else {
                             "linux-x86_64"
                         }
-                        File("$ndkPath/toolchains/llvm/prebuilt", hostTag)
+                        File("$ndkDirectory/toolchains/llvm/prebuilt", hostTag)
                     } else {
                         cargoConfig.toolchainDirectory
                     }

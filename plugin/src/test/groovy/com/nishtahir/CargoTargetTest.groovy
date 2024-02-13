@@ -32,7 +32,7 @@ class CargoTargetTest extends AbstractTest {
         when:
         BuildResult buildResult = withGradleVersion(TestVersions.latestSupportedGradleVersionFor(androidVersion).version)
                 .withProjectDir(temporaryFolder.root)
-                .withArguments('cargoBuildAndroid', '--stacktrace', '--rerun-tasks', '--build-cache')
+                .withArguments('cargoBuildAndroid', '--stacktrace', '--rerun-tasks')
         // .withDebug(true)
                 .build()
 
