@@ -151,8 +151,16 @@ jobs:
         with:
           workspaces: |
             plugin/src/test/resources/rust -> plugin/build/resources/test/target/1.67
+          prefix-key: v0-rust-${{ matrix.os }}
+          shared-key: test-1.67
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
             plugin/src/test/resources/rust -> plugin/build/resources/test/target/stable
           prefix-key: v0-rust-${{ matrix.os }}
+          shared-key: test-stable
 
       - name: Gradle test
         run: |
@@ -222,10 +230,24 @@ jobs:
         with:
           workspaces: |
             plugin/src/test/resources/rust -> plugin/build/resources/test/target/1.67
+          prefix-key: v0-rust-${{ matrix.os }}
+          shared-key: test-1.67
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
             plugin/src/test/resources/rust -> plugin/build/resources/test/target/null
+          prefix-key: v0-rust-${{ matrix.os }}
+          shared-key: test-null
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
             plugin/src/test/resources/rust -> plugin/build/resources/test/target/stable
           prefix-key: v0-rust-${{ matrix.os }}
-          shared-key: ${{ matrix.androidTestTask }}
+          shared-key: test-stable
 
       - name: Gradle test
         run: |
