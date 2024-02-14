@@ -2,11 +2,7 @@
 
 Cross compile Rust Cargo projects for Android targets.
 
-
-<p align="left">
-    <a alt="Version badge" href="https://plugins.gradle.org/plugin/org.mozilla.rust-android-gradle.rust-android">
-        <img src="https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org/mozilla/rust-android-gradle/rust-android/org.mozilla.rust-android-gradle.rust-android.gradle.plugin/maven-metadata.xml.svg?label=rust-android-gradle&colorB=brightgreen" /></a>
-</p>
+[![CI](https://github.com/emakryo/rust-android-gradle/actions/workflows/check.yml/badge.svg)](https://github.com/emakryo/rust-android-gradle/actions/workflows/check.yml)
 
 # Usage
 
