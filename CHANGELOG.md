@@ -12,6 +12,17 @@ see [CHANGELOG.md of the original project](https://github.com/mozilla/rust-andro
 
 ## [Unreleased]
 
+### Added
+
+- Add configuration block for product flavors.
+
+### Changed
+
+- Change the precedence order of cargo target directory to use (highest priority first):
+  1. `targetDirectory` in `cargo` block in `build.gradle`.
+  2. `CARGO_TARGET_DIR` environment variable.
+  3. Default `${module}/target` directory.
+
 ### Fixed
 
 - Fix local unittest for Android Gradle Plugin 8.2.

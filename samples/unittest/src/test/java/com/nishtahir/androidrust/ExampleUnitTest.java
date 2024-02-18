@@ -4,6 +4,7 @@
 
 package com.nishtahir.androidrust;
 
+import com.nishtahir.androidrust.BuildConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -28,12 +29,14 @@ public class ExampleUnitTest implements JNACallback, JNICallback  {
     @Test
     public void testViaJNI() {
         MainActivity.invokeCallbackViaJNI(this);
-        Assert.assertEquals("From JNI: Hello from Rust", callbackValue);
+        Assert.assertTrue(callbackValue.contains("From JNI: Hello from Rust"));
+        Assert.assertTrue(callbackValue.contains(String.format("[feature=%s]", BuildConfig.FEATURES)));
     }
 
     @Test
     public void testViaJNA() {
         MainActivity.invokeCallbackViaJNA(this);
-        Assert.assertEquals("From JNA: Hello from Rust", callbackValue);
+        Assert.assertTrue(callbackValue.contains("From JNA: Hello from Rust"));
+        Assert.assertTrue(callbackValue.contains(String.format("[feature=%s]", BuildConfig.FEATURES)));
     }
 }

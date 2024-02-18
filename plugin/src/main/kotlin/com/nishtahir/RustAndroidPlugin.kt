@@ -305,11 +305,9 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         val destDir = "${buildDir}/rustJniLibs/${variant.name}"
-        val buildTypeName = variant.buildType.name
-        val buildTypeNameCapitalized = buildTypeName.replaceFirstChar { it.uppercase() }
         extensions[T::class].apply {
-            sourceSets.getByName(buildTypeName).jniLibs.srcDir(File(destDir, "android"))
-            sourceSets.getByName("test${buildTypeNameCapitalized}").resources.srcDir(File(destDir, "desktop"))
+            sourceSets.getByName(variant.name).jniLibs.srcDir(File(destDir, "android"))
+            sourceSets.getByName("test${capitalisedVariantName}").resources.srcDir(File(destDir, "desktop"))
         }
 
         val variantAndroidBuildTask = "cargoBuildAndroid${capitalisedVariantName}"

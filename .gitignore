@@ -30,6 +30,7 @@ modules.xml
 *.ipr
 /target/
 /samples/rust/target/
+/samples/rust/targets/
 Cargo.lock
 **/*.rs.bk
 .gradle

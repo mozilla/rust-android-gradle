@@ -79,7 +79,10 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            samples/rust -> samples/rust/target
+            samples/rust -> samples/rust/targets/base
+            samples/rust -> samples/rust/targets/all
+            samples/rust -> samples/rust/targets/noDefaultButBar
+            samples/rust -> samples/rust/targets/defaultAndBar
           prefix-key: v0-rust-${{ matrix.os }}
 
       - name: Assemble samples/app

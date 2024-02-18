@@ -151,12 +151,7 @@ which can be specified using the `apiLevel` option.  This option defaults to the
 level.  As of API level 21, 64-bit builds are possible; and conversely, the `arm64` and `x86_64`
 targets require `apiLevel >= 21`.
 
-### Cargo release profile
-
-The `profile` option selects between the `--debug` and `--release` profiles in `cargo`.  *Defaults
-to `debug`!*
-
-### Extension reference
+## Extension reference
 
 ### module
 
@@ -259,9 +254,9 @@ cargo {
 
 ### profile
 
-The Cargo [release profile](https://doc.rust-lang.org/book/second-edition/ch14-01-release-profiles.html#customizing-builds-with-release-profiles) to build.
+The Cargo [profile](https://doc.rust-lang.org/book/second-edition/ch14-01-release-profiles.html#customizing-builds-with-release-profiles) to build.
 
-Default values are depending on build type: for `debug` builds, `dev`; for `release` builds, `release`.
+Default values are depending on build type: for debug builds, `dev`; for release builds, `release`.
 
 ```groovy
 cargo {
@@ -315,8 +310,7 @@ Defaults to `${module}/target`.  `targetDirectory` can be absolute; if it is not
 as a path relative to the Gradle `projectDir`.
 
 Note that if `CARGO_TARGET_DIR` (see https://doc.rust-lang.org/cargo/reference/environment-variables.html)
-is specified in the environment, it takes precedence over `targetDirectory`, as cargo will output
-all build artifacts to it, regardless of what is being built, or where it was invoked.
+is specified in the environment, it is used when `targetDirectory` configuration is absent.
 
 You may also override `CARGO_TARGET_DIR` variable by setting `rust.cargoTargetDir` in
 `local.properties`, however it seems very unlikely that this will be useful, as we don't pass this
@@ -403,14 +397,23 @@ cargo {
 }
 ```
 
-### Build types
+### Build variants (build types and product flavors
 
-The plugin supports building for multiple build types.  The build types are compatible with the
+The plugin supports building for multiple build variants, composed by product flavors and build types.
+The build types are compatible with the
 [android plugin's build types](https://developer.android.com/build/build-variants#build-types),
 and are specified in the `buildTypes` block. Any configuration above can be specified per build.
 For configuration value of `profile`, `dev` profile is used for debuggable build types (e.g. `debug` build type),
 and `release` is used otherwise (e.g. `release` build type).
 `buildTypes` block is useful to specify different features for different build types.
+
+The product flavors are defined in the `productFlavors` block in android plugin.
+The same product flavor can be specified in the `productFlavors` block in the `cargo` block.
+
+The precedence of the configuration values is as follows:
+1. The configuration value specified in the product flavors.
+2. The configuration value specified in the build types.
+3. The configuration value specified in the `cargo` block.
 
 ```groovy
 cargo {
@@ -426,6 +429,18 @@ cargo {
         release {
             features {
                 noDefaultBut "z"
+            }
+        }
+    }
+    productFlavors {
+        flavor1 {
+            features { spec ->
+                spec.defaultAnd "a"
+            }
+        }
+        flavor2 {
+            features { spec ->
+                spec.defaultAnd "b"
             }
         }
     }

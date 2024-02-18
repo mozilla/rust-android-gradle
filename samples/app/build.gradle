@@ -28,6 +28,7 @@ android {
     namespace "com.nishtahir.androidrust"
     compileSdkVersion 33
     ndkVersion "23.1.7779620"
+    buildFeatures.buildConfig true
 
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
@@ -36,6 +37,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "FEATURES", "\"foo\""
     }
     buildTypes {
         release {
@@ -43,12 +45,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
 }
 
 cargo {
     module = "../rust"
     targets = ["x86_64", "arm64"]
     libname = "rust"
+    targetDirectory = "../rust/targets/base"
 }
 
 repositories {
