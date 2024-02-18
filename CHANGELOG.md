@@ -12,6 +12,8 @@ see [CHANGELOG.md of the original project](https://github.com/mozilla/rust-andro
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-02-18
+
 ### Added
 
 - Add configuration block for product flavors.
