@@ -134,25 +134,23 @@ open class CargoConfig(val name: String){
         return null
     }
 
-    fun merge(other: CargoConfig): CargoConfig {
+    fun merge(other: CargoConfig) {
         val from = this
-        return CargoConfig(name).apply {
-            module = other.module ?: from.module
-            libname = other.libname ?: from.libname
-            targets = other.targets ?: from.targets
-            prebuiltToolchains = other.prebuiltToolchains ?: from.prebuiltToolchains
-            profile = other.profile ?: from.profile
-            verbose = other.verbose ?: from.verbose
-            targetDirectory = other.targetDirectory ?: from.targetDirectory
-            targetIncludes = other.targetIncludes ?: from.targetIncludes
-            apiLevel = other.apiLevel ?: from.apiLevel
-            apiLevels = from.apiLevels.toMutableMap().apply {
-                other.apiLevels.forEach { (k, v) -> put(k, v) }
-            }
-            extraCargoBuildArguments = other.extraCargoBuildArguments ?: from.extraCargoBuildArguments
-            exec = other.exec ?: from.exec
-            featureSpec = FeatureSpec(other.featureSpec.features ?: from.featureSpec.features)
+        module = other.module ?: from.module
+        libname = other.libname ?: from.libname
+        targets = other.targets ?: from.targets
+        prebuiltToolchains = other.prebuiltToolchains ?: from.prebuiltToolchains
+        profile = other.profile ?: from.profile
+        verbose = other.verbose ?: from.verbose
+        targetDirectory = other.targetDirectory ?: from.targetDirectory
+        targetIncludes = other.targetIncludes ?: from.targetIncludes
+        apiLevel = other.apiLevel ?: from.apiLevel
+        apiLevels = from.apiLevels.toMutableMap().apply {
+            other.apiLevels.forEach { (k, v) -> put(k, v) }
         }
+        extraCargoBuildArguments = other.extraCargoBuildArguments ?: from.extraCargoBuildArguments
+        exec = other.exec ?: from.exec
+        featureSpec = FeatureSpec(other.featureSpec.features ?: from.featureSpec.features)
     }
 
     fun clone(): CargoConfig {
@@ -178,13 +176,22 @@ open class CargoConfig(val name: String){
 // `CargoExtension` is documented in README.md.
 open class CargoExtension(project: Project): CargoConfig("") {
     val buildTypes: NamedDomainObjectContainer<CargoConfig> = project.container(CargoConfig::class.java)
+    val productFlavors: NamedDomainObjectContainer<CargoConfig> = project.container(CargoConfig::class.java)
 
     fun getConfig(variants: BaseVariant): CargoConfig {
-        val baseConfig = this as CargoConfig
+        val config = (this as CargoConfig).clone()
         val buildTypeConfig = buildTypes.findByName(variants.buildType.name)
         if (buildTypeConfig is CargoConfig) {
-            return baseConfig.merge(buildTypeConfig)
+            config.merge(buildTypeConfig)
         }
-        return baseConfig.clone()
+
+        for (flavor in variants.productFlavors.reversed()) {
+            val flavorConfig = productFlavors.findByName(flavor.name)
+            if (flavorConfig is CargoConfig) {
+                config.merge(flavorConfig)
+            }
+        }
+
+        return config
     }
 }

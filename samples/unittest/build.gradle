@@ -28,14 +28,33 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+    buildFeatures.buildConfig true
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    flavorDimensions "feature"
+    productFlavors {
+        base {
+            dimension "feature"
+            buildConfigField "String", "FEATURES", "\"foo\""
+        }
+        all {
+            dimension "feature"
+            buildConfigField "String", "FEATURES", "\"foobar\""
+        }
+        noDefaultButBar {
+            dimension "feature"
+            buildConfigField "String", "FEATURES", "\"bar\""
+        }
+        defaultAndBar {
+            dimension "feature"
+            buildConfigField "String", "FEATURES", "\"foobar\""
+        }
+    }
     ndkVersion '26.1.10909125'
-
 }
 
 def arch = System.getProperty('os.arch')
@@ -55,6 +74,30 @@ cargo {
         throw new GradleException("Unsupported platform: arch=$arch, os=$os")
     }
     libname = "rust"
+
+    productFlavors {
+        base {
+            targetDirectory "../rust/targets/base"
+        }
+        all {
+            features { spec ->
+                spec.all()
+            }
+            targetDirectory "../rust/targets/all"
+        }
+        noDefaultButBar {
+            features { spec ->
+                spec.noDefaultBut "bar"
+            }
+            targetDirectory "../rust/targets/noDefaultButBar"
+        }
+        defaultAndBar {
+            features { spec ->
+                spec.defaultAnd "bar"
+            }
+            targetDirectory "../rust/targets/defaultAndBar"
+        }
+    }
 }
 
 repositories {
@@ -136,5 +179,3 @@ android.applicationVariants.all { variant ->
         }
     }
 }
-
-

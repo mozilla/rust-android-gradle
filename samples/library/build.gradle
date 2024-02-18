@@ -51,12 +51,7 @@ cargo {
     module = "../rust"
     targets = ["x86_64", "arm64"]
     libname = "rust"
-
-    features {
-        defaultAnd "foo", "bar"
-        noDefaultBut("foo", "bar")
-        all()
-    }
+    targetDirectory = "../rust/targets/base"
 
     exec = { spec, toolchain ->
         spec.environment("TEST", "test")
