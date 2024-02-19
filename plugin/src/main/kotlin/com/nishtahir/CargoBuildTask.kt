@@ -80,7 +80,10 @@ open class CargoBuildTask @Inject constructor(
                 standardOutput = System.out
                 workingDir = manifestDir.dir
 
-                environment("CARGO_TARGET_DIR", cargoConfig.targetDirectory)
+                project.logger.info("Target directory: ${cargoConfig.targetDirectory}")
+                if (cargoConfig.targetDirectory != null) {
+                    environment("CARGO_TARGET_DIR", project.file(cargoConfig.targetDirectory!!))
+                }
 
                 val theCommandLine = mutableListOf(cargoConfig.cargoCommand)
 
