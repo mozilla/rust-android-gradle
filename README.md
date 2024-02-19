@@ -397,20 +397,21 @@ cargo {
 }
 ```
 
-### Build variants (build types and product flavors
+### Build variants (build types and product flavors)
 
-The plugin supports building for multiple build variants, composed by product flavors and build types.
+The plugin allows for building multiple build variants, which are made up of product flavors and a build type.
 The build types are compatible with the
-[android plugin's build types](https://developer.android.com/build/build-variants#build-types),
-and are specified in the `buildTypes` block. Any configuration above can be specified per build.
-For configuration value of `profile`, `dev` profile is used for debuggable build types (e.g. `debug` build type),
-and `release` is used otherwise (e.g. `release` build type).
-`buildTypes` block is useful to specify different features for different build types.
+[build types specified in the Android plugin](https://developer.android.com/build/build-variants#build-types),
+and are defined in the `buildTypes` block.
 
-The product flavors are defined in the `productFlavors` block in android plugin.
-The same product flavor can be specified in the `productFlavors` block in the `cargo` block.
+For each build type, you can specify any of the aforementioned configurations.
+The `dev` profile is used by default for debuggable build types (e.g. `debug` build type),
+while `release` is used otherwise (e.g. `release` build type).
 
-The precedence of the configuration values is as follows:
+The product flavors specified in the `cargo` block must be defined in the `productFlavors` block of
+the android plugin. Each of the configurations above can be specified per product flavor in the same way as the build type.
+
+The order of the individual configuration values is as follows:
 1. The configuration value specified in the product flavors.
 2. The configuration value specified in the build types.
 3. The configuration value specified in the `cargo` block.
