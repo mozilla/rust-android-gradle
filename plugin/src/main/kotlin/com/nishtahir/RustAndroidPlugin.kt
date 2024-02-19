@@ -268,14 +268,13 @@ open class RustAndroidPlugin : Plugin<Project> {
         // 1. The `targetDirectory` property in the `CargoExtension` block.
         // 2. The `rust.cargoTargetDir` property in the `local.properties` file.
         // 3. The `CARGO_TARGET_DIR` environment variable.
-        // 4. The `${buildDir}/cargoTarget` directory.
+        // 4. The default `${module}/target` directory.
         //
         // We allow this to be specified in `local.properties`, not because this is
         // something you should ever need to do currently, but we don't want it to ruin anyone's
         // day if it turns out we're wrong about that.
         config.targetDirectory = config.targetDirectory
             ?: config.getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
-            ?: "${config.module}/target"
 
         // Determine the NDK version, if present
         val ndkSourceProperties = Properties()
@@ -297,7 +296,7 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         val generateToolchainsTask = "generateToolchains${capitalisedVariantName}"
-        val ndkDir = extensions[T::class].ndkDirectory
+        val ndkDir = extensions[T::class].ndkDirectory.absolutePath
 
         tasks.register(generateToolchainsTask, GenerateToolchainsTask::class.java, config, ndkDir).configure {
             group = RUST_TASK_GROUP
