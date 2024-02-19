@@ -44,11 +44,12 @@ open class CargoBuildTask @Inject constructor(
 
         // cargo.profile is non-null here
         val targetDirectoryProfile = getTargetDirectoryFromProfile(cargoConfig.profile!!)
+        val targetDirectory = cargoConfig.targetDirectory ?: "${cargoConfig.module}/target"
 
         val cargoOutputDir = project.file(if (toolchain.target == defaultTargetTriple) {
-            "${cargoConfig.targetDirectory}/${targetDirectoryProfile}"
+            "${targetDirectory}/${targetDirectoryProfile}"
         } else {
-            "${cargoConfig.targetDirectory}/${toolchain.target}/${targetDirectoryProfile}"
+            "${targetDirectory}/${toolchain.target}/${targetDirectoryProfile}"
         })
 
         destinationDir.mkdirs()
