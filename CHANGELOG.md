@@ -12,6 +12,13 @@ see [CHANGELOG.md of the original project](https://github.com/mozilla/rust-andro
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-02-19
+
+### Fixed
+
+- Fix wrong path of cargo target directory.
+- Fix wrong type for ndk path.
+
 ## [0.2.0] - 2024-02-18
 
 ### Added
