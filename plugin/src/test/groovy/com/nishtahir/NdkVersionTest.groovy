@@ -67,7 +67,7 @@ class NdkVersionTest extends AbstractTest {
             // https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2004-Readme.md#android
             "24.0.8215888",
             "25.2.9519653",
-            "26.1.10909125",
+            "26.2.11394342",
         ]
     }
 }
