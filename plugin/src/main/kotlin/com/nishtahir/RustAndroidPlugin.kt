@@ -165,8 +165,8 @@ open class RustAndroidPlugin : Plugin<Project> {
 
             // Fish linker wrapper scripts from our Java resources.
             tasks.register(generateLinkerWrapperTask, GenerateLinkerWrapperTask::class.java).configure {
-                group = RUST_TASK_GROUP
-                description = "Generate shared linker wrapper script"
+                it.group = RUST_TASK_GROUP
+                it.description = "Generate shared linker wrapper script"
 
                 with(it) {
                     // From https://stackoverflow.com/a/320595.
@@ -196,13 +196,13 @@ open class RustAndroidPlugin : Plugin<Project> {
 
     private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
         tasks.register(androidBuildTask, DefaultTask::class.java) {
-            group = RUST_TASK_GROUP
-            description = "Build library for android"
+            it.group = RUST_TASK_GROUP
+            it.description = "Build library for android"
         }
 
         tasks.register(hostBuildTask, DefaultTask::class.java) {
-            group = RUST_TASK_GROUP
-            description = "Build library for host"
+            it.group = RUST_TASK_GROUP
+            it.description = "Build library for host"
         }
 
         when (val androidExtension = extensions[T::class]) {
@@ -299,8 +299,8 @@ open class RustAndroidPlugin : Plugin<Project> {
         val ndkDir = extensions[T::class].ndkDirectory.absolutePath
 
         tasks.register(generateToolchainsTask, GenerateToolchainsTask::class.java, config, ndkDir).configure {
-            group = RUST_TASK_GROUP
-            description = "Generate standard toolchain for given architectures"
+            it.group = RUST_TASK_GROUP
+            it.description = "Generate standard toolchain for given architectures"
         }
 
         val destDir = "${buildDir}/rustJniLibs/${variant.name}"
@@ -313,8 +313,8 @@ open class RustAndroidPlugin : Plugin<Project> {
         val variantDesktopBuildTask = "cargoBuildDesktop${capitalisedVariantName}"
 
         tasks.register(variantAndroidBuildTask) {
-            group = RUST_TASK_GROUP
-            description = "Build Rust code for Android (${variant.name})"
+            it.group = RUST_TASK_GROUP
+            it.description = "Build Rust code for Android (${variant.name})"
             it.extensions.add("outDir", "${destDir}/android")
         }
         tasks.named(androidBuildTask).configure {
@@ -322,8 +322,8 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         tasks.register(variantDesktopBuildTask) {
-            group = RUST_TASK_GROUP
-            description = "Build Rust code for desktop (${variant.name})"
+            it.group = RUST_TASK_GROUP
+            it.description = "Build Rust code for desktop (${variant.name})"
             it.extensions.add("outDir", "${destDir}/desktop")
         }
         tasks.named(hostBuildTask).configure {
@@ -351,8 +351,8 @@ open class RustAndroidPlugin : Plugin<Project> {
             } .let { "${destDir}/${it}/${toolchain.folder}" }
 
             tasks.register(buildTask, CargoBuildTask::class.java, toolchain, config).configure {
-                group = RUST_TASK_GROUP
-                description = "Build library for variant: $capitalisedVariantName ($target)"
+                it.group = RUST_TASK_GROUP
+                it.description = "Build library for variant: $capitalisedVariantName ($target)"
                 it.manifestDir = fileTree(config.module!!).apply {
                     // Exclude cargo build directories
                     exclude("target/**")
