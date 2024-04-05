@@ -107,6 +107,11 @@ val toolchains = listOf(
                 "android/x86_64")
 )
 
+data class Ndk(val path: File, val version: String) {
+    val versionMajor: Int
+        get() = version.split(".").first().toInt()
+}
+
 data class Toolchain(val platform: String,
                      val type: ToolchainType,
                      val target: String,
@@ -227,21 +232,23 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         // Determine the NDK version, if present
-        val ndkSourceProperties = Properties()
-        val ndkSourcePropertiesFile = File(extensions[T::class].ndkDirectory, "source.properties")
-        if (ndkSourcePropertiesFile.exists()) {
-            ndkSourceProperties.load(ndkSourcePropertiesFile.inputStream())
+        val ndk = extensions[T::class].ndkDirectory.let {
+            val ndkSourceProperties = Properties()
+            val ndkSourcePropertiesFile = File(it, "source.properties")
+            if (ndkSourcePropertiesFile.exists()) {
+                ndkSourceProperties.load(ndkSourcePropertiesFile.inputStream())
+            }
+            val ndkVersion = ndkSourceProperties.getProperty("Pkg.Revision", "0.0")
+            Ndk(path = it, version = ndkVersion)
         }
-        val ndkVersion = ndkSourceProperties.getProperty("Pkg.Revision", "0.0")
-        val ndkVersionMajor = ndkVersion.split(".").first().toInt()
 
         // Determine whether to use prebuilt or generated toolchains
         val usePrebuilt =
             cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
             cargoExtension.prebuiltToolchains ?:
-            (ndkVersionMajor >= 19);
+            (ndk.versionMajor >= 19);
 
-        if (usePrebuilt && ndkVersionMajor < 19) {
+        if (usePrebuilt && ndk.versionMajor < 19) {
             throw GradleException("usePrebuilt = true requires NDK version 19+")
         }
 
@@ -299,6 +306,7 @@ open class RustAndroidPlugin : Plugin<Project> {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
                 toolchain = theToolchain
+                this.ndk = ndk
             }
 
             if (!usePrebuilt) {
