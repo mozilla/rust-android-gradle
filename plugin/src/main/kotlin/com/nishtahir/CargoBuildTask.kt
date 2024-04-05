@@ -15,6 +15,9 @@ open class CargoBuildTask : DefaultTask() {
     @Input
     var toolchain: Toolchain? = null
 
+    @Input
+    var ndk: Ndk? = null
+
     @Suppress("unused")
     @TaskAction
     fun build() = with(project) {
@@ -25,10 +28,12 @@ open class CargoBuildTask : DefaultTask() {
                 throw GradleException("toolchain cannot be null")
             }
 
+            val ndk = ndk ?: throw GradleException("ndk cannot be null")
+
             project.plugins.all {
                 when (it) {
-                    is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, this)
-                    is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, this)
+                    is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, ndk, this)
+                    is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, ndk, this)
                 }
             }
             // CARGO_TARGET_DIR can be used to force the use of a global, shared target directory
@@ -77,8 +82,7 @@ open class CargoBuildTask : DefaultTask() {
         }
     }
 
-    inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, cargoExtension: CargoExtension) {
-        val app = project.extensions[T::class]
+    inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, ndk: Ndk, cargoExtension: CargoExtension) {
         val apiLevel = cargoExtension.apiLevels[toolchain.platform]!!
         val defaultTargetTriple = getDefaultTargetTriple(project, cargoExtension.rustcCommand)
 
@@ -165,13 +169,8 @@ open class CargoBuildTask : DefaultTask() {
 
                 // Cross-compiling to Android requires toolchain massaging.
                 if (toolchain.type != ToolchainType.DESKTOP) {
-                    val ndkPath = app.ndkDirectory
-                    val ndkVersion = ndkPath.name
-                    val ndkVersionMajor = try {
-                        ndkVersion.split(".").first().toInt()
-                    } catch (ex: NumberFormatException) {
-                        0 // Falls back to generic behaviour.
-                    }
+                    val ndkPath = ndk.path
+                    val ndkVersionMajor = ndk.versionMajor
 
                     val toolchainDirectory = if (toolchain.type == ToolchainType.ANDROID_PREBUILT) {
                         environment("CARGO_NDK_MAJOR_VERSION", ndkVersionMajor)
