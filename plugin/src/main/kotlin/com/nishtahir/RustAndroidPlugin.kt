@@ -363,6 +363,7 @@ open class RustAndroidPlugin : Plugin<Project> {
                     it.dependsOn(generateToolchainsTask)
                 }
                 it.dependsOn(generateLinkerWrapperTask)
+                it.outputs.upToDateWhen { false }
             }
 
             if (toolchain.type == ToolchainType.DESKTOP) {
