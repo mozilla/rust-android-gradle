@@ -55,11 +55,10 @@ class NdkVersionTest extends AbstractTest {
 
         where:
         ndkVersion << [
-            // NDK versions supported by Github Actions, per
-            // https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-Readme.md.
-            "21.4.7075529",
-            "22.1.7171670",
-            "23.1.7779620",
+            // Partial list of NDK versions supported by Github Actions, per
+            // https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md
+            "25.2.9519653",
+            "26.2.11394342",
         ]
     }
 }

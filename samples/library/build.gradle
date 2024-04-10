@@ -17,7 +17,7 @@ apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
     compileSdkVersion 27
-    ndkVersion "23.1.7779620"
+    ndkVersion "26.2.11394342"
 
     defaultConfig {
         minSdkVersion 21
