@@ -8,6 +8,11 @@ on:
     branches: [master, citest]
   pull_request:
     branches: [master]
+  schedule:
+    # N.b. * is a special character in YAML so you have to quote this
+    # string.  10:20 UTC (2:20 Pacific), once a week on Tuesday, to
+    # verify this stays healthy over time.
+    - cron:  '20 10 * * 3'
 
 jobs:
   generate_versions:
