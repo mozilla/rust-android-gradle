@@ -1,3 +1,7 @@
+# 0.9.4
+
+- Always use the NDK version from .
+
 # 0.9.3
 
 - Fix issues with Android NDK 23+: use `llvm-ar`, support `-lgcc` rewriting on Windows.
