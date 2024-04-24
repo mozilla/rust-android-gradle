@@ -10,6 +10,8 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 
 open class CargoBuildTask : DefaultTask() {
     @Input
@@ -47,6 +49,10 @@ open class CargoBuildTask : DefaultTask() {
                 getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
                 ?: targetDirectory
                 ?: "${module!!}/target"
+
+            if (!Files.exists(Paths.get(targetDirectory))) {
+                throw GradleException("Cargo target directory (`${targetDirectory}`) does not exists. If you're using a Cargo Workspace, you need to specify the target directory in `build.gradle` or `local.properties` (see https://github.com/mozilla/rust-android-gradle#targetdirectory).")
+            }
 
             val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
 
