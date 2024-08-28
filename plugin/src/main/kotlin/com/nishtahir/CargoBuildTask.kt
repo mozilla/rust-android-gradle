@@ -228,7 +228,8 @@ open class CargoBuildTask : DefaultTask() {
                     environment("RUST_ANDROID_GRADLE_LINKER_WRAPPER_PY",
                             File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.py").path)
                     environment("RUST_ANDROID_GRADLE_CC", cc)
-                    environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${cargoExtension.libname!!}.so")
+                    // https://developer.android.com/guide/practices/page-sizes#other-build-systems
+                    environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-z,max-page-size=16384,-soname,lib${cargoExtension.libname!!}.so")
                 }
 
                 cargoExtension.extraCargoBuildArguments?.let {
