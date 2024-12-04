@@ -17,7 +17,7 @@ apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
     compileSdkVersion 27
-    ndkVersion "26.2.11394342"
+    ndkVersion "26.3.11579264"
 
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
