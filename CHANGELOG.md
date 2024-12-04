@@ -1,3 +1,7 @@
+# 0.9.5
+
+- Do not use deprecated  module for Python 3.13 compatibility
+
 # 0.9.4
 
 - Always use the NDK version from .
