@@ -58,7 +58,7 @@ jobs:
         git push "${remote}" --follow-tags
         git push "${remote}" --tags
 
-        echo "::set-output name=new_tag::v${{ github.event.inputs.new_version }}"
+        echo "new_tag=v${{ github.event.inputs.new_version }}" >> $GITHUB_OUTPUT
 
     - name: Create release
       id: create_release
