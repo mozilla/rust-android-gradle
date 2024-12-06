@@ -1,7 +1,7 @@
 package com.nishtahir
 
-import com.google.common.collect.ImmutableMultimap
-import com.google.common.collect.Multimap
+import org.gradle.internal.impldep.com.google.common.collect.ImmutableMultimap
+import org.gradle.internal.impldep.com.google.common.collect.Multimap
 import org.gradle.util.GradleVersion
 import org.gradle.util.VersionNumber
 
