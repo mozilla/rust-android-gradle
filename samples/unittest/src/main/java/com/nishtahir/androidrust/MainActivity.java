@@ -1,8 +1,9 @@
 package com.nishtahir.androidrust;
 
+import static java.lang.System.loadLibrary;
+
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.TextView;
 
 import com.sun.jna.Library;
@@ -14,8 +15,7 @@ public class MainActivity extends AppCompatActivity implements JNACallback, JNIC
     private static final String TAG = "MainActivity";
 
     public interface RustLibrary extends Library {
-        RustLibrary INSTANCE = (RustLibrary)
-            Native.load("rust", RustLibrary.class);
+        RustLibrary INSTANCE = Native.load("rust", RustLibrary.class);
 
         int invokeCallbackViaJNA(JNACallback callback);
     }

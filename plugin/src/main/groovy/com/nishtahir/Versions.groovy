@@ -1,11 +1,11 @@
 package com.nishtahir
 
-import com.google.common.collect.ImmutableMultimap
-import com.google.common.collect.ImmutableSortedSet
-import com.google.common.collect.Multimap
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import org.gradle.internal.impldep.com.google.common.collect.ImmutableMultimap
+import org.gradle.internal.impldep.com.google.common.collect.ImmutableSortedSet
+import org.gradle.internal.impldep.com.google.common.collect.Multimap
 import org.gradle.util.GradleVersion
 import org.gradle.util.VersionNumber
 

@@ -4,7 +4,8 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 
 use jni::JNIEnv;
-use jni::objects::{JClass, JObject, JValue};
+use jni::objects::{JClass, JObject};
+use jni::objects::JValueGen;
 
 pub type Callback = unsafe extern "C" fn(*const c_char) -> ();
 
@@ -18,7 +19,7 @@ pub extern "C" fn invokeCallbackViaJNA(callback: Callback) {
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn Java_com_nishtahir_androidrust_MainActivity_invokeCallbackViaJNI(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _class: JClass,
     callback: JObject
 ) {
@@ -26,5 +27,5 @@ pub extern "C" fn Java_com_nishtahir_androidrust_MainActivity_invokeCallbackViaJ
     let response = env.new_string(&s)
         .expect("Couldn't create java string!");
     env.call_method(callback, "callback", "(Ljava/lang/String;)V",
-                    &[JValue::from(JObject::from(response))]).unwrap();
+                    &[JValueGen::from(&JObject::from(response))]).unwrap();
 }
