@@ -1,3 +1,7 @@
+# 0.9.6
+
+- Added option to add a build-id during linking
+
 # 0.9.5
 
 - Do not use deprecated  module for Python 3.13 compatibility
