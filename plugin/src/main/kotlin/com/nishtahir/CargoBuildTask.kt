@@ -228,7 +228,11 @@ open class CargoBuildTask : DefaultTask() {
                     environment("RUST_ANDROID_GRADLE_LINKER_WRAPPER_PY",
                             File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.py").path)
                     environment("RUST_ANDROID_GRADLE_CC", cc)
-                    environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${cargoExtension.libname!!}.so")
+                    if (cargoExtension.generateBuildId) {
+                        environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,--build-id,-soname,lib${cargoExtension.libname!!}.so")
+                    } else {
+                        environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${cargoExtension.libname!!}.so")
+                    }
                 }
 
                 cargoExtension.extraCargoBuildArguments?.let {

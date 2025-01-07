@@ -341,6 +341,10 @@ cargo {
 }
 ```
 
+### generateBuildId
+
+Generate a build-id for the shared library during the link phase.
+
 ### exec
 
 This is a callback taking the `ExecSpec` we're going to use to invoke `cargo build`, and
