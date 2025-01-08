@@ -1,5 +1,5 @@
 buildscript {
-    ext.agp_version = '4.0.1'
+    ext.agp_version = '8.7.1'
     repositories {
         google()
         maven {
@@ -16,11 +16,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
-    compileSdkVersion 27
+    namespace "com.nishtahir.androidrust"
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 35
+        compileSdk 35
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -31,7 +32,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    ndkVersion "22.1.7171670"
+    ndkVersion "27.1.12297006"
     sourceSets {
         test.resources.srcDirs += "$buildDir/rustJniLibs/desktop"
     }
@@ -40,11 +41,17 @@ android {
 cargo {
     module = "../rust"
     targets = ["x86_64", "linux-x86-64"] // "x86", "x86_64", "arm64"]
+    // Needed for build on arm MAC
+//    targets = ["x86_64", "darwin-aarch64"] // "x86", "x86_64", "arm64"]
     libname = "rust"
 }
 
 repositories {
     google()
+    mavenCentral()
+    maven {
+        url "https://mvnrepository.com"
+    }
 }
 
 
@@ -66,15 +73,13 @@ configurations {
 }
 
 dependencies {
-    jnaForTest "net.java.dev.jna:jna:5.6.0@jar"
-    implementation "net.java.dev.jna:jna:5.6.0@aar"
+    jnaForTest "net.java.dev.jna:jna:5.15.0@jar"
+    implementation "net.java.dev.jna:jna:5.15.0@aar"
 
-    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
-    testImplementation 'junit:junit:4.12'
+    androidTestImplementation('androidx.test.espresso:espresso-core:3.6.1')
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:2.0.4'
+    testImplementation 'junit:junit:4.13.2'
 
     // For reasons unknown, resolving the jnaForTest configuration directly
     // trips a nasty issue with the Android-Gradle plugin 3.2.1, like `Cannot
@@ -85,7 +90,7 @@ dependencies {
     // avoiding other configurations from being resolved.  Tricky!
     testImplementation files(configurations.jnaForTest.copyRecursive().files)
     // testImplementation "androidx.test.ext:junit:$versions.androidx_junit"
-    testImplementation "org.robolectric:robolectric:4.2.1"
+    testImplementation "org.robolectric:robolectric:4.14.1"
 }
 
 afterEvaluate {

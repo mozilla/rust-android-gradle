@@ -1,5 +1,5 @@
 buildscript {
-    ext.agp_version = '7.0.0'
+    ext.agp_version = '8.7.1'
     repositories {
         google()
         maven {
@@ -16,13 +16,14 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
-    compileSdkVersion 27
-    ndkVersion "26.3.11579264"
+    ndkVersion "27.1.12297006"
+    namespace "com.nishtahir.androidrust"
 
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 35
+        compileSdk 35
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -50,14 +51,14 @@ dependencies {
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
-    testImplementation 'junit:junit:4.12'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:2.0.4'
+    testImplementation 'junit:junit:4.13.2'
 }
 
 afterEvaluate {
     // The `cargoBuild` task isn't available until after evaluation.
-    android.applicationVariants.all { variant ->
+    android.applicationVariants.configureEach { variant ->
         def productFlavor = ""
         variant.productFlavors.each {
             productFlavor += "${it.name.capitalize()}"

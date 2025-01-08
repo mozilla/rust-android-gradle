@@ -137,6 +137,9 @@ open class CargoBuildTask : DefaultTask() {
                             theCommandLine.add(features.featureSet.joinToString(" "))
                         }
                     }
+                    null -> {
+                        // Do nothing
+                    }
                 }
 
                 if (cargoExtension.profile != "debug") {
