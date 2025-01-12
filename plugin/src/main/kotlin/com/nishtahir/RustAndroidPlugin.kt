@@ -119,43 +119,43 @@ data class Toolchain(val platform: String,
                      val binutilsTriple: String,
                      val folder: String) {
     fun cc(apiLevel: Int): File =
-            if (System.getProperty("os.name").startsWith("Windows")) {
-                if (type == ToolchainType.ANDROID_PREBUILT) {
-                    File("bin", "$compilerTriple$apiLevel-clang.cmd")
-                } else {
-                    File("$platform-$apiLevel/bin", "$compilerTriple-clang.cmd")
-                }
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            if (type == ToolchainType.ANDROID_PREBUILT) {
+                File("bin", "$compilerTriple$apiLevel-clang.cmd")
             } else {
-                if (type == ToolchainType.ANDROID_PREBUILT) {
-                    File("bin", "$compilerTriple$apiLevel-clang")
-                } else {
-                    File("$platform-$apiLevel/bin", "$compilerTriple-clang")
-                }
+                File("$platform-$apiLevel/bin", "$compilerTriple-clang.cmd")
             }
+        } else {
+            if (type == ToolchainType.ANDROID_PREBUILT) {
+                File("bin", "$compilerTriple$apiLevel-clang")
+            } else {
+                File("$platform-$apiLevel/bin", "$compilerTriple-clang")
+            }
+        }
 
     fun cxx(apiLevel: Int): File =
-            if (System.getProperty("os.name").startsWith("Windows")) {
-                if (type == ToolchainType.ANDROID_PREBUILT) {
-                    File("bin", "$compilerTriple$apiLevel-clang++.cmd")
-                } else {
-                    File("$platform-$apiLevel/bin", "$compilerTriple-clang++.cmd")
-                }
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            if (type == ToolchainType.ANDROID_PREBUILT) {
+                File("bin", "$compilerTriple$apiLevel-clang++.cmd")
             } else {
-                if (type == ToolchainType.ANDROID_PREBUILT) {
-                    File("bin", "$compilerTriple$apiLevel-clang++")
-                } else {
-                    File("$platform-$apiLevel/bin", "$compilerTriple-clang++")
-                }
+                File("$platform-$apiLevel/bin", "$compilerTriple-clang++.cmd")
             }
+        } else {
+            if (type == ToolchainType.ANDROID_PREBUILT) {
+                File("bin", "$compilerTriple$apiLevel-clang++")
+            } else {
+                File("$platform-$apiLevel/bin", "$compilerTriple-clang++")
+            }
+        }
 
     fun ar(apiLevel: Int, ndkVersionMajor: Int): File =
-            if (ndkVersionMajor >= 23) {
-                File("bin", "llvm-ar")
-            } else if (type == ToolchainType.ANDROID_PREBUILT) {
-                File("bin", "$binutilsTriple-ar")
-            } else {
-                File("$platform-$apiLevel/bin", "$binutilsTriple-ar")
-            }
+        if (ndkVersionMajor >= 23) {
+            File("bin", "llvm-ar")
+        } else if (type == ToolchainType.ANDROID_PREBUILT) {
+            File("bin", "$binutilsTriple-ar")
+        } else {
+            File("$platform-$apiLevel/bin", "$binutilsTriple-ar")
+        }
 }
 
 @Suppress("unused")
@@ -196,8 +196,8 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         // Allow to set targets, including per-project, in local.properties.
         val localTargets: String? =
-                cargoExtension.localProperties.getProperty("rust.targets.${project.name}") ?:
-                cargoExtension.localProperties.getProperty("rust.targets")
+            cargoExtension.localProperties.getProperty("rust.targets.${project.name}") ?:
+            cargoExtension.localProperties.getProperty("rust.targets")
         if (localTargets != null) {
             cargoExtension.targets = localTargets.split(',').map { it.trim() }
         }
@@ -208,25 +208,22 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         // Ensure that an API level is specified for all targets
         val apiLevel = cargoExtension.apiLevel
-        if (cargoExtension.apiLevels.size > 0) {
+        if (cargoExtension.apiLevels.isNotEmpty()) {
             if (apiLevel != null) {
                 throw GradleException("Cannot set both `apiLevel` and `apiLevels`")
             }
         } else {
-            val default = if (apiLevel != null) {
-                apiLevel
-            } else {
-                extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
-            }
-            cargoExtension.apiLevels = cargoExtension.targets!!.map { it to default }.toMap()
+            val default = apiLevel ?: extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
+            cargoExtension.apiLevels = cargoExtension.targets!!.associateWith { default }
         }
         val missingApiLevelTargets = cargoExtension.targets!!.toSet().minus(
             cargoExtension.apiLevels.keys)
-        if (missingApiLevelTargets.size > 0) {
+        if (missingApiLevelTargets.isNotEmpty()) {
             throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
         }
 
         extensions[T::class].apply {
+            val buildDir by layout.buildDirectory
             sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/android"))
             sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
         }
@@ -246,7 +243,7 @@ open class RustAndroidPlugin : Plugin<Project> {
         val usePrebuilt =
             cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
             cargoExtension.prebuiltToolchains ?:
-            (ndk.versionMajor >= 19);
+            (ndk.versionMajor >= 19)
 
         if (usePrebuilt && ndk.versionMajor < 19) {
             throw GradleException("usePrebuilt = true requires NDK version 19+")
@@ -268,15 +265,18 @@ open class RustAndroidPlugin : Plugin<Project> {
             description = "Generate shared linker wrapper script"
         }
 
+        val rootBuildDir by rootBuildDirectory()
         generateLinkerWrapper.apply {
             // From https://stackoverflow.com/a/320595.
             from(rootProject.zipTree(File(RustAndroidPlugin::class.java.protectionDomain.codeSource.location.toURI()).path))
             include("**/linker-wrapper*")
-            into(File(rootProject.buildDir, "linker-wrapper"))
+            into(File(rootBuildDir, "linker-wrapper"))
             eachFile {
                 it.path = it.path.replaceFirst("com/nishtahir", "")
             }
-            fileMode = 493 // 0755 in decimal; Kotlin doesn't have octal literals (!).
+            filePermissions {
+                it.unix("755")
+            }
             includeEmptyDirs = false
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
@@ -289,24 +289,24 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         cargoExtension.targets!!.forEach { target ->
             val theToolchain = toolchains
-                    .filter {
-                        if (usePrebuilt) {
-                            it.type != ToolchainType.ANDROID_GENERATED
-                        } else {
-                            it.type != ToolchainType.ANDROID_PREBUILT
-                        }
+                .filter {
+                    if (usePrebuilt) {
+                        it.type != ToolchainType.ANDROID_GENERATED
+                    } else {
+                        it.type != ToolchainType.ANDROID_PREBUILT
                     }
-                    .find { it.platform == target }
+                }
+                .find { it.platform == target }
             if (theToolchain == null) {
-                throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
+                throw GradleException("Target $target is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
             }
 
-            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
+            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalized()}",
                     CargoBuildTask::class.java).apply {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
-                toolchain = theToolchain
-                this.ndk = ndk
+                toolchain.set(theToolchain)
+                this.ndk.set(ndk)
             }
 
             if (!usePrebuilt) {

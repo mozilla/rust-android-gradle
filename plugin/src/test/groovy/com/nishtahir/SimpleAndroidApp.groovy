@@ -1,10 +1,5 @@
 package com.nishtahir
 
-import org.gradle.api.GradleException
-import org.gradle.util.VersionNumber
-
-import static com.nishtahir.Versions.android
-
 class SimpleAndroidApp {
     final File projectDir
     private final File cacheDir
@@ -51,8 +46,8 @@ class SimpleAndroidApp {
                         }
                     }
                     dependencies {
-                        classpath ('com.android.tools.build:gradle:$androidVersion') { force = true }
-                        classpath "org.mozilla.rust-android-gradle:plugin:${Versions.PLUGIN_VERSION}"
+                        classpath ('com.android.tools.build:gradle:${androidVersion}!!')
+                        classpath "org.mozilla.rust-android-gradle:plugin:${Versions.@INSTANCE.PLUGIN_VERSION}"
                         ${kotlinPluginDependencyIfEnabled}
                     }
                 }
@@ -140,6 +135,7 @@ class SimpleAndroidApp {
             }
 
             android {
+                namespace "com.nishtahir"
                 ${maybeNdkVersion}
                 compileSdkVersion 28
                 buildToolsVersion "29.0.3"
@@ -156,7 +152,7 @@ class SimpleAndroidApp {
     }
 
     private String getMaybeNdkVersion() {
-        def isAndroid34x = androidVersion >= android("3.4.0")
+        def isAndroid34x = androidVersion >= Versions.@INSTANCE.android("3.4.0")
         if (isAndroid34x) {
             return """ndkVersion '${ndkVersion}'"""
         } else {
@@ -246,11 +242,24 @@ class SimpleAndroidApp {
         """.stripIndent()
     }
 
+    private static File getSystemDefaultAndroidSdkHome() {
+        def os = System.getProperty("os.name").toLowerCase()
+        def home = System.getProperty("user.home")
+        if (os.contains("win")) {
+            def localappdata = System.getenv("LOCALAPPDATA")
+            return new File("$localappdata\\Android\\Sdk")
+        } else if (os.contains("osx")) {
+            return new File("$home/Library/Android/sdk")
+        } else {
+            return new File("$home/Android/sdk")
+        }
+    }
+
     private void configureAndroidSdkHome() {
         file('local.properties').text = ""
         def env = System.getenv("ANDROID_HOME")
         if (!env) {
-            def androidSdkHome = new File("${System.getProperty("user.home")}/Library/Android/sdk")
+            def androidSdkHome = systemDefaultAndroidSdkHome
             file('local.properties').text += "sdk.dir=${androidSdkHome.absolutePath.replace(File.separatorChar, '/' as char)}"
         }
         // def env = System.getenv("ANDROID_NDK_HOME")
@@ -274,10 +283,10 @@ class SimpleAndroidApp {
         boolean kotlinEnabled = true
         boolean kaptWorkersEnabled = true
 
-        VersionNumber androidVersion = Versions.latestAndroidVersion()
-        VersionNumber ndkVersion = Versions.latestAndroidVersion() >= android("3.4.0") ? VersionNumber.parse("26.3.11579264") : null
+        VersionNumber androidVersion = Versions.@INSTANCE.latestAndroidVersion()
+        VersionNumber ndkVersion = Versions.@INSTANCE.latestAndroidVersion() >= Versions.@INSTANCE.android("3.4.0") ? VersionNumber.@Companion.parse("26.3.11579264") : null
 
-        VersionNumber kotlinVersion = VersionNumber.parse("1.3.72")
+        VersionNumber kotlinVersion = VersionNumber.@Companion.parse("1.3.72")
         File projectDir
         File cacheDir
 
@@ -303,14 +312,14 @@ class SimpleAndroidApp {
 
         Builder withAndroidVersion(VersionNumber androidVersion) {
             this.androidVersion = androidVersion
-            if (this.androidVersion < android("3.4.0")) {
+            if (this.androidVersion < Versions.@INSTANCE.android("3.4.0")) {
                 this.ndkVersion = null
             }
             return this
         }
 
         Builder withAndroidVersion(String androidVersion) {
-            return withAndroidVersion(android(androidVersion))
+            return withAndroidVersion(Versions.@INSTANCE.android(androidVersion))
         }
 
         Builder withNdkVersion(VersionNumber ndkVersion) {
@@ -319,7 +328,7 @@ class SimpleAndroidApp {
         }
 
         Builder withNdkVersion(String ndkVersion) {
-            return withNdkVersion(VersionNumber.parse(ndkVersion))
+            return withNdkVersion(VersionNumber.@Companion.parse(ndkVersion))
         }
 
         Builder withProjectDir(File projectDir) {

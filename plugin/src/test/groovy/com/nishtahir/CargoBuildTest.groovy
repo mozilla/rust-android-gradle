@@ -1,12 +1,8 @@
 package com.nishtahir
 
-import org.gradle.api.GradleException
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Unroll
-
-import com.nishtahir.Versions
-
 
 @MultiVersionTest
 class CargoBuildTest extends AbstractTest {
@@ -44,6 +40,8 @@ class CargoBuildTest extends AbstractTest {
         new File(temporaryFolder.root, "library/build/rustJniLibs/android/x86_64/librust.so").exists()
 
         where:
-        [androidVersion, gradleVersion] << TestVersions.allCandidateTestVersions.entries().collect { [it.key, it.value] }
+        [androidVersion, gradleVersion] << TestVersions.allCandidateTestVersions.collectMany { entry ->
+            entry.value.collect {[entry.key, it] }
+        }
     }
 }

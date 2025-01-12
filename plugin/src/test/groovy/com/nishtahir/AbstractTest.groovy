@@ -14,6 +14,9 @@ class AbstractTest extends Specification {
     }
 
     def withGradleVersion(String gradleVersion) {
+        if (gradleVersion.count(".") == 2 && gradleVersion.endsWith(".0")) {
+            gradleVersion = gradleVersion.substring(0, gradleVersion.length() - 2)
+        }
         GradleRunner.create()
             .withGradleVersion(gradleVersion)
             .forwardOutput()
