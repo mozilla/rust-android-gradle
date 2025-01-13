@@ -2,12 +2,13 @@
 name = "rust"
 version = "0.2.0"
 authors = ["Nick Alexander <nalexander@mozilla.com>"]
+edition = "2021"
 
 [dependencies]
 jni = "0.5.2"
 
 [lib]
-crate_type = ["staticlib", "dylib"]
+crate-type = ["staticlib", "dylib"]
 
 [features]
 default = ["foo"]
