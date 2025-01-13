@@ -280,6 +280,7 @@ open class RustAndroidPlugin : Plugin<Project> {
                     it.unix("755")
                 }
             } else {
+                @Suppress("DEPRECATION")
                 fileMode = "0755".toInt(8)
             }
             includeEmptyDirs = false

@@ -66,10 +66,11 @@ dependencies {
     testImplementation(libs.spock.core) { exclude(group = "org.codehaus.groovy") }
     testImplementation(libs.spock.junit4) { exclude(group = "org.codehaus.groovy") }
     testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(21)
 }
 
 val generatedResources = layout.buildDirectory.dir("generated-resources/main")
@@ -130,6 +131,9 @@ tasks {
         val versionSpecificTest = register<Test>(testTaskName) {
             description = "Runs the multi-version tests for AGP $androidVersion (JDK version $jdkVersion)"
             group = "verification"
+
+            testClassesDirs = files(test.map { it.testClassesDirs })
+            classpath = files(test.map { it.classpath })
 
             javaToolchains {
                 javaLauncher = launcherFor {
