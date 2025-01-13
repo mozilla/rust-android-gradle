@@ -20,11 +20,11 @@ data class FeatureSpec(var features: Features? = null) {
         this.features = Features.All()
     }
 
-    fun defaultAnd(featureSet: Array<String>) {
+    fun defaultAnd(vararg featureSet: String) {
         this.features = Features.DefaultAnd(featureSet.toSet())
     }
 
-    fun noDefaultBut(featureSet: Array<String>) {
+    fun noDefaultBut(vararg featureSet: String) {
         this.features = Features.NoDefaultBut(featureSet.toSet())
     }
 }

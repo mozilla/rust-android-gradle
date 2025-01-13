@@ -1,6 +1,0 @@
-includeBuild('../..') {
-    dependencySubstitution {
-        // As required.
-        substitute module('org.mozilla.rust-android-gradle:rust-android') with project(':plugin')
-    }
-}

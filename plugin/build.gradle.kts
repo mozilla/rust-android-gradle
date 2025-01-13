@@ -81,10 +81,14 @@ tasks {
         inputs.property("supportedVersions", supportedVersions)
         outputs.dir(generatedResources)
         doLast {
-            outputFile.get().writeText(JsonBuilder(mapOf(
-                "version" to version,
-                "supportedVersions" to supportedVersions
-            )).toPrettyString())
+            outputFile.get().writeText(
+                JsonBuilder(
+                    mapOf(
+                        "version" to version,
+                        "supportedVersions" to supportedVersions
+                    )
+                ).toPrettyString()
+            )
         }
     }
 
@@ -102,9 +106,11 @@ tasks {
         inputs.property("supportedVersions", supportedVersions)
         outputs.dir(generatedBuildResources)
         doLast {
-            outputFile.get().writeText(JsonBuilder(
-                supportedVersions.keys.map { androidTestTaskName(it) }.toList()
-            ).toString())
+            outputFile.get().writeText(
+                JsonBuilder(
+                    supportedVersions.keys.map { androidTestTaskName(it) }.toList()
+                ).toString()
+            )
         }
     }
 
