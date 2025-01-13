@@ -6,6 +6,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.util.GradleVersion
 import java.io.File
 import java.util.Properties
 
@@ -274,8 +275,12 @@ open class RustAndroidPlugin : Plugin<Project> {
             eachFile {
                 it.path = it.path.replaceFirst("com/nishtahir", "")
             }
-            filePermissions {
-                it.unix("755")
+            if (GradleVersion.current() >= GradleVersion.version("8.3")) {
+                filePermissions {
+                    it.unix("755")
+                }
+            } else {
+                fileMode = "0755".toInt(8)
             }
             includeEmptyDirs = false
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE

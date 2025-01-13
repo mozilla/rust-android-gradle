@@ -7,7 +7,7 @@ class TestVersions {
         def testedVersion = System.getProperty('org.gradle.android.testVersion')
         if (testedVersion) {
             return Versions.@INSTANCE.SUPPORTED_VERSIONS_MATRIX.entrySet().findAll {
-                it.key == VersionNumber.parse(testedVersion)
+                it.key == VersionNumber.@Companion.parse(testedVersion)
             }.collectEntries()
         } else {
             return Versions.@INSTANCE.SUPPORTED_VERSIONS_MATRIX
@@ -17,7 +17,7 @@ class TestVersions {
     static VersionNumber latestAndroidVersionForCurrentJDK() {
         String currentJDKVersion = System.getProperty("java.version")
         if (currentJDKVersion.startsWith("1.")) {
-            return allCandidateTestVersions.keySet().findAll {it < VersionNumber.parse("7.0.0-alpha01")}.max()
+            return allCandidateTestVersions.keySet().findAll {it < VersionNumber.@Companion.parse("7.0.0-alpha01")}.max()
         }
         return allCandidateTestVersions.keySet().max()
     }
@@ -27,7 +27,7 @@ class TestVersions {
     }
 
     static GradleVersion latestSupportedGradleVersionFor(String androidVersion) {
-        return latestSupportedGradleVersionFor(VersionNumber.parse(androidVersion))
+        return latestSupportedGradleVersionFor(VersionNumber.@Companion.parse(androidVersion))
     }
 
     static GradleVersion latestSupportedGradleVersionFor(VersionNumber androidVersion) {
@@ -35,7 +35,7 @@ class TestVersions {
     }
 
     static VersionNumber getLatestVersionForAndroid(String version) {
-        VersionNumber versionNumber = VersionNumber.parse(version)
+        VersionNumber versionNumber = VersionNumber.@Companion.parse(version)
         return allCandidateTestVersions.keySet().findAll { it.major == versionNumber.major && it.minor == versionNumber.minor }?.max()
     }
 

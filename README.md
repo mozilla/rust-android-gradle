@@ -10,6 +10,63 @@ Cross compile Rust Cargo projects for Android targets.
 
 # Usage
 
+## Setup
+
+<details open name="setup">
+<summary>Gradle 8 + Kotlin DSL</summary>
+
+Ensure that your `settings.gradle.kts` includes the `gradlePluginPortal()` repository:
+
+```kotlin
+pluginManagement {
+   repositories {
+      /* other repos */
+      gradlePluginPortal()
+   }
+}
+```
+
+In your project's `build.gradle.kts`, declare the `rust-android-gradle` plugin in your `plugins` block and include the `cargo` block:
+
+```kotlin
+plugins {
+    id("org.mozilla.rust-android-gradle.rust-android") version("0.9.6")
+}
+
+cargo {
+    module = "../rust"
+    libname = "rust"
+    targets = listOf("x86_64", "arm64")
+}
+```
+
+Install the Rust targets corresponding to your `cargo.targets`, e.g. in this case:
+```sh
+rustup target add x86_64-linux-android
+rustup target add aarch64-linux-android
+```
+
+Now you need to make sure that the `cargoBuild` task is a dependency of your `generate*Assets` tasks through the following segment in your `build.gradle.kts`:
+
+```kotlin
+afterEvaluate {
+   fun CharSequence.capitalized() =
+      toString().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+
+   /* replace applicationVariants with libraryVariants if compiling an Android library */
+   android.applicationVariants.forEach { variant ->
+      val productFlavor = variant.productFlavors.joinToString("") { it.name.capitalized() }
+      val buildType = variant.buildType.name.capitalized()
+      tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild"])
+   }
+}
+```
+
+</details>
+
+<details name="setup">
+<summary>Classic Gradle + Groovy DSL</summary>
+
 Add the plugin to your root `build.gradle`, like:
 
 ```groovy
@@ -79,6 +136,72 @@ tasks.whenTaskAdded { task ->
 }
 ```
 
+</details>
+
+## Supported targets
+
+There are two kinds of targets, **desktop** targets and **Android** targets. Android targets are designed for inclusion in an Android app at runtime,
+whereas desktop targets are useful for running unit tests on a local machine. Better support for desktop targets in unit tests is [planned](https://github.com/ncalexan/rust-android-gradle/issues/13).
+In the meantime, see [the unittest example](examples/unittest/build.gradle.kts) for more guidance on using a desktop target to run Java unit tests with Rust code.
+
+<table><thead>
+  <tr>
+    <th>OS</th>
+    <th>Arch</th>
+    <th>Rust target</th>
+    <th><code>build.gradle</code> target</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td rowspan="4">Android</td>
+    <td>x86_64</td>
+    <td><code>x86_64-linux-android</code></td>
+    <td><code>x86_64</code></td>
+  </tr>
+  <tr>
+    <td>arm64</td>
+    <td><code>aarch64-linux-android</code></td>
+    <td><code>arm64</code></td>
+  </tr>
+  <tr>
+    <td>x86</td>
+    <td><code>i686-linux-android</code></td>
+    <td><code>x86</code></td>
+  </tr>
+  <tr>
+    <td>armv7</td>
+    <td><code>armv7-linux-androideabi</code></td>
+    <td><code>arm</code></td>
+  </tr>
+  <tr>
+    <td>Linux</td>
+    <td>x86_64</td>
+    <td><code>x86_64-unknown-linux-gnu</code></td>
+    <td><code>linux-x86-64</code></td>
+  </tr>
+  <tr>
+    <td rowspan="2">MacOS</td>
+    <td>arm64</td>
+    <td><code>aarch64-apple-darwin</code></td>
+    <td><code>darwin-aarch64</code></td>
+  </tr>
+  <tr>
+    <td>x86_64</td>
+    <td><code>x86_64-apple-darwin</code></td>
+    <td><code>darwin-x86-64</code></td>
+  </tr>
+  <tr>
+    <td rowspan="2">Windows</td>
+    <td rowspan="2">x86_64</td>
+    <td><code>x86_64-pc-windows-msvc</code></td>
+    <td><code>win32-x86-64-msvc</code></td>
+  </tr>
+  <tr>
+    <td><code>x86_64-pc-windows-gnu</code></td>
+    <td><code>win32-x86-64-gnu</code></td>
+  </tr>
+</tbody></table>
+
 ## Configuration
 
 The `cargo` Gradle configuration accepts many options.
@@ -127,7 +250,7 @@ it is interpreted as a path relative to the Gradle `projectDir`.
 ```groovy
 cargo {
     // Note: path is either absolute, or relative to the gradle project's `projectDir`.
-    module = '../rust'
+    module = "../rust"
 }
 ```
 
@@ -153,38 +276,21 @@ In `build.gradle`:
 
 ```groovy
 cargo {
-    libname = 'test'
+    libname = "test"
 }
 ```
 
 ### targets
 
 A list of Android targets to build with Cargo; required.
-
-Valid targets for **Android** are:
-
-```
-'arm',
-'arm64',
-'x86',
-'x86_64'
-```
-Valid targets for **Desktop** are:
-```
-'linux-x86-64',
-'darwin-x86-64',
-'darwin-aarch64',
-'win32-x86-64-gnu',
-'win32-x86-64-msvc'
-```
-
-The desktop targets are useful for testing native code in Android unit tests that run on the host,
-not on the target device.  Better support for this feature is
-[planned](https://github.com/ncalexan/rust-android-gradle/issues/13).
+See [Supported Targets](#supported-targets) for a list of supported values.
 
 ```groovy
 cargo {
+    /* groovy */
     targets = ['arm', 'x86', 'linux-x86-64']
+    /* kotlin */
+    targets = listOf("arm", "x86", "linux-x86-64")
 }
 ```
 
@@ -261,7 +367,7 @@ cargo {
     features {
         noDefaultBut()
         noDefaultBut("x")
-        noDefaultBut "x", "y"
+        noDefaultBut("x", "y")
     }
 }
 ```
@@ -287,7 +393,7 @@ library on a per-machine basis.
 ```groovy
 cargo {
     // Note: path is either absolute, or relative to the gradle project's `projectDir`.
-    targetDirectory = 'path/to/workspace/root/target'
+    targetDirectory = "path/to/workspace/root/target"
 }
 ```
 
@@ -299,7 +405,7 @@ Defaults to `["lib${libname}.so", "lib${libname}.dylib", "{$libname}.dll"]`.
 
 ```groovy
 cargo {
-    targetIncludes = ['libnotlibname.so']
+    targetIncludes = ["libnotlibname.so"]
 }
 ```
 
@@ -322,11 +428,18 @@ You may specify the API level per target in `targets` using the `apiLevels` opti
 
 ```groovy
 cargo {
+    /* groovy */
     targets = ["arm", "x86_64"]
     apiLevels = [
         "arm": 16,
         "x86_64": 21,
     ]
+    /* kotlin */
+    targets = listOf("arm", "x86_64")
+    apiLevels = mapOf(
+        "arm" to 16,
+        "x86_64" to 21
+    )
 }
 ```
 
@@ -337,7 +450,7 @@ to append a list of additional arguments to each `cargo build` invocation.
 
 ```groovy
 cargo {
-    extraCargoBuildArguments = ['a', 'list', 'of', 'strings']
+    extraCargoBuildArguments = ["a", "list", "of", "strings"]
 }
 ```
 

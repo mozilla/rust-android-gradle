@@ -31,7 +31,7 @@ android {
 
 cargo {
     module = "../rust"
-    targets = listOf("x86_64", "win32-x86-64-msvc")
+    targets = listOf("x86_64", "linux-x86-64")
     libname = "rust"
 }
 

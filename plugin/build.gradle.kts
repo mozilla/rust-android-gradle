@@ -38,7 +38,7 @@ val isCI = (System.getenv("CI") ?: "false").toBoolean()
 val supportedVersions = mapOf(
     "8.7.3" to listOf("8.9.0", "8.10.0"),
     "8.6.1" to listOf("8.7.0"),
-    "8.1.4" to listOf("8.0.0", "7.6.4"),
+    "8.1.4" to listOf("8.0.2", "7.6.4"),
     "7.2.0" to listOf("7.3.3", "7.6.4"),
     "7.0.0" to listOf("7.1.1"),
     "4.2.2" to listOf("6.8.3", "7.1.1"),
@@ -69,7 +69,7 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(11)
 }
 
 val generatedResources = layout.buildDirectory.dir("generated-resources/main")
@@ -160,9 +160,7 @@ fun normalizeVersion(version: String) = version.replace("[.\\-]".toRegex(), "_")
 fun jdkVersionFor(agpVersion: String) = JavaLanguageVersion.of(
     if (agpVersion.split('.')[0].toInt() >= 8) {
         17
-    } else if (agpVersion.split('.')[0].toInt() >= 7) {
-        11
     } else {
-        8
+        11
     }
 )

@@ -19,4 +19,4 @@ fun Project.buildDirectory(): Provider<File> = layout.buildDirectory.asFile
 
 inline fun<reified T> DefaultTask.property(): Property<T> = project.objects.property(T::class.java)
 
-fun CharSequence.capitalized() = toString().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+fun CharSequence.capitalized() = toString().replaceFirstChar { if (it.isLowerCase()) it.uppercase() else it.toString() }
