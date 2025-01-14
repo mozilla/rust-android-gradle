@@ -2,18 +2,18 @@
 
 Cross compile Rust Cargo projects for Android targets.
 
+This is a fork of the original [mozilla/rust-android-gradle](https://github.com/mozilla/rust-android-gradle)
+with a focus on up-to-date Gradle plugin authoring practices. Support for older AGP versions is sacrificed
+to focus on the upcoming Gradle 9.0 release, which removes several APIs that were relied upon by the upstream plugin.
 
 <p align="left">
-    <a alt="Version badge" href="https://plugins.gradle.org/plugin/org.mozilla.rust-android-gradle.rust-android">
-        <img src="https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org/mozilla/rust-android-gradle/rust-android/org.mozilla.rust-android-gradle.rust-android.gradle.plugin/maven-metadata.xml.svg?label=rust-android-gradle&colorB=brightgreen" /></a>
+    <a alt="Version badge" href="https://plugins.gradle.org/plugin/me.sigptr.rust-android">
+        <img src="https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/me/sigptr/rust-android/me.sigptr.rust-android.gradle.plugin/maven-metadata.xml.svg?label=rust-android-gradle&colorB=brightgreen" /></a>
 </p>
 
 # Usage
 
 ## Setup
-
-<details open name="setup">
-<summary>Gradle 8 + Kotlin DSL</summary>
 
 Ensure that your `settings.gradle.kts` includes the `gradlePluginPortal()` repository:
 
@@ -30,7 +30,7 @@ In your project's `build.gradle.kts`, declare the `rust-android-gradle` plugin i
 
 ```kotlin
 plugins {
-    id("org.mozilla.rust-android-gradle.rust-android") version("0.9.6")
+    id("me.sigptr.rust-android") version("1.0.0")
 }
 
 cargo {
@@ -61,82 +61,6 @@ afterEvaluate {
    }
 }
 ```
-
-</details>
-
-<details name="setup">
-<summary>Classic Gradle + Groovy DSL</summary>
-
-Add the plugin to your root `build.gradle`, like:
-
-```groovy
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-    dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.6'
-    }
-}
-```
-
-or 
-
-```groovy
-buildscript {
-    //...
-}
-
-plugins {
-    id "org.mozilla.rust-android-gradle.rust-android" version "0.9.6"
-}
-```
-
-In your *project's* build.gradle, `apply plugin` and add the `cargo` configuration:
-
-```groovy
-android { ... }
-
-apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
-
-cargo {
-    module  = "../rust"       // Or whatever directory contains your Cargo.toml
-    libname = "rust"          // Or whatever matches Cargo.toml's [package] name.
-    targets = ["arm", "x86"]  // See bellow for a longer list of options
-}
-```
-
-Install the rust toolchains for your target platforms:
-
-```sh
-rustup target add armv7-linux-androideabi   # for arm
-rustup target add i686-linux-android        # for x86
-rustup target add aarch64-linux-android     # for arm64
-rustup target add x86_64-linux-android      # for x86_64
-rustup target add x86_64-unknown-linux-gnu  # for linux-x86-64
-rustup target add x86_64-apple-darwin       # for darwin x86_64 (if you have an Intel MacOS)
-rustup target add aarch64-apple-darwin      # for darwin arm64 (if you have a M1 MacOS)
-rustup target add x86_64-pc-windows-gnu     # for win32-x86-64-gnu
-rustup target add x86_64-pc-windows-msvc    # for win32-x86-64-msvc
-...
-```
-
-Finally, run the `cargoBuild` task to cross compile:
-```sh
-./gradlew cargoBuild
-```
-Or add it as a dependency to one of your other build tasks, to build your rust code when you normally build your project:
-```gradle
-tasks.whenTaskAdded { task ->
-    if ((task.name == 'javaPreCompileDebug' || task.name == 'javaPreCompileRelease')) {
-        task.dependsOn 'cargoBuild'
-    }
-}
-```
-
-</details>
 
 ## Supported targets
 
@@ -696,7 +620,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.9.0'
+        classpath 'me.sigptr.rust-android:plugin:0.10.0'
     }
 }
 ```

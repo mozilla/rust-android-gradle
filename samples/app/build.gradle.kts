@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application") version("8.7.3")
-    id("org.mozilla.rust-android-gradle.rust-android")
+    id("me.sigptr.rust-android")
 }
 
 android {

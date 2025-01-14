@@ -11,11 +11,11 @@ plugins {
 }
 
 gradlePlugin {
-    website = "https://github.com/mozilla/rust-android-gradle"
-    vcsUrl = "https://github.com/mozilla/rust-android-gradle.git"
+    website = "https://github.com/bell345/rust-android-gradle"
+    vcsUrl = "https://github.com/bell345/rust-android-gradle.git"
     plugins {
         create("rustAndroidGradlePlugin") {
-            id = "org.mozilla.rust-android-gradle.rust-android"
+            id = "me.sigptr.rust-android"
             implementationClass = "com.nishtahir.RustAndroidPlugin"
             displayName = "Plugin for building Rust with Cargo in Android projects"
             description = "A plugin that helps build Rust JNI libraries with Cargo for use in Android projects."
@@ -28,7 +28,7 @@ val versionProperties = Properties().apply {
     load(FileInputStream("${rootProject.projectDir}/version.properties"))
 }
 
-group = "org.mozilla.rust-android-gradle"
+group = "me.sigptr"
 version = versionProperties["version"]!!
 
 val isCI = (System.getenv("CI") ?: "false").toBoolean()

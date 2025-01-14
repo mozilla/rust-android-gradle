@@ -29,7 +29,7 @@ class SimpleAndroidApp(
                     mavenCentral()
                     gradlePluginPortal {
                         content {
-                            excludeGroup("org.mozilla.rust-android-gradle")
+                            excludeGroup("me.sigptr.rust-android")
                         }
                     }
                 }
@@ -113,7 +113,7 @@ class SimpleAndroidApp(
         plugins {
             id("org.jetbrains.kotlin.android") version("$kotlinVersion")
             id("$androidPlugin") version("$androidVersion")
-            id("org.mozilla.rust-android-gradle.rust-android") version("${Versions.PLUGIN_VERSION}")
+            id("me.sigptr.rust-android") version("${Versions.PLUGIN_VERSION}")
         }
         
         repositories {
