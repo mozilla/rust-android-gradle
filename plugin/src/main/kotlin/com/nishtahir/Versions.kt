@@ -31,9 +31,6 @@ object Versions {
         SUPPORTED_GRADLE_VERSIONS = matrix.values.flatten().toSet()
     }
 
-    fun android(version: String) = VersionNumber.parse(version)
-    fun gradle(version: String) = GradleVersion.version(version)
-
     fun earliestMaybeSupportedAndroidVersion(): VersionNumber {
         val earliestSupported = SUPPORTED_ANDROID_VERSIONS.min()
         return VersionNumber(
@@ -46,3 +43,6 @@ object Versions {
 
     fun latestAndroidVersion() = SUPPORTED_ANDROID_VERSIONS.max()
 }
+
+fun android(version: String) = VersionNumber.parse(version)
+fun gradle(version: String) = GradleVersion.version(version)

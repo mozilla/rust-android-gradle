@@ -3,7 +3,6 @@ import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
-    groovy
     `maven-publish`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
@@ -47,9 +46,7 @@ val supportedVersions = mapOf(
 val localRepo = file("${layout.buildDirectory.get()}/local-repo")
 publishing {
     repositories {
-        maven {
-            url = localRepo.toURI()
-        }
+        maven(localRepo)
     }
 }
 
@@ -62,15 +59,15 @@ dependencies {
     testImplementation(libs.android.gradlePlugin)
     testImplementation(libs.guava)
 
-    testImplementation(platform(libs.spock.bom))
-    testImplementation(libs.spock.core) { exclude(group = "org.codehaus.groovy") }
-    testImplementation(libs.spock.junit4) { exclude(group = "org.codehaus.groovy") }
     testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.framework.datatest)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(17)
 }
 
 val generatedResources = layout.buildDirectory.dir("generated-resources/main")

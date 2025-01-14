@@ -6,8 +6,8 @@ gradle-test-retry = "1.6.0"
 gradle-versions = "0.51.0"
 guava = "33.4.0-android"
 junit-jupiter-api = "5.11.4"
+kotest = "5.9.1"
 kotlinx-serialization-json = "1.7.3"
-spock-bom = "2.4-M5-groovy-3.0"
 version-catalog-update = "0.8.5"
 
 [libraries]
@@ -16,9 +16,9 @@ guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit-jupiter-api" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
-spock-bom = { group = "org.spockframework", name = "spock-bom", version.ref = "spock-bom" }
-spock-core = { group = "org.spockframework", name = "spock-core" }
-spock-junit4 = { group = "org.spockframework", name = "spock-junit4" }
+kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+kotest-runner-junit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
+kotest-framework-datatest = { group = "io.kotest", name = "kotest-framework-datatest", version.ref = "kotest" }
 
 [plugins]
 gradle-plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "gradle-plugin-publish" }
