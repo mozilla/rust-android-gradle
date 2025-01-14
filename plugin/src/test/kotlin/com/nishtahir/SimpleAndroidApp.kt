@@ -2,25 +2,11 @@ package com.nishtahir
 
 import java.io.File
 
-val systemDefaultAndroidSdkHome = run {
-    val os = System.getProperty("os.name").lowercase()
-    val home = System.getProperty("user.home")
-
-    if (os.contains("win")) {
-        val localappdata = System.getenv("LOCALAPPDATA")
-        File("$localappdata\\Android\\Sdk")
-    } else if (os.contains("osx")) {
-        File("$home/Library/Android/sdk")
-    } else {
-        File("$home/Android/sdk")
-    }
-}
-
 class SimpleAndroidApp(
     private val projectDir: File,
     private val androidVersion: VersionNumber = Versions.latestAndroidVersion(),
     private val ndkVersionOverride: VersionNumber? = null,
-    private val kotlinVersion: VersionNumber? = VersionNumber.parse("1.3.72"),
+    private val kotlinVersion: VersionNumber,
     private val kaptWorkersEnabled: Boolean = true
 ) {
     private val ndkVersion = ndkVersionOverride
@@ -35,7 +21,20 @@ class SimpleAndroidApp(
     fun writeProject() {
         val localRepo = System.getProperty("local.repo")
 
-        writeFile("settings.gradle.kts", /*language=kotlin*/ """
+        appendFile("settings.gradle.kts", /*language=kotlin*/ """
+            pluginManagement {
+                repositories {
+                    maven("$localRepo")
+                    google()
+                    mavenCentral()
+                    gradlePluginPortal {
+                        content {
+                            excludeGroup("org.mozilla.rust-android-gradle")
+                        }
+                    }
+                }
+            }
+            
             buildCache {
                 local {
                     directory = "${cacheDir.absolutePath.replace(File.separatorChar, '/')}"
@@ -46,37 +45,23 @@ class SimpleAndroidApp(
             include(":library")
         """.trimIndent())
 
-        writeFile("build.gradle.kts", /*language=kotlin*/ """
-            buildscript {
-                repositories {
-                    google()
-                    mavenCentral()
-                    maven("$localRepo")
-                }
-                dependencies {
-                    classpath("com.android.tools.build:gradle:${androidVersion}!!")
-                    classpath("org.mozilla.rust-android-gradle:plugin:${Versions.PLUGIN_VERSION}")
-                }
-            }
-        """.trimIndent())
-
-        val libPackage = /*language=*/ "org.gradle.android.example.library"
-        val libActivity = /*language=*/ "LibraryActivity"
+        val libPackage =/*language=*/ "org.gradle.android.example.library"
+        val libActivity =/*language=*/ "LibraryActivity"
 
         writeActivity("library", libPackage, libActivity)
 
-        writeFile("library/src/main/AndroidManifest.xml", /*language=xml*/ """
+        appendFile("library/src/main/AndroidManifest.xml", /*language=xml*/ """
             <manifest xmlns:android="http://schemas.android.com/apk/res/android"
                 package="$libPackage">
             </manifest>
         """.trimIndent())
 
-        val appPackage = /*language=*/ "org.gradle.android.example.app"
-        val appActivity = /*language=*/ "AppActivity"
+        val appPackage =/*language=*/ "org.gradle.android.example.app"
+        val appActivity =/*language=*/ "AppActivity"
 
         writeActivity("app", appPackage, appActivity)
 
-        writeFile("app/src/main/AndroidManifest.xml", /*language=xml*/ """
+        appendFile("app/src/main/AndroidManifest.xml", /*language=xml*/ """
             <manifest xmlns:android="http://schemas.android.com/apk/res/android"
                 package="$appPackage">
             
@@ -99,13 +84,13 @@ class SimpleAndroidApp(
             </manifest>
         """.trimIndent())
 
-        writeFile("app/src/main/res/values/strings.xml", /*language=xml*/ """
+        appendFile("app/src/main/res/values/strings.xml", /*language=xml*/ """
             <resources>
                 <string name="app_name">Android Gradle</string>
             </resources>
         """.trimIndent())
 
-        writeFile("app/build.gradle.kts",
+        appendFile("app/build.gradle.kts",
             subprojectConfiguration("com.android.application"),
             """android.defaultConfig.applicationId = "org.gradle.android.test.app"""",
             """
@@ -115,28 +100,21 @@ class SimpleAndroidApp(
             """.trimIndent()
         )
 
-        writeFile("library/build.gradle.kts", subprojectConfiguration("com.android.library"))
+        appendFile("library/build.gradle.kts", subprojectConfiguration("com.android.library"))
 
-        writeFile("gradle.properties", /*language=properties*/ """
+        appendFile("gradle.properties", /*language=properties*/ """
             android.useAndroidX=true
             org.gradle.jvmargs=-Xmx2048m
             kapt.use.worker.api=${kaptWorkersEnabled}
         """.trimIndent())
-
-        if (System.getenv("ANDROID_HOME").isNullOrEmpty()) {
-            writeFile("local.properties", /*language=properties*/ """
-                sdk.dir=${systemDefaultAndroidSdkHome.absolutePath.replace(File.separatorChar, '/')}
-            """.trimIndent())
-        }
     }
 
     private fun subprojectConfiguration(androidPlugin: String) = /*language=kotlin*/ """
-        apply(plugin = "$androidPlugin")
-        apply(plugin = "org.mozilla.rust-android-gradle.rust-android")
-        ${includeIfKotlin(/*language=*/ """
-            apply(plugin = "kotlin-android")
-            apply(plugin = "kotlin-kapt")
-        """.trimIndent())}
+        plugins {
+            id("org.jetbrains.kotlin.android") version("$kotlinVersion")
+            id("$androidPlugin") version("$androidVersion")
+            id("org.mozilla.rust-android-gradle.rust-android") version("${Versions.PLUGIN_VERSION}")
+        }
         
         repositories {
             google()
@@ -145,35 +123,23 @@ class SimpleAndroidApp(
         
         dependencies {
             implementation("joda-time:joda-time:2.7")
-            ${includeIfKotlin("""
-                implementation("org.jetbrains.kotlin:kotlin-stdlib")
-            """.trimIndent())}
         }
         
         android {
             namespace = "com.nishtahir"
             ${ndkVersion?.let { """ndkVersion = "$it"""" } ?: ""}
             compileSdk = 28
-            buildToolsVersion = "29.0.3"
             defaultConfig {
                 minSdk = 28
-                targetSdk = 28
             }
         }
     """.trimIndent()
-
-    private fun includeIfKotlin(inclusion: String): String =
-        if (kotlinVersion != null) {
-            inclusion
-        } else {
-            ""
-        }
 
     private fun writeActivity(baseDir: String, packageName: String, className: String) {
         val resourceName = className.lowercase()
         val packagePath = packageName.replace('.', '/')
 
-        writeFile("${baseDir}/src/main/java/${packagePath}/${className}.java", /*language=java*/ """
+        appendFile("${baseDir}/src/main/java/${packagePath}/${className}.java", /*language=java*/ """
             package ${packageName};
             
             import org.joda.time.LocalTime;
@@ -199,13 +165,13 @@ class SimpleAndroidApp(
             }
         """.trimIndent())
 
-        writeFile("${baseDir}/src/test/java/${packagePath}/JavaUserTest.java", /*language=java*/ """
+        appendFile("${baseDir}/src/test/java/${packagePath}/JavaUserTest.java", /*language=java*/ """
             package ${packageName};
             
             public class JavaUserTest {}
         """.trimIndent())
 
-        writeFile("${baseDir}/src/main/res/layout/${resourceName}_layout.xml", /*language=xml*/ """
+        appendFile("${baseDir}/src/main/res/layout/${resourceName}_layout.xml", /*language=xml*/ """
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:orientation="vertical"
                 android:layout_width="fill_parent"
@@ -219,7 +185,7 @@ class SimpleAndroidApp(
             </LinearLayout>
         """.trimIndent())
 
-        writeFile("${baseDir}/src/main/rs/${resourceName}.rs", /*language=renderscript*/ """
+        appendFile("${baseDir}/src/main/rs/${resourceName}.rs", /*language=renderscript*/ """
             #pragma version(1)
             #pragma rs java_package_name(com.example.myapplication)
             
@@ -229,10 +195,13 @@ class SimpleAndroidApp(
         """.trimIndent())
     }
 
-    private fun writeFile(relativePath: String, vararg contents: String) {
+    private fun appendFile(relativePath: String, vararg contents: String) {
         File(projectDir, relativePath).apply {
             parentFile.mkdirs()
-            contents.forEach { appendText(it + '\n') }
+            contents.forEach {
+                appendText(it)
+                appendText("\n\n")
+            }
         }
     }
 }

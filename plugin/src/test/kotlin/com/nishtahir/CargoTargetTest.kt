@@ -3,7 +3,6 @@ package com.nishtahir
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.WithDataTestName
 import io.kotest.datatest.withData
-import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import org.gradle.testkit.runner.TaskOutcome
@@ -20,6 +19,7 @@ data class TargetTestData(
 class CargoTargetTest : FunSpec({
     val androidVersion = TestVersions.latestAndroidVersionForCurrentJDK
     val gradleVersion = TestVersions.latestSupportedGradleVersionFor(androidVersion)
+    val kotlinVersion = TestVersions.latestKotlinVersion
 
     withData(listOf(
         // Sadly, cross-compiling to macOS targets fails at this time: see
@@ -31,12 +31,12 @@ class CargoTargetTest : FunSpec({
         TargetTestData("x86_64", "android/x86_64/librust.so")
     )) { (target, location) ->
         // arrange
-        val projectDir = tempdir()
+        val projectDir = tempDirectory()
 
         SimpleAndroidApp(
             projectDir = projectDir,
             androidVersion = androidVersion,
-            kotlinVersion = null
+            kotlinVersion = kotlinVersion
         ).writeProject()
 
         SimpleCargoProject(

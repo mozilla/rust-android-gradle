@@ -12,7 +12,7 @@ class SimpleCargoProject(
         val cargoModuleDir = File(resCargoPath).parentFile
         val targetDir = File(cargoModuleDir.parentFile, "target")
 
-        val targetStrings = targets.map { "\"$it\"" }.joinToString { ", " }
+        val targetStrings = targets.joinToString { "\"$it\"" }
 
         val contents = /*language=kotlin*/ """
             cargo {
@@ -23,14 +23,17 @@ class SimpleCargoProject(
             }
         """.trimIndent()
 
-        writeFile("app/build.gradle.kts", contents)
-        writeFile("library/build.gradle.kts", contents)
+        appendFile("app/build.gradle.kts", contents)
+        appendFile("library/build.gradle.kts", contents)
     }
 
-    private fun writeFile(relativePath: String, vararg contents: String) {
+    private fun appendFile(relativePath: String, vararg contents: String) {
         File(projectDir, relativePath).apply {
             parentFile.mkdirs()
-            contents.forEach { appendText(it + '\n') }
+            contents.forEach {
+                appendText(it)
+                appendText("\n\n")
+            }
         }
     }
 }

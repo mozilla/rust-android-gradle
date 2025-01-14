@@ -67,7 +67,7 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(11)
 }
 
 val generatedResources = layout.buildDirectory.dir("generated-resources/main")
@@ -119,6 +119,12 @@ tasks {
         retry {
             maxRetries = if (isCI) { 1 } else { 0 }
             maxFailures = 20
+        }
+
+        javaToolchains {
+            javaLauncher = launcherFor {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
         }
     }
 

@@ -30,15 +30,14 @@ object TestVersions {
     val latestAndroidVersions = allCandidateTestVersions.keys
         .map { getLatestVersionForAndroid("${it.major}.${it.minor}") }
 
-    fun latestSupportedGradleVersionFor(androidVersion: String) =
-        latestSupportedGradleVersionFor(VersionNumber.parse(androidVersion))
-
     fun latestSupportedGradleVersionFor(androidVersion: VersionNumber) =
         allCandidateTestVersions.entries.find {
             it.key.major == androidVersion.major && it.key.minor == androidVersion.minor
         }?.value?.maxOrNull()!!
 
-    fun getLatestVersionForAndroid(version: String): VersionNumber {
+    val latestKotlinVersion = VersionNumber.parse("1.9.25")
+
+    private fun getLatestVersionForAndroid(version: String): VersionNumber {
         val number = VersionNumber.parse(version)
         return allCandidateTestVersions.keys
             .filter { it.major == number.major && it.minor == number.minor }

@@ -3,7 +3,6 @@ package com.nishtahir
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.datatest.WithDataTestName
 import io.kotest.datatest.withData
-import io.kotest.engine.spec.tempdir
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import org.gradle.testkit.runner.TaskOutcome
@@ -19,6 +18,7 @@ data class NdkTestData(
 class NdkVersionTest : FunSpec({
     val androidVersion = TestVersions.latestAndroidVersionForCurrentJDK
     val gradleVersion = TestVersions.latestSupportedGradleVersionFor(androidVersion)
+    val kotlinVersion = TestVersions.latestKotlinVersion
     val target = "x86_64"
     val location = "android/x86_64/librust.so"
 
@@ -29,12 +29,12 @@ class NdkVersionTest : FunSpec({
         NdkTestData("27.2.12479018")
     )) { (ndkVersion) ->
         // arrange
-        val projectDir = tempdir()
+        val projectDir = tempDirectory()
 
         SimpleAndroidApp(
             projectDir = projectDir,
             androidVersion = androidVersion,
-            kotlinVersion = null,
+            kotlinVersion = kotlinVersion,
             ndkVersionOverride = VersionNumber.parse(ndkVersion)
         ).writeProject()
 
