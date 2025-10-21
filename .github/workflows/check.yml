@@ -30,7 +30,9 @@ jobs:
         run: echo "::set-output name=matrix::$(cat plugin/build/build-resources/androidTestTasks.json)"
 
       - name: debug
-        run: echo ${{ steps.setup-matrix.outputs.matrix }}
+        env:
+          MATRIX: ${{ steps.setup-matrix.outputs.matrix }}
+        run: echo $MATRIX
 
     outputs:
       matrix: ${{ steps.setup-matrix.outputs.matrix }}
