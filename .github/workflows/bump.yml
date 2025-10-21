@@ -25,22 +25,24 @@ jobs:
       id: bump_version
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NEW_VERSION: ${{ github.event.inputs.new_version }}
+        CHANGELOG: ${{ github.event.inputs.changelog }}
       run: |
         old_version=$(sed -e 's/.*=//' version.properties)
-        echo "Bumping old version: $old_version to new version ${{ github.event.inputs.new_version }}."
+        echo "Bumping old version: $old_version to new version $NEW_VERSION."
         echo "Changelog:"
-        echo "- ${{ github.event.inputs.changelog }}"
+        echo "- $CHANGELOG"
 
-        echo "# ${{ github.event.inputs.new_version }}" >> new_CHANGELOG.md
+        echo "# $NEW_VERSION" >> new_CHANGELOG.md
         echo >> new_CHANGELOG.md
-        echo "- ${{ github.event.inputs.changelog }}" >> new_CHANGELOG.md
+        echo "- $CHANGELOG" >> new_CHANGELOG.md
         echo >> new_CHANGELOG.md
         cat CHANGELOG.md >> new_CHANGELOG.md
         mv new_CHANGELOG.md CHANGELOG.md
 
-        sed -i -e "s/$old_version/${{ github.event.inputs.new_version }}/" version.properties README.md
+        sed -i -e "s/$old_version/$NEW_VERSION/" version.properties README.md
 
-        echo "version=${{ github.event.inputs.new_version }}" > version.properties
+        echo "version=$NEW_VERSION" > version.properties
 
         git diff
 
@@ -48,17 +50,17 @@ jobs:
         git config --global user.email "${GITHUB_EMAIL:-rust-android-gradle@users.noreply.github.com}"
 
         git add --all
-        git commit -m "Prep for releasing version ${{ github.event.inputs.new_version }}."
+        git commit -m "Prep for releasing version $NEW_VERSION."
 
         git log -n 1
 
-        git tag "v${{ github.event.inputs.new_version }}"
+        git tag "v$NEW_VERSION"
         remote="https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
         git push "${remote}" --follow-tags
         git push "${remote}" --tags
 
-        echo "::set-output name=new_tag::v${{ github.event.inputs.new_version }}"
+        echo "::set-output name=new_tag::v$NEW_VERSION"
 
     - name: Create release
       id: create_release
