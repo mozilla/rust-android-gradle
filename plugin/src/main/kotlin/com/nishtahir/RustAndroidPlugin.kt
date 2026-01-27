@@ -276,7 +276,9 @@ open class RustAndroidPlugin : Plugin<Project> {
             eachFile {
                 it.path = it.path.replaceFirst("com/nishtahir", "")
             }
-            fileMode = 493 // 0755 in decimal; Kotlin doesn't have octal literals (!).
+            filePermissions { permissions ->
+                permissions.unix("rwxr-xr-x") // 0755
+            }
             includeEmptyDirs = false
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }

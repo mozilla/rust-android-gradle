@@ -7,8 +7,12 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
+import javax.inject.Inject
 
-open class GenerateToolchainsTask : DefaultTask() {
+abstract class GenerateToolchainsTask : DefaultTask() {
+    @get:Inject
+    abstract val execOperations: ExecOperations
 
     @TaskAction
     @Suppress("unused")
@@ -44,7 +48,7 @@ open class GenerateToolchainsTask : DefaultTask() {
                     // already. It is fast to do so and fixes any issues
                     // with partially reclaimed temporary files.
                     val dir = File(cargoExtension.toolchainDirectory, arch + "-" + apiLevel)
-                    project.exec { spec ->
+                    execOperations.exec { spec ->
                         spec.standardOutput = System.out
                         spec.errorOutput = System.out
                         spec.commandLine(cargoExtension.pythonCommand)
