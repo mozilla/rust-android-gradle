@@ -8,10 +8,14 @@ import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
 import java.io.ByteArrayOutputStream
 import java.io.File
+import javax.inject.Inject
 
-open class CargoBuildTask : DefaultTask() {
+abstract class CargoBuildTask : DefaultTask() {
+    @get:Inject
+    abstract val execOperations: ExecOperations
     @Input
     var toolchain: Toolchain? = null
 
@@ -48,7 +52,7 @@ open class CargoBuildTask : DefaultTask() {
                 ?: targetDirectory
                 ?: "${module!!}/target"
 
-            val defaultTargetTriple = getDefaultTargetTriple(project, rustcCommand)
+            val defaultTargetTriple = getDefaultTargetTriple(execOperations, project, rustcCommand)
 
             var cargoOutputDir = File(if (toolchain.target == defaultTargetTriple) {
                 "${target}/${profile}"
@@ -84,9 +88,9 @@ open class CargoBuildTask : DefaultTask() {
 
     inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, ndk: Ndk, cargoExtension: CargoExtension) {
         val apiLevel = cargoExtension.apiLevels[toolchain.platform]!!
-        val defaultTargetTriple = getDefaultTargetTriple(project, cargoExtension.rustcCommand)
+        val defaultTargetTriple = getDefaultTargetTriple(execOperations, project, cargoExtension.rustcCommand)
 
-        project.exec { spec ->
+        execOperations.exec { spec ->
             with(spec) {
                 standardOutput = System.out
                 val module = File(cargoExtension.module!!)
@@ -120,6 +124,7 @@ open class CargoBuildTask : DefaultTask() {
                 // there's a way to specify them in the cargo command line -- rustc accepts
                 // them if passed in directly with `--cfg`, and cargo will pass them to rustc
                 // if you use them as default featureSpec.
+                // Kotlin 1.9+ requires exhaustive when for sealed classes with nullable types
                 when (features) {
                     is Features.All -> {
                         theCommandLine.add("--all-features")
@@ -137,6 +142,7 @@ open class CargoBuildTask : DefaultTask() {
                             theCommandLine.add(features.featureSet.joinToString(" "))
                         }
                     }
+                    null -> { /* Use default features */ }
                 }
 
                 if (cargoExtension.profile != "debug") {
@@ -249,9 +255,9 @@ open class CargoBuildTask : DefaultTask() {
 }
 
 // This can't be private/internal as it's called from `buildProjectForTarget`.
-fun getDefaultTargetTriple(project: Project, rustc: String): String? {
+fun getDefaultTargetTriple(execOperations: ExecOperations, project: Project, rustc: String): String? {
     val stdout = ByteArrayOutputStream()
-    val result = project.exec { spec ->
+    val result = execOperations.exec { spec ->
         spec.standardOutput = stdout
         spec.commandLine = listOf(rustc, "--version", "--verbose")
     }
