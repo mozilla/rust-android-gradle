@@ -107,7 +107,7 @@ val toolchains = listOf(
                 "android/x86_64")
 )
 
-data class Ndk(val path: File, val version: String) {
+data class Ndk(val path: File, val version: String) : java.io.Serializable {
     val versionMajor: Int
         get() = version.split(".").first().toInt()
 }
@@ -117,7 +117,7 @@ data class Toolchain(val platform: String,
                      val target: String,
                      val compilerTriple: String,
                      val binutilsTriple: String,
-                     val folder: String) {
+                     val folder: String) : java.io.Serializable {
     fun cc(apiLevel: Int): File =
             if (System.getProperty("os.name").startsWith("Windows")) {
                 if (type == ToolchainType.ANDROID_PREBUILT) {
@@ -257,6 +257,11 @@ open class RustAndroidPlugin : Plugin<Project> {
                     GenerateToolchainsTask::class.java).apply {
                 group = RUST_TASK_GROUP
                 description = "Generate standard toolchain for given architectures"
+                targets = cargoExtension.targets!!
+                apiLevels = cargoExtension.apiLevels
+                pythonCommand = cargoExtension.pythonCommand
+                this.toolchainDirectory = cargoExtension.toolchainDirectory
+                ndkDirectory = extensions[T::class].ndkDirectory
             }
         } else {
             null
@@ -307,6 +312,37 @@ open class RustAndroidPlugin : Plugin<Project> {
                 description = "Build library ($target)"
                 toolchain = theToolchain
                 this.ndk = ndk
+                projectDir = project.projectDir
+                this.buildDir = project.buildDir
+                rootBuildDir = project.rootProject.buildDir
+                cargoCommand = cargoExtension.cargoCommand
+                rustcCommand = cargoExtension.rustcCommand
+                rustupChannel = cargoExtension.rustupChannel
+                pythonCommand = cargoExtension.pythonCommand
+                module = cargoExtension.module!!
+                libname = cargoExtension.libname
+                verbose = cargoExtension.verbose
+                profile = cargoExtension.profile
+                cargoTargetDir = cargoExtension.getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
+                    ?: cargoExtension.targetDirectory
+                targetIncludes = cargoExtension.targetIncludes
+                featureSpec = cargoExtension.featureSpec
+                extraCargoBuildArguments = cargoExtension.extraCargoBuildArguments
+                apiLevels = cargoExtension.apiLevels
+                generateBuildId = cargoExtension.generateBuildId
+                this.toolchainDirectory = cargoExtension.toolchainDirectory
+                autoConfigureClangSys = cargoExtension.getFlagProperty(
+                    "rust.autoConfigureClangSys",
+                    "RUST_ANDROID_GRADLE_AUTO_CONFIGURE_CLANG_SYS",
+                    theToolchain.type != ToolchainType.DESKTOP
+                )
+                targetProperties = project.properties
+                    .filterKeys { it.startsWith("RUST_ANDROID_GRADLE_TARGET_") }
+                    .mapValues { it.value?.toString() ?: "" }
+                cargoExtension.exec?.let {
+                    logger.warn("rust-android-gradle: cargo.exec closure is not compatible with Gradle configuration cache")
+                    execClosure = it
+                }
             }
 
             if (!usePrebuilt) {
