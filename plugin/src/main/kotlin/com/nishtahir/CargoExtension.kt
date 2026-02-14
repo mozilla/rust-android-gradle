@@ -7,7 +7,7 @@ import org.gradle.process.ExecSpec
 import java.io.File
 import java.util.*
 
-sealed class Features {
+sealed class Features : java.io.Serializable {
     class All() : Features()
 
     data class DefaultAnd(val featureSet: Set<String>) : Features()
@@ -15,7 +15,7 @@ sealed class Features {
     data class NoDefaultBut(val featureSet: Set<String>) : Features()
 }
 
-data class FeatureSpec(var features: Features? = null) {
+data class FeatureSpec(var features: Features? = null) : java.io.Serializable {
     fun all() {
         this.features = Features.All()
     }

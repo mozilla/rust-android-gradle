@@ -1,14 +1,16 @@
 package com.nishtahir;
 
-import com.android.build.gradle.*
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecOperations
+import org.gradle.api.file.FileSystemOperations
+import org.gradle.process.ExecSpec
 import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.inject.Inject
@@ -16,109 +18,122 @@ import javax.inject.Inject
 abstract class CargoBuildTask : DefaultTask() {
     @get:Inject
     abstract val execOperations: ExecOperations
+
+    @get:Inject
+    abstract val fileSystemOperations: FileSystemOperations
+
     @Input
     var toolchain: Toolchain? = null
 
     @Input
     var ndk: Ndk? = null
 
+    @Internal
+    var projectDir: File = File("")
+
+    @Internal
+    var buildDir: File = File("")
+
+    @Internal
+    var rootBuildDir: File = File("")
+
+    @Input
+    var cargoCommand: String = "cargo"
+
+    @Input
+    var rustcCommand: String = "rustc"
+
+    @Input
+    var rustupChannel: String = ""
+
+    @Input
+    var pythonCommand: String = "python"
+
+    @Input
+    var module: String = ""
+
+    @Input
+    @Optional
+    var libname: String? = null
+
+    @Input
+    @Optional
+    var verbose: Boolean? = null
+
+    @Input
+    var profile: String = "debug"
+
+    @Input
+    @Optional
+    var cargoTargetDir: String? = null
+
+    @Input
+    @Optional
+    var targetIncludes: Array<String>? = null
+
+    @Input
+    var featureSpec: FeatureSpec = FeatureSpec()
+
+    @Input
+    @Optional
+    var extraCargoBuildArguments: List<String>? = null
+
+    @Input
+    var apiLevels: Map<String, Int> = mapOf()
+
+    @Input
+    var generateBuildId: Boolean = false
+
+    @Internal
+    var toolchainDirectory: File = File("")
+
+    @Input
+    var autoConfigureClangSys: Boolean = false
+
+    @Input
+    var targetProperties: Map<String, String> = mapOf()
+
+    @Internal
+    var execClosure: ((ExecSpec, Toolchain) -> Unit)? = null
+
     @Suppress("unused")
     @TaskAction
-    fun build() = with(project) {
-        extensions[CargoExtension::class].apply {
-            // Need to capture the value to dereference smoothly.
-            val toolchain = toolchain
-            if (toolchain == null) {
-                throw GradleException("toolchain cannot be null")
-            }
+    fun build() {
+        val toolchain = toolchain ?: throw GradleException("toolchain cannot be null")
+        val ndk = ndk ?: throw GradleException("ndk cannot be null")
 
-            val ndk = ndk ?: throw GradleException("ndk cannot be null")
-
-            project.plugins.all {
-                when (it) {
-                    is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, ndk, this)
-                    is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, ndk, this)
-                }
-            }
-            // CARGO_TARGET_DIR can be used to force the use of a global, shared target directory
-            // across all rust projects on a machine. Use it if it's set, otherwise use the
-            // configured `targetDirectory` value, and fall back to `${module}/target`.
-            //
-            // We also allow this to be specified in `local.properties`, not because this is
-            // something you should ever need to do currently, but we don't want it to ruin anyone's
-            // day if it turns out we're wrong about that.
-            val target =
-                getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
-                ?: targetDirectory
-                ?: "${module!!}/target"
-
-            val defaultTargetTriple = getDefaultTargetTriple(execOperations, project, rustcCommand)
-
-            var cargoOutputDir = File(if (toolchain.target == defaultTargetTriple) {
-                "${target}/${profile}"
-            } else {
-                "${target}/${toolchain.target}/${profile}"
-            })
-            if (!cargoOutputDir.isAbsolute) {
-                cargoOutputDir = File(project.project.projectDir, cargoOutputDir.path)
-            }
-            cargoOutputDir = cargoOutputDir.canonicalFile
-
-            val intoDir = File(buildDir, "rustJniLibs/${toolchain.folder}")
-            intoDir.mkdirs()
-
-            copy { spec ->
-                spec.from(cargoOutputDir)
-                spec.into(intoDir)
-
-                // Need to capture the value to dereference smoothly.
-                val targetIncludes = targetIncludes
-                if (targetIncludes != null) {
-                    spec.include(targetIncludes.asIterable())
-                } else {
-                    // It's safe to unwrap, since we bailed at configuration time if this is unset.
-                    val libname = libname!!
-                    spec.include("lib${libname}.so")
-                    spec.include("lib${libname}.dylib")
-                    spec.include("${libname}.dll")
-                }
-            }
-        }
-    }
-
-    inline fun <reified T : BaseExtension> buildProjectForTarget(project: Project, toolchain: Toolchain, ndk: Ndk, cargoExtension: CargoExtension) {
-        val apiLevel = cargoExtension.apiLevels[toolchain.platform]!!
-        val defaultTargetTriple = getDefaultTargetTriple(execOperations, project, cargoExtension.rustcCommand)
+        val apiLevel = apiLevels[toolchain.platform]!!
+        val defaultTargetTriple = getDefaultTargetTriple(execOperations, logger, rustcCommand)
 
         execOperations.exec { spec ->
             with(spec) {
                 standardOutput = System.out
-                val module = File(cargoExtension.module!!)
-                if (module.isAbsolute) {
-                    workingDir = module
+                val moduleFile = File(module)
+                if (moduleFile.isAbsolute) {
+                    workingDir = moduleFile
                 } else {
-                    workingDir = File(project.project.projectDir, module.path)
+                    workingDir = File(projectDir, moduleFile.path)
                 }
                 workingDir = workingDir.canonicalFile
 
-                val theCommandLine = mutableListOf(cargoExtension.cargoCommand)
+                val theCommandLine = mutableListOf(cargoCommand)
 
-                if (!cargoExtension.rustupChannel.isEmpty()) {
-                    val hasPlusSign = cargoExtension.rustupChannel.startsWith("+")
+                if (!rustupChannel.isEmpty()) {
+                    val hasPlusSign = rustupChannel.startsWith("+")
                     val maybePlusSign = if (!hasPlusSign) "+" else ""
 
-                    theCommandLine.add(maybePlusSign + cargoExtension.rustupChannel)
+                    theCommandLine.add(maybePlusSign + rustupChannel)
                 }
 
                 theCommandLine.add("build")
 
                 // Respect `verbose` if it is set; otherwise, log if asked to
                 // with `--info` or `--debug` from the command line.
-                if (cargoExtension.verbose ?: project.logger.isEnabled(LogLevel.INFO)) {
+                if (verbose ?: logger.isEnabled(LogLevel.INFO)) {
                     theCommandLine.add("--verbose")
                 }
 
-                val features = cargoExtension.featureSpec.features
+                val features = featureSpec.features
                 // We just pass this along to cargo as something space separated... AFAICT
                 // you're allowed to have featureSpec with spaces in them, but I don't think
                 // there's a way to specify them in the cargo command line -- rustc accepts
@@ -145,11 +160,11 @@ abstract class CargoBuildTask : DefaultTask() {
                     null -> { /* Use default features */ }
                 }
 
-                if (cargoExtension.profile != "debug") {
+                if (profile != "debug") {
                     // Cargo is rigid: it accepts "--release" for release (and
                     // nothing for dev).  This is a cheap way of allowing only
                     // two values.
-                    theCommandLine.add("--${cargoExtension.profile}")
+                    theCommandLine.add("--${profile}")
                 }
                 if (toolchain.target != defaultTargetTriple) {
                     // Only providing --target for the non-default targets means desktop builds
@@ -164,13 +179,13 @@ abstract class CargoBuildTask : DefaultTask() {
                 val prefix = "RUST_ANDROID_GRADLE_TARGET_${toolchain_target}_"
 
                 // For ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_TARGET_x_KEY=VALUE, set KEY=VALUE.
-                project.logger.info("Passing through project properties with prefix '${prefix}' (environment variables with prefix 'ORG_GRADLE_PROJECT_${prefix}'")
-                project.properties.forEach { (key, value) ->
-                                             if (key.startsWith(prefix)) {
-                                                 val realKey = key.substring(prefix.length)
-                                                 project.logger.debug("Passing through environment variable '${key}' as '${realKey}=${value}'")
-                                                 environment(realKey, value)
-                                             }
+                logger.info("Passing through project properties with prefix '${prefix}' (environment variables with prefix 'ORG_GRADLE_PROJECT_${prefix}'")
+                targetProperties.forEach { (key, value) ->
+                                         if (key.startsWith(prefix)) {
+                                             val realKey = key.substring(prefix.length)
+                                             logger.debug("Passing through environment variable '${key}' as '${realKey}=${value}'")
+                                             environment(realKey, value)
+                                         }
                 }
 
                 // Cross-compiling to Android requires toolchain massaging.
@@ -178,7 +193,7 @@ abstract class CargoBuildTask : DefaultTask() {
                     val ndkPath = ndk.path
                     val ndkVersionMajor = ndk.versionMajor
 
-                    val toolchainDirectory = if (toolchain.type == ToolchainType.ANDROID_PREBUILT) {
+                    val toolchainDir = if (toolchain.type == ToolchainType.ANDROID_PREBUILT) {
                         environment("CARGO_NDK_MAJOR_VERSION", ndkVersionMajor)
 
                         val hostTag = if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -194,20 +209,20 @@ abstract class CargoBuildTask : DefaultTask() {
                         }
                         File("$ndkPath/toolchains/llvm/prebuilt", hostTag)
                     } else {
-                        cargoExtension.toolchainDirectory
+                        toolchainDirectory
                     }
 
                     val linker_wrapper =
                     if (System.getProperty("os.name").startsWith("Windows")) {
-                        File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.bat")
+                        File(rootBuildDir, "linker-wrapper/linker-wrapper.bat")
                     } else {
-                        File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.sh")
+                        File(rootBuildDir, "linker-wrapper/linker-wrapper.sh")
                     }
                     environment("CARGO_TARGET_${toolchain_target}_LINKER", linker_wrapper.path)
 
-                    val cc = File(toolchainDirectory, "${toolchain.cc(apiLevel)}").path;
-                    val cxx = File(toolchainDirectory, "${toolchain.cxx(apiLevel)}").path;
-                    val ar = File(toolchainDirectory, "${toolchain.ar(apiLevel, ndkVersionMajor)}").path;
+                    val cc = File(toolchainDir, "${toolchain.cc(apiLevel)}").path;
+                    val cxx = File(toolchainDir, "${toolchain.cxx(apiLevel)}").path;
+                    val ar = File(toolchainDir, "${toolchain.ar(apiLevel, ndkVersionMajor)}").path;
 
                     // For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
                     // https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
@@ -218,51 +233,78 @@ abstract class CargoBuildTask : DefaultTask() {
                     // Set CLANG_PATH in the environment, so that bindgen (or anything
                     // else using clang-sys in a build.rs) works properly, and doesn't
                     // use host headers and such.
-                    val shouldConfigure = cargoExtension.getFlagProperty(
-                        "rust.autoConfigureClangSys",
-                        "RUST_ANDROID_GRADLE_AUTO_CONFIGURE_CLANG_SYS",
-                        // By default, only do this for non-desktop platforms. If we're
-                        // building for desktop, things should work out of the box.
-                        toolchain.type != ToolchainType.DESKTOP
-                    )
-                    if (shouldConfigure) {
+                    if (autoConfigureClangSys) {
                         environment("CLANG_PATH", cc)
                     }
 
                     // Configure our linker wrapper.
-                    environment("RUST_ANDROID_GRADLE_PYTHON_COMMAND", cargoExtension.pythonCommand)
+                    environment("RUST_ANDROID_GRADLE_PYTHON_COMMAND", pythonCommand)
                     environment("RUST_ANDROID_GRADLE_LINKER_WRAPPER_PY",
-                            File(project.rootProject.buildDir, "linker-wrapper/linker-wrapper.py").path)
+                            File(rootBuildDir, "linker-wrapper/linker-wrapper.py").path)
                     environment("RUST_ANDROID_GRADLE_CC", cc)
-                    if (cargoExtension.generateBuildId) {
-                        environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,--build-id,-soname,lib${cargoExtension.libname!!}.so")
+                    if (generateBuildId) {
+                        environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,--build-id,-soname,lib${libname!!}.so")
                     } else {
-                        environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${cargoExtension.libname!!}.so")
+                        environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${libname!!}.so")
                     }
                 }
 
-                cargoExtension.extraCargoBuildArguments?.let {
+                extraCargoBuildArguments?.let {
                     theCommandLine.addAll(it)
                 }
 
                 commandLine = theCommandLine
             }
-            if (cargoExtension.exec != null) {
-                (cargoExtension.exec!!)(spec, toolchain)
+            if (execClosure != null) {
+                (execClosure!!)(spec, toolchain)
             }
         }.assertNormalExitValue()
+
+        // CARGO_TARGET_DIR can be used to force the use of a global, shared target directory
+        // across all rust projects on a machine. Use it if it's set, otherwise use the
+        // configured `targetDirectory` value, and fall back to `${module}/target`.
+        val target = cargoTargetDir ?: "${module}/target"
+
+        var cargoOutputDir = File(if (toolchain.target == defaultTargetTriple) {
+            "${target}/${profile}"
+        } else {
+            "${target}/${toolchain.target}/${profile}"
+        })
+        if (!cargoOutputDir.isAbsolute) {
+            cargoOutputDir = File(projectDir, cargoOutputDir.path)
+        }
+        cargoOutputDir = cargoOutputDir.canonicalFile
+
+        val intoDir = File(buildDir, "rustJniLibs/${toolchain.folder}")
+        intoDir.mkdirs()
+
+        fileSystemOperations.copy { spec ->
+            spec.from(cargoOutputDir)
+            spec.into(intoDir)
+
+            // Need to capture the value to dereference smoothly.
+            val targetIncludes = targetIncludes
+            if (targetIncludes != null) {
+                spec.include(targetIncludes.asIterable())
+            } else {
+                // It's safe to unwrap, since we bailed at configuration time if this is unset.
+                val libname = libname!!
+                spec.include("lib${libname}.so")
+                spec.include("lib${libname}.dylib")
+                spec.include("${libname}.dll")
+            }
+        }
     }
 }
 
-// This can't be private/internal as it's called from `buildProjectForTarget`.
-fun getDefaultTargetTriple(execOperations: ExecOperations, project: Project, rustc: String): String? {
+fun getDefaultTargetTriple(execOperations: ExecOperations, logger: org.gradle.api.logging.Logger, rustc: String): String? {
     val stdout = ByteArrayOutputStream()
     val result = execOperations.exec { spec ->
         spec.standardOutput = stdout
         spec.commandLine = listOf(rustc, "--version", "--verbose")
     }
     if (result.exitValue != 0) {
-        project.logger.warn(
+        logger.warn(
             "Failed to get default target triple from rustc (exit code: ${result.exitValue})")
         return null
     }
@@ -277,9 +319,9 @@ fun getDefaultTargetTriple(execOperations: ExecOperations, project: Project, rus
         ?.let { it.substring(triplePrefix.length).trim() }
 
     if (triple == null) {
-        project.logger.warn("Failed to parse `rustc -Vv` output! (Please report a rust-android-gradle bug)")
+        logger.warn("Failed to parse `rustc -Vv` output! (Please report a rust-android-gradle bug)")
     } else {
-        project.logger.info("Default rust target triple: $triple")
+        logger.info("Default rust target triple: $triple")
     }
     return triple
 }
