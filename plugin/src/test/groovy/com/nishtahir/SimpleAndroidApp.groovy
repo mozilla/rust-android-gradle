@@ -248,10 +248,12 @@ class SimpleAndroidApp {
 
     private void configureAndroidSdkHome() {
         file('local.properties').text = ""
-        def env = System.getenv("ANDROID_HOME")
+        def env = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
         if (!env) {
             def androidSdkHome = new File("${System.getProperty("user.home")}/Library/Android/sdk")
             file('local.properties').text += "sdk.dir=${androidSdkHome.absolutePath.replace(File.separatorChar, '/' as char)}"
+        } else {
+            file('local.properties').text += "sdk.dir=${env.replace(File.separatorChar, '/' as char)}"
         }
         // def env = System.getenv("ANDROID_NDK_HOME")
         // if (!env) {
@@ -277,7 +279,7 @@ class SimpleAndroidApp {
         VersionNumber androidVersion = Versions.latestAndroidVersion()
         VersionNumber ndkVersion = Versions.latestAndroidVersion() >= android("3.4.0") ? VersionNumber.parse("26.3.11579264") : null
 
-        VersionNumber kotlinVersion = VersionNumber.parse("1.3.72")
+        VersionNumber kotlinVersion = VersionNumber.parse("1.9.24")
         File projectDir
         File cacheDir
 

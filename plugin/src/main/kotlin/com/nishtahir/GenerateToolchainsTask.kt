@@ -13,12 +13,14 @@ open class GenerateToolchainsTask : DefaultTask() {
     @TaskAction
     @Suppress("unused")
     fun generateToolchainTask() {
-        project.plugins.all {
-            when (it) {
-                is AppPlugin -> configureTask<AppExtension>(project)
-                is LibraryPlugin -> configureTask<LibraryExtension>(project)
+        project.withAndroidExtension(
+            application = {
+                configureTask<AppExtension>(project)
+            },
+            library = {
+                configureTask<LibraryExtension>(project)
             }
-        }
+        )
     }
 
     inline fun <reified T : BaseExtension> configureTask(project: Project) {

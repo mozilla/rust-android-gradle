@@ -166,14 +166,18 @@ open class RustAndroidPlugin : Plugin<Project> {
         with(project) {
             cargoExtension = extensions.create("cargo", CargoExtension::class.java)
 
-            afterEvaluate {
-                plugins.all {
-                    when (it) {
-                        is AppPlugin -> configurePlugin<AppExtension>(this)
-                        is LibraryPlugin -> configurePlugin<LibraryExtension>(this)
+            configureForAndroidPlugin(
+                application = {
+                    afterEvaluate {
+                        configurePlugin<AppExtension>(this)
+                    }
+                },
+                library = {
+                    afterEvaluate {
+                        configurePlugin<LibraryExtension>(this)
                     }
                 }
-            }
+            )
 
         }
     }

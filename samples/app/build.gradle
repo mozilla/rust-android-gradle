@@ -1,9 +1,10 @@
 buildscript {
-    ext.agp_version = '7.0.0'
+    ext.agp_version = '8.5.0'
     repositories {
         google()
+        mavenCentral()
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url = "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
@@ -16,8 +17,9 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
+    namespace = "com.nishtahir.androidrust"
     compileSdkVersion 27
-    ndkVersion "26.3.11579264"
+    ndkVersion = "26.3.11579264"
 
     defaultConfig {
         applicationId "com.nishtahir.androidrust"

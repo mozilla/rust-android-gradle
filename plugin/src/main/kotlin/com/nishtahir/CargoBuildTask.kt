@@ -30,12 +30,14 @@ open class CargoBuildTask : DefaultTask() {
 
             val ndk = ndk ?: throw GradleException("ndk cannot be null")
 
-            project.plugins.all {
-                when (it) {
-                    is AppPlugin -> buildProjectForTarget<AppExtension>(project, toolchain, ndk, this)
-                    is LibraryPlugin -> buildProjectForTarget<LibraryExtension>(project, toolchain, ndk, this)
+            project.withAndroidExtension(
+                application = {
+                    buildProjectForTarget<AppExtension>(project, toolchain, ndk, this@apply)
+                },
+                library = {
+                    buildProjectForTarget<LibraryExtension>(project, toolchain, ndk, this@apply)
                 }
-            }
+            )
             // CARGO_TARGET_DIR can be used to force the use of a global, shared target directory
             // across all rust projects on a machine. Use it if it's set, otherwise use the
             // configured `targetDirectory` value, and fall back to `${module}/target`.
@@ -121,6 +123,7 @@ open class CargoBuildTask : DefaultTask() {
                 // them if passed in directly with `--cfg`, and cargo will pass them to rustc
                 // if you use them as default featureSpec.
                 when (features) {
+                    null -> Unit
                     is Features.All -> {
                         theCommandLine.add("--all-features")
                     }
