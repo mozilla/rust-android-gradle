@@ -529,7 +529,7 @@ An easy way to locally test changes made in this plugin is to simply add this to
 includeBuild('../rust-android-gradle') {
     dependencySubstitution {
         // As required.
-        substitute module('gradle.plugin.org.mozilla.rust-android-gradle:plugin') with project(':plugin')
+        substitute module('gradle.plugin.org.mozilla.rust-android-gradle:plugin') using project(':plugin')
     }
 }
 ```
