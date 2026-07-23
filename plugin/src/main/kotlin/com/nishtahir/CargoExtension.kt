@@ -36,7 +36,6 @@ open class CargoExtension {
     var module: String? = null
     var libname: String? = null
     var targets: List<String>? = null
-    var prebuiltToolchains: Boolean? = null
     var profile: String = "debug"
     var verbose: Boolean? = null
     var targetDirectory: String? = null

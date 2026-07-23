@@ -13,7 +13,6 @@ const val RUST_TASK_GROUP = "rust"
 
 enum class ToolchainType {
     ANDROID_PREBUILT,
-    ANDROID_GENERATED,
     DESKTOP,
 }
 
@@ -57,30 +56,6 @@ val toolchains = listOf(
                 "<compilerTriple>",
                 "<binutilsTriple>",
                 "desktop/win32-x86-64"),
-        Toolchain("arm",
-                ToolchainType.ANDROID_GENERATED,
-                "armv7-linux-androideabi",
-                "arm-linux-androideabi",
-                "arm-linux-androideabi",
-                "android/armeabi-v7a"),
-        Toolchain("arm64",
-                ToolchainType.ANDROID_GENERATED,
-                "aarch64-linux-android",
-                "aarch64-linux-android",
-                "aarch64-linux-android",
-                "android/arm64-v8a"),
-        Toolchain("x86",
-                ToolchainType.ANDROID_GENERATED,
-                "i686-linux-android",
-                "i686-linux-android",
-                "i686-linux-android",
-                "android/x86"),
-        Toolchain("x86_64",
-                ToolchainType.ANDROID_GENERATED,
-                "x86_64-linux-android",
-                "x86_64-linux-android",
-                "x86_64-linux-android",
-                "android/x86_64"),
         Toolchain("arm",
                 ToolchainType.ANDROID_PREBUILT,
                 "armv7-linux-androideabi",  // This is correct.  "Note: For 32-bit ARM, the compiler is prefixed with
@@ -242,26 +217,6 @@ open class RustAndroidPlugin : Plugin<Project> {
             Ndk(path = it, version = ndkVersion)
         }
 
-        // Determine whether to use prebuilt or generated toolchains
-        val usePrebuilt =
-            cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
-            cargoExtension.prebuiltToolchains ?:
-            (ndk.versionMajor >= 19);
-
-        if (usePrebuilt && ndk.versionMajor < 19) {
-            throw GradleException("usePrebuilt = true requires NDK version 19+")
-        }
-
-        val generateToolchain = if (!usePrebuilt) {
-            tasks.maybeCreate("generateToolchains",
-                    GenerateToolchainsTask::class.java).apply {
-                group = RUST_TASK_GROUP
-                description = "Generate standard toolchain for given architectures"
-            }
-        } else {
-            null
-        }
-
         // Fish linker wrapper scripts from our Java resources.
         val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
             group = RUST_TASK_GROUP
@@ -291,13 +246,6 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         cargoExtension.targets!!.forEach { target ->
             val theToolchain = toolchains
-                    .filter {
-                        if (usePrebuilt) {
-                            it.type != ToolchainType.ANDROID_GENERATED
-                        } else {
-                            it.type != ToolchainType.ANDROID_PREBUILT
-                        }
-                    }
                     .find { it.platform == target }
             if (theToolchain == null) {
                 throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
@@ -311,9 +259,6 @@ open class RustAndroidPlugin : Plugin<Project> {
                 this.ndk = ndk
             }
 
-            if (!usePrebuilt) {
-                targetBuildTask.dependsOn(generateToolchain!!)
-            }
             targetBuildTask.dependsOn(generateLinkerWrapper)
             buildTask.dependsOn(targetBuildTask)
         }
