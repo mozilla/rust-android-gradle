@@ -60,10 +60,6 @@ class NdkVersionTest extends AbstractTest {
 
         where:
         ndkVersion << [
-            // Old LTS NDKs need to be installed manually
-            "21.4.7075529",
-            "23.1.7779620",
-            "26.3.11579264",
             // Partial list of NDK versions supported by Github Actions, per
             // https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2604-Readme.md#android
             "27.3.13750724",

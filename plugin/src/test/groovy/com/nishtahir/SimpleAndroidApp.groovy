@@ -51,7 +51,7 @@ class SimpleAndroidApp {
                         }
                     }
                     dependencies {
-                        classpath ('com.android.tools.build:gradle:$androidVersion') { force = true }
+                        classpath ('com.android.tools.build:gradle') { version { strictly '$androidVersion' } }
                         classpath "org.mozilla.rust-android-gradle:plugin:${Versions.PLUGIN_VERSION}"
                         ${kotlinPluginDependencyIfEnabled}
                     }
@@ -60,15 +60,13 @@ class SimpleAndroidApp {
 
         writeActivity(library, libPackage, libraryActivity)
         file("${library}/src/main/AndroidManifest.xml") << """<?xml version="1.0" encoding="utf-8"?>
-                <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-                    package="${libPackage}">
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android">
                 </manifest>
             """.stripIndent()
 
         writeActivity(app, appPackage, appActivity)
         file("${app}/src/main/AndroidManifest.xml") << """<?xml version="1.0" encoding="utf-8"?>
-                <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-                    package="${appPackage}">
+                <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
                     <application android:label="@string/app_name" >
                         <activity
@@ -98,7 +96,7 @@ class SimpleAndroidApp {
                 include ':${library}'
             """.stripIndent()
 
-        file("${app}/build.gradle") << subprojectConfiguration("com.android.application") << """
+        file("${app}/build.gradle") << subprojectConfiguration("com.android.application", appPackage) << """
                 android.defaultConfig.applicationId "org.gradle.android.test.app"
             """.stripIndent() << activityDependency() <<
             """
@@ -107,7 +105,7 @@ class SimpleAndroidApp {
                 }
             """.stripIndent()
 
-        file("${library}/build.gradle") << subprojectConfiguration("com.android.library") << activityDependency()
+        file("${library}/build.gradle") << subprojectConfiguration("com.android.library", libPackage) << activityDependency()
 
         file("gradle.properties") << """
                 android.useAndroidX=true
@@ -124,7 +122,7 @@ class SimpleAndroidApp {
         """ : ""
     }
 
-    private subprojectConfiguration(String androidPlugin) {
+    private subprojectConfiguration(String androidPlugin, String namespace) {
         """
             apply plugin: "$androidPlugin"
             ${kotlinPluginsIfEnabled}
@@ -141,11 +139,11 @@ class SimpleAndroidApp {
 
             android {
                 ${maybeNdkVersion}
-                compileSdkVersion 28
-                buildToolsVersion "29.0.3"
+                compileSdkVersion 30
+                namespace '${namespace}'
                 defaultConfig {
-                    minSdkVersion 28
-                    targetSdkVersion 28
+                    minSdkVersion 30
+                    targetSdkVersion 30
 
                     lintOptions {
                         checkReleaseBuilds false
@@ -330,7 +328,7 @@ class SimpleAndroidApp {
 
         SimpleAndroidApp build() {
             if (ndkVersion == null && androidVersion >= android("3.4.0")) {
-                ndkVersion = VersionNumber.parse("21.4.7075529")
+                ndkVersion = VersionNumber.parse("29.0.14206865")
             }
             return new SimpleAndroidApp(projectDir, cacheDir, androidVersion, ndkVersion, kotlinVersion, kotlinEnabled, kaptWorkersEnabled)
         }

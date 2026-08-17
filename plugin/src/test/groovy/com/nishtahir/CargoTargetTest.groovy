@@ -11,7 +11,7 @@ class CargoTargetTest extends AbstractTest {
     def "cargoBuild produces #location for target #target"() {
         given:
         def androidVersion = TestVersions.latestAndroidVersionForCurrentJDK()
-        def ndkVersion = "21.4.7075529"
+        def ndkVersion = "29.0.14206865"
         def ndkVersionMajor = ndkVersion.split('\\.')[0] as int
         // Toolchain 1.68 or later versions are not compatible to old NDK prior to r23
         // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
