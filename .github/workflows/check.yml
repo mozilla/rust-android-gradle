@@ -20,7 +20,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Gradle test
         run: |
@@ -49,7 +49,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -72,11 +72,11 @@ jobs:
           ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
         shell: bash
 
-      - name: Setup Java 11
-        uses: actions/setup-java@v4
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: 11
+          java-version: 17
           cache: 'gradle'
 
       - name: Assemble samples/app
@@ -106,7 +106,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE for the job.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -129,12 +129,12 @@ jobs:
           ${ANDROID_HOME}${SDKMANAGER} --install 'ndk;21.4.7075529' 'ndk;23.1.7779620'
         shell: bash
 
-      # Use Java 8
-      - name: Setup Java 8
-        uses: actions/setup-java@v4
+      # Use Java 17
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: 8
+          java-version: 17
           cache: 'gradle'
 
       - name: Gradle setup
@@ -168,7 +168,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup NDK
         env:
@@ -191,12 +191,12 @@ jobs:
           toolchain: 1.67
           targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
 
-      # Use Java 8
-      - name: Setup Java 8
-        uses: actions/setup-java@v4
+      # Use Java 17
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: 8
+          java-version: 17
           cache: 'gradle'
 
       - name: Gradle setup
