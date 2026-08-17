@@ -93,6 +93,12 @@ dependencies {
     testImplementation "org.robolectric:robolectric:4.14.1"
 }
 
+// Java 17: Required for Gradle 8.5+ and AGP 8.x
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 afterEvaluate {
     // The `cargoBuild` task isn't available until after evaluation.
     android.applicationVariants.all { variant ->

@@ -80,7 +80,6 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "17"
 }
 
-
 // Generate a json file that contains the matrix of Gradle and AGP versions to test against.
 def generatedResources = "$buildDir/generated-resources/main"
 tasks.register('generateVersions') {
