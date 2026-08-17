@@ -19,6 +19,8 @@ android {
     compileSdkVersion 27
     ndkVersion "26.3.11579264"
 
+    namespace = 'com.nishtahir.androidrust'
+
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
         minSdkVersion 21
