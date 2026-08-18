@@ -56,12 +56,6 @@ jobs:
         with:
           targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
 
-      - name: Setup Rust 1.67
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.67
-          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
-
       - name: Setup NDK
         env:
           SDKMANAGER: /cmdline-tools/latest/bin/sdkmanager
@@ -111,12 +105,6 @@ jobs:
       - name: Setup Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
-
-      - name: Setup Rust 1.67
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.67
           targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
 
       - name: Setup NDK
@@ -183,12 +171,6 @@ jobs:
       - name: Setup Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
-
-      - name: Setup Rust 1.67
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.67
           targets: x86_64-linux-android,x86_64-unknown-linux-gnu,aarch64-linux-android
 
       # Use Java 17
