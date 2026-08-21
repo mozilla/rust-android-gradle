@@ -13,7 +13,6 @@ const val RUST_TASK_GROUP = "rust"
 
 enum class ToolchainType {
     ANDROID_PREBUILT,
-    ANDROID_GENERATED,
     DESKTOP,
 }
 
@@ -58,30 +57,6 @@ val toolchains = listOf(
                 "<binutilsTriple>",
                 "desktop/win32-x86-64"),
         Toolchain("arm",
-                ToolchainType.ANDROID_GENERATED,
-                "armv7-linux-androideabi",
-                "arm-linux-androideabi",
-                "arm-linux-androideabi",
-                "android/armeabi-v7a"),
-        Toolchain("arm64",
-                ToolchainType.ANDROID_GENERATED,
-                "aarch64-linux-android",
-                "aarch64-linux-android",
-                "aarch64-linux-android",
-                "android/arm64-v8a"),
-        Toolchain("x86",
-                ToolchainType.ANDROID_GENERATED,
-                "i686-linux-android",
-                "i686-linux-android",
-                "i686-linux-android",
-                "android/x86"),
-        Toolchain("x86_64",
-                ToolchainType.ANDROID_GENERATED,
-                "x86_64-linux-android",
-                "x86_64-linux-android",
-                "x86_64-linux-android",
-                "android/x86_64"),
-        Toolchain("arm",
                 ToolchainType.ANDROID_PREBUILT,
                 "armv7-linux-androideabi",  // This is correct.  "Note: For 32-bit ARM, the compiler is prefixed with
                 "armv7a-linux-androideabi", // armv7a-linux-androideabi, but the binutils tools are prefixed with
@@ -107,7 +82,7 @@ val toolchains = listOf(
                 "android/x86_64")
 )
 
-data class Ndk(val path: File, val version: String) {
+data class Ndk(val path: File, val version: String) : java.io.Serializable {
     val versionMajor: Int
         get() = version.split(".").first().toInt()
 }
@@ -117,7 +92,7 @@ data class Toolchain(val platform: String,
                      val target: String,
                      val compilerTriple: String,
                      val binutilsTriple: String,
-                     val folder: String) {
+                     val folder: String) : java.io.Serializable {
     fun cc(apiLevel: Int): File =
             if (System.getProperty("os.name").startsWith("Windows")) {
                 if (type == ToolchainType.ANDROID_PREBUILT) {
@@ -242,26 +217,6 @@ open class RustAndroidPlugin : Plugin<Project> {
             Ndk(path = it, version = ndkVersion)
         }
 
-        // Determine whether to use prebuilt or generated toolchains
-        val usePrebuilt =
-            cargoExtension.localProperties.getProperty("rust.prebuiltToolchains")?.equals("true") ?:
-            cargoExtension.prebuiltToolchains ?:
-            (ndk.versionMajor >= 19);
-
-        if (usePrebuilt && ndk.versionMajor < 19) {
-            throw GradleException("usePrebuilt = true requires NDK version 19+")
-        }
-
-        val generateToolchain = if (!usePrebuilt) {
-            tasks.maybeCreate("generateToolchains",
-                    GenerateToolchainsTask::class.java).apply {
-                group = RUST_TASK_GROUP
-                description = "Generate standard toolchain for given architectures"
-            }
-        } else {
-            null
-        }
-
         // Fish linker wrapper scripts from our Java resources.
         val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
             group = RUST_TASK_GROUP
@@ -276,7 +231,9 @@ open class RustAndroidPlugin : Plugin<Project> {
             eachFile {
                 it.path = it.path.replaceFirst("com/nishtahir", "")
             }
-            fileMode = 493 // 0755 in decimal; Kotlin doesn't have octal literals (!).
+            filePermissions { permissions ->
+                permissions.unix("rwxr-xr-x") // 0755
+            }
             includeEmptyDirs = false
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
@@ -289,13 +246,6 @@ open class RustAndroidPlugin : Plugin<Project> {
 
         cargoExtension.targets!!.forEach { target ->
             val theToolchain = toolchains
-                    .filter {
-                        if (usePrebuilt) {
-                            it.type != ToolchainType.ANDROID_GENERATED
-                        } else {
-                            it.type != ToolchainType.ANDROID_PREBUILT
-                        }
-                    }
                     .find { it.platform == target }
             if (theToolchain == null) {
                 throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
@@ -307,11 +257,39 @@ open class RustAndroidPlugin : Plugin<Project> {
                 description = "Build library ($target)"
                 toolchain = theToolchain
                 this.ndk = ndk
+                projectDir = project.projectDir
+                this.buildDir = project.buildDir
+                rootBuildDir = project.rootProject.buildDir
+                cargoCommand = cargoExtension.cargoCommand
+                rustcCommand = cargoExtension.rustcCommand
+                rustupChannel = cargoExtension.rustupChannel
+                pythonCommand = cargoExtension.pythonCommand
+                module = cargoExtension.module!!
+                libname = cargoExtension.libname
+                verbose = cargoExtension.verbose
+                profile = cargoExtension.profile
+                cargoTargetDir = cargoExtension.getProperty("rust.cargoTargetDir", "CARGO_TARGET_DIR")
+                    ?: cargoExtension.targetDirectory
+                targetIncludes = cargoExtension.targetIncludes
+                featureSpec = cargoExtension.featureSpec
+                extraCargoBuildArguments = cargoExtension.extraCargoBuildArguments
+                apiLevels = cargoExtension.apiLevels
+                generateBuildId = cargoExtension.generateBuildId
+                this.toolchainDirectory = cargoExtension.toolchainDirectory
+                autoConfigureClangSys = cargoExtension.getFlagProperty(
+                    "rust.autoConfigureClangSys",
+                    "RUST_ANDROID_GRADLE_AUTO_CONFIGURE_CLANG_SYS",
+                    theToolchain.type != ToolchainType.DESKTOP
+                )
+                targetProperties = project.properties
+                    .filterKeys { it.startsWith("RUST_ANDROID_GRADLE_TARGET_") }
+                    .mapValues { it.value?.toString() ?: "" }
+                cargoExtension.exec?.let {
+                    logger.warn("rust-android-gradle: cargo.exec closure is not compatible with Gradle configuration cache")
+                    execClosure = it
+                }
             }
 
-            if (!usePrebuilt) {
-                targetBuildTask.dependsOn(generateToolchain!!)
-            }
             targetBuildTask.dependsOn(generateLinkerWrapper)
             buildTask.dependsOn(targetBuildTask)
         }

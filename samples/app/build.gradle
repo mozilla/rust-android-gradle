@@ -1,5 +1,5 @@
 buildscript {
-    ext.agp_version = '7.0.0'
+    ext.agp_version = '8.2.0'
     repositories {
         google()
         maven {
@@ -16,13 +16,15 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
-    compileSdkVersion 27
-    ndkVersion "26.3.11579264"
+    compileSdkVersion 30
+    ndkVersion "29.0.14206865"
+
+    namespace = 'com.nishtahir.androidrust'
 
     defaultConfig {
         applicationId "com.nishtahir.androidrust"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -53,6 +55,12 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
+}
+
+// Java 17: Required for Gradle 8.5+ and AGP 8.x
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 afterEvaluate {
