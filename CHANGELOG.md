@@ -1,3 +1,7 @@
+# 0.10.0
+
+- Support AGP 8 by reworking several contributor PRs.
+
 # 0.9.6
 
 - Added option to add a build-id during linking
