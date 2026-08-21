@@ -175,7 +175,7 @@ abstract class CargoBuildTask : DefaultTask() {
 
                 // Target-specific environment configuration, passed through to
                 // the underlying `cargo build` invocation.
-                val toolchain_target = toolchain.target.toUpperCase().replace('-', '_')
+                val toolchain_target = toolchain.target.uppercase().replace('-', '_')
                 val prefix = "RUST_ANDROID_GRADLE_TARGET_${toolchain_target}_"
 
                 // For ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_TARGET_x_KEY=VALUE, set KEY=VALUE.
@@ -242,11 +242,19 @@ abstract class CargoBuildTask : DefaultTask() {
                     environment("RUST_ANDROID_GRADLE_LINKER_WRAPPER_PY",
                             File(rootBuildDir, "linker-wrapper/linker-wrapper.py").path)
                     environment("RUST_ANDROID_GRADLE_CC", cc)
+
+                    var extras = ""
                     if (generateBuildId) {
-                        environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,--build-id,-soname,lib${libname!!}.so")
-                    } else {
-                        environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,-soname,lib${libname!!}.so")
+                        extras += "--build-id,"
                     }
+
+                    if (ndkVersionMajor <= 27) {
+                        // Per https://developer.android.com/guide/practices/page-sizes#compile-16-kb-alignment.
+                        extras += "-z,max-page-size=16384,"
+                        extras += "-z,common-page-size=16384,"
+                    }
+
+                    environment("RUST_ANDROID_GRADLE_CC_LINK_ARG", "-Wl,${extras}-soname,lib${libname!!}.so")
                 }
 
                 extraCargoBuildArguments?.let {
