@@ -180,7 +180,7 @@ Valid targets for **Desktop** are:
 
 The desktop targets are useful for testing native code in Android unit tests that run on the host,
 not on the target device.  Better support for this feature is
-[planned](https://github.com/ncalexan/rust-android-gradle/issues/13).
+[planned](https://github.com/mozilla/rust-android-gradle/issues/13).
 
 ```groovy
 cargo {
