@@ -59,7 +59,6 @@ class NdkVersionTest extends AbstractTest {
             // Partial list of NDK versions supported by Github Actions, per
             // https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2604-Readme.md#android
             "27.3.13750724",
-            "28.2.13676358",
             "29.0.14206865",
             "30.0.16248370",
         ]
