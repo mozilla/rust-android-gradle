@@ -1,9 +1,7 @@
 package com.nishtahir
 
 import org.gradle.api.GradleException
-import org.gradle.util.VersionNumber
-
-import static com.nishtahir.Versions.android
+import java.lang.module.ModuleDescriptor.Version as VersionNumber
 
 class SimpleAndroidApp {
     final File projectDir
@@ -97,7 +95,7 @@ class SimpleAndroidApp {
             """.stripIndent()
 
         file("${app}/build.gradle") << subprojectConfiguration("com.android.application", appPackage) << """
-                android.defaultConfig.applicationId "org.gradle.android.test.app"
+                android.defaultConfig.applicationId = "org.gradle.android.test.app"
             """.stripIndent() << activityDependency() <<
             """
                 dependencies {
@@ -139,15 +137,14 @@ class SimpleAndroidApp {
 
             android {
                 ${maybeNdkVersion}
-                compileSdkVersion 30
-                namespace '${namespace}'
+                compileSdk = 36
+                namespace = '${namespace}'
                 defaultConfig {
-                    minSdkVersion 30
-                    targetSdkVersion 30
-
-                    lintOptions {
-                        checkReleaseBuilds false
-                    }
+                    minSdk = 30
+                    targetSdk = 36
+                }
+                lint {
+                    checkReleaseBuilds = false
                 }
             }
         """.stripIndent()
@@ -155,7 +152,7 @@ class SimpleAndroidApp {
 
     private String getMaybeNdkVersion() {
         if (ndkVersion != null) {
-            return """ndkVersion '${ndkVersion}'"""
+            return """ndkVersion = '${ndkVersion}'"""
         } else {
             return ""
         }
@@ -303,10 +300,6 @@ class SimpleAndroidApp {
             return this
         }
 
-        Builder withAndroidVersion(String androidVersion) {
-            return withAndroidVersion(android(androidVersion))
-        }
-
         Builder withNdkVersion(VersionNumber ndkVersion) {
             this.ndkVersion = ndkVersion
             return this
@@ -327,9 +320,7 @@ class SimpleAndroidApp {
         }
 
         SimpleAndroidApp build() {
-            if (ndkVersion == null && androidVersion >= android("3.4.0")) {
-                ndkVersion = VersionNumber.parse("29.0.14206865")
-            }
+            ndkVersion = ndkVersion ?: VersionNumber.parse("30.0.16248370")
             return new SimpleAndroidApp(projectDir, cacheDir, androidVersion, ndkVersion, kotlinVersion, kotlinEnabled, kaptWorkersEnabled)
         }
     }
