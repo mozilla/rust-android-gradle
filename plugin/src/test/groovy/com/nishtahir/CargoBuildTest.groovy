@@ -28,7 +28,7 @@ class CargoBuildTest extends AbstractTest {
         when:
         BuildResult buildResult = withGradleVersion(gradleVersion.version)
                 .withProjectDir(temporaryFolder.root)
-                .withArguments('cargoBuild', '--info', '--stacktrace')
+                .withArguments('mergeDebugJniLibFolders', '--info', '--stacktrace')
                 // .withDebug(true)
                 .build()
 
@@ -40,8 +40,12 @@ class CargoBuildTest extends AbstractTest {
         then:
         buildResult.task(':app:cargoBuild').outcome == TaskOutcome.SUCCESS
         buildResult.task(':library:cargoBuild').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':app:cargoBuildX86_64').outcome == TaskOutcome.SUCCESS
+        buildResult.task(':library:cargoBuildX86_64').outcome == TaskOutcome.SUCCESS
         new File(temporaryFolder.root, "app/build/rustJniLibs/android/x86_64/librust.so").exists()
         new File(temporaryFolder.root, "library/build/rustJniLibs/android/x86_64/librust.so").exists()
+        new File(temporaryFolder.root, "app/build/intermediates/merged_jni_libs/debug/mergeDebugJniLibFolders/out/x86_64/librust.so").exists()
+        new File(temporaryFolder.root, "library/build/intermediates/merged_jni_libs/debug/mergeDebugJniLibFolders/out/x86_64/librust.so").exists()
 
         where:
         [androidVersion, gradleVersion] << TestVersions.allCandidateTestVersions.entries().collect { [it.key, it.value] }

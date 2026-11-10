@@ -11,11 +11,7 @@ class CargoTargetTest extends AbstractTest {
     def "cargoBuild produces #location for target #target"() {
         given:
         def androidVersion = TestVersions.latestAndroidVersionForCurrentJDK()
-        def ndkVersion = "29.0.14206865"
-        def ndkVersionMajor = ndkVersion.split('\\.')[0] as int
-        // Toolchain 1.68 or later versions are not compatible to old NDK prior to r23
-        // https://blog.rust-lang.org/2023/01/09/android-ndk-update-r25.html
-        def channel = ndkVersionMajor >= 23 ? "stable" : "1.67"
+        def ndkVersion = "30.0.16248370"
 
         SimpleAndroidApp.builder(temporaryFolder.root, cacheDir)
                 .withAndroidVersion(androidVersion)
@@ -27,7 +23,7 @@ class CargoTargetTest extends AbstractTest {
 
         SimpleCargoProject.builder(temporaryFolder.root)
                 .withTargets([target])
-                .withChannel(channel)
+                .withChannel("stable")
                 .build()
                 .writeProject()
 
@@ -54,10 +50,8 @@ class CargoTargetTest extends AbstractTest {
                 // Sadly, cross-compiling to macOS targets fails at this time: see
                 // https://github.com/rust-lang/rust/issues/84984.
                 // ["darwin", "desktop/darwin/librust.dylib"],
-                // And so does cross-compiling from macOS to Linux targets.
-                // ["linux-x86-64", "desktop/linux-x86-64/librust.so"],
                 ["arm64",  "android/arm64-v8a/librust.so"],
                 ["x86_64", "android/x86_64/librust.so"],
-        ]
+        ] + (System.getProperty("os.name") == "Linux" ? [["linux-x86-64", "desktop/linux-x86-64/librust.so"]] : [])
     }
 }
