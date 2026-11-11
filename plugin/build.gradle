@@ -1,10 +1,10 @@
 import groovy.json.JsonBuilder
-import org.gradle.util.VersionNumber
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    // plugin-publish 1.2.1: Required for Gradle 8.5+ (old version uses removed pluginBundle API)
-    id 'com.gradle.plugin-publish' version '1.2.1'
-    id "org.gradle.test-retry" version "1.5.8"
+    id 'com.gradle.plugin-publish' version '2.2.1'
+    id "org.gradle.test-retry" version "1.6.6"
 }
 
 apply plugin: "java-gradle-plugin"
@@ -27,24 +27,20 @@ gradlePlugin {
     }
 }
 
-group 'org.mozilla.rust-android-gradle'
-version "$plugin_version"
+group = 'org.mozilla.rust-android-gradle'
+version = rootProject.ext.plugin_version
 
 def isCI = (System.getenv('CI') ?: 'false').toBoolean()
 
 // Maps supported Android plugin versions to the versions of Gradle that support it
-// Updated for Gradle 8.5+ compatibility (required for Gradle 9 support)
 def supportedVersions = [
-    "8.2.0": ["8.5"],
-    "8.3.0": ["8.5"],
-    "8.4.0": ["8.6"],
-    "8.5.0": ["8.7"],
-    "8.6.0": ["8.7"],
+    "9.0.0": ["9.1.0"],
+    "9.5.1": ["9.9.1"],
 ]
 
 // A local repo we publish our library to for testing in order to workaround limitations
 // in the TestKit plugin classpath.
-def localRepo = file("$buildDir/local-repo")
+def localRepo = layout.buildDirectory.dir("local-repo").get().asFile
 publishing {
     repositories {
         maven {
@@ -55,33 +51,31 @@ publishing {
 
 dependencies {
     implementation gradleApi()
-    // Guava: Required for Versions.groovy (was transitively provided by old AGP)
-    implementation "com.google.guava:guava:32.1.3-jre"
-    compileOnly "com.android.tools.build:gradle:${agp_version}"
+    compileOnly "com.android.tools.build:gradle-api:${rootProject.ext.agp_version}"
 
     testImplementation gradleTestKit()
-    testImplementation "com.android.tools.build:gradle:${agp_version}"
-    testImplementation platform("org.spockframework:spock-bom:2.0-M5-groovy-3.0")
-    testImplementation("org.spockframework:spock-core") { exclude group: 'org.codehaus.groovy' }
-    testImplementation("org.spockframework:spock-junit4") { exclude group: 'org.codehaus.groovy' }
-    testImplementation "org.junit.jupiter:junit-jupiter-api"
+    testImplementation "com.google.guava:guava:33.8.0-jre"
+    testImplementation platform("org.spockframework:spock-bom:2.5-groovy-4.0")
+    testImplementation("org.spockframework:spock-core") { exclude group: 'org.apache.groovy' }
+    testImplementation("org.spockframework:spock-junit4") { exclude group: 'org.apache.groovy' }
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
-// Java 17: Required for Gradle 8.5+ and AGP 8.x
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-compileKotlin {
-    kotlinOptions.jvmTarget = "17"
-}
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "17"
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+        apiVersion = KotlinVersion.KOTLIN_2_2
+        languageVersion = KotlinVersion.KOTLIN_2_2
+    }
 }
 
 // Generate a json file that contains the matrix of Gradle and AGP versions to test against.
-def generatedResources = "$buildDir/generated-resources/main"
+def generatedResources = layout.buildDirectory.dir("generated-resources/test").get().asFile
 tasks.register('generateVersions') {
     def outputFile = file("$generatedResources/versions.json")
     inputs.property "version", version
@@ -96,13 +90,13 @@ tasks.register('generateVersions') {
 }
 
 sourceSets {
-    main {
+    test {
         output.dir(generatedResources, builtBy: tasks.named('generateVersions'))
     }
 }
 
 // This is used by github actions to split out jobs by Android version test task
-def generatedBuildResources = "$buildDir/build-resources"
+def generatedBuildResources = layout.buildDirectory.dir("build-resources").get().asFile
 tasks.register('generateTestTasksJson') {
     def outputFile = file("${generatedBuildResources}/androidTestTasks.json")
     inputs.property "supportedVersions", supportedVersions
@@ -131,14 +125,11 @@ tasks.withType(Test).configureEach {
 // Generate a test task for each Android version and run the tests annotated with the MultiVersionTest category
 supportedVersions.keySet().each { androidVersion ->
     def testTaskName = androidTestTaskName(androidVersion)
-    def jdkVersion = jdkVersionFor(androidVersion)
     def versionSpecificTest = tasks.register(testTaskName, Test) {
-        description = "Runs the multi-version tests for AGP ${androidVersion} (JDK version ${jdkVersion})"
+        description = "Runs the multi-version tests for AGP ${androidVersion}"
         group = "verification"
-
-        javaLauncher = javaToolchains.launcherFor {
-            languageVersion = jdkVersion
-        }
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
 
         systemProperty 'org.gradle.android.testVersion', androidVersion
     }
@@ -154,12 +145,4 @@ static def androidTestTaskName(String androidVersion) {
 
 static def normalizeVersion(String version) {
     return version.replaceAll('[.\\-]', '_')
-}
-
-static def jdkVersionFor(String version) {
-    // AGP 8.x requires Java 17
-    def jdkVersion = VersionNumber.parse(version) >= VersionNumber.parse("8.0.0") ? 17 :
-                     VersionNumber.parse(version) > VersionNumber.parse("7.0.0-alpha01") ? 11 : 8
-
-    return JavaLanguageVersion.of(jdkVersion)
 }

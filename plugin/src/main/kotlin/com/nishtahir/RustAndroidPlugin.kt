@@ -1,11 +1,13 @@
 package com.nishtahir
 
-import com.android.build.gradle.*
+import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.variant.HasUnitTest
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.Sync
 import java.io.File
 import java.util.Properties
 
@@ -141,19 +143,36 @@ open class RustAndroidPlugin : Plugin<Project> {
         with(project) {
             cargoExtension = extensions.create("cargo", CargoExtension::class.java)
 
-            afterEvaluate {
-                plugins.all {
-                    when (it) {
-                        is AppPlugin -> configurePlugin<AppExtension>(this)
-                        is LibraryPlugin -> configurePlugin<LibraryExtension>(this)
-                    }
+            listOf("com.android.application", "com.android.library").forEach { id ->
+                pluginManager.withPlugin(id) {
+                    configureAndroid(this)
                 }
             }
-
         }
     }
 
-    private inline fun <reified T : BaseExtension> configurePlugin(project: Project) = with(project) {
+    private fun configureAndroid(project: Project) = with(project) {
+        val androidComponents = extensions.getByType(AndroidComponentsExtension::class.java)
+        var minSdk: Int? = null
+
+        androidComponents.onVariants { variant ->
+            val rustJniLibs = layout.buildDirectory.dir("rustJniLibs").get().asFile
+            minSdk = minOf(minSdk ?: Int.MAX_VALUE, variant.minSdk.apiLevel)
+            variant.sources.jniLibs?.addStaticSourceDirectory(File(rustJniLibs, "android").path)
+            val mergeJniLibs = "merge${variant.name.replaceFirstChar { it.titlecase() }}JniLibFolders"
+            tasks.named { it == mergeJniLibs }.configureEach { it.dependsOn("cargoBuild") }
+            (variant as? HasUnitTest)?.unitTest?.configureTestTask {
+                it.classpath += files(File(rustJniLibs, "desktop"))
+                it.dependsOn("cargoBuild")
+            }
+        }
+
+        afterEvaluate {
+            configurePlugin(this, androidComponents, minSdk)
+        }
+    }
+
+    private fun configurePlugin(project: Project, androidComponents: AndroidComponentsExtension<*, *, *>, minSdk: Int?) = with(project) {
         cargoExtension.localProperties = Properties()
 
         val localPropertiesFile = File(project.rootDir, "local.properties")
@@ -188,11 +207,9 @@ open class RustAndroidPlugin : Plugin<Project> {
                 throw GradleException("Cannot set both `apiLevel` and `apiLevels`")
             }
         } else {
-            val default = if (apiLevel != null) {
-                apiLevel
-            } else {
-                extensions[T::class].defaultConfig.minSdkVersion!!.apiLevel
-            }
+            val default = apiLevel
+                ?: minSdk
+                ?: throw GradleException("Could not determine minSdk: no Android variants were configured")
             cargoExtension.apiLevels = cargoExtension.targets!!.map { it to default }.toMap()
         }
         val missingApiLevelTargets = cargoExtension.targets!!.toSet().minus(
@@ -201,13 +218,8 @@ open class RustAndroidPlugin : Plugin<Project> {
             throw GradleException("`apiLevels` missing entries for: $missingApiLevelTargets")
         }
 
-        extensions[T::class].apply {
-            sourceSets.getByName("main").jniLibs.srcDir(File("$buildDir/rustJniLibs/android"))
-            sourceSets.getByName("test").resources.srcDir(File("$buildDir/rustJniLibs/desktop"))
-        }
-
         // Determine the NDK version, if present
-        val ndk = extensions[T::class].ndkDirectory.let {
+        val ndk = androidComponents.sdkComponents.ndkDirectory.get().asFile.let {
             val ndkSourceProperties = Properties()
             val ndkSourcePropertiesFile = File(it, "source.properties")
             if (ndkSourcePropertiesFile.exists()) {
@@ -218,7 +230,7 @@ open class RustAndroidPlugin : Plugin<Project> {
         }
 
         // Fish linker wrapper scripts from our Java resources.
-        val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", GenerateLinkerWrapperTask::class.java).apply {
+        val generateLinkerWrapper = rootProject.tasks.maybeCreate("generateLinkerWrapper", Sync::class.java).apply {
             group = RUST_TASK_GROUP
             description = "Generate shared linker wrapper script"
         }
@@ -227,7 +239,7 @@ open class RustAndroidPlugin : Plugin<Project> {
             // From https://stackoverflow.com/a/320595.
             from(rootProject.zipTree(File(RustAndroidPlugin::class.java.protectionDomain.codeSource.location.toURI()).path))
             include("**/linker-wrapper*")
-            into(File(rootProject.buildDir, "linker-wrapper"))
+            into(rootProject.layout.buildDirectory.dir("linker-wrapper"))
             eachFile {
                 it.path = it.path.replaceFirst("com/nishtahir", "")
             }
@@ -251,15 +263,15 @@ open class RustAndroidPlugin : Plugin<Project> {
                 throw GradleException("Target ${target} is not recognized (recognized targets: ${toolchains.map { it.platform }.sorted()}).  Check `local.properties` and `build.gradle`.")
             }
 
-            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.capitalize()}",
+            val targetBuildTask = tasks.maybeCreate("cargoBuild${target.replaceFirstChar { it.titlecase() }}",
                     CargoBuildTask::class.java).apply {
                 group = RUST_TASK_GROUP
                 description = "Build library ($target)"
                 toolchain = theToolchain
                 this.ndk = ndk
                 projectDir = project.projectDir
-                this.buildDir = project.buildDir
-                rootBuildDir = project.rootProject.buildDir
+                this.buildDir = project.layout.buildDirectory.get().asFile
+                rootBuildDir = project.rootProject.layout.buildDirectory.get().asFile
                 cargoCommand = cargoExtension.cargoCommand
                 rustcCommand = cargoExtension.rustcCommand
                 rustupChannel = cargoExtension.rustupChannel
@@ -281,7 +293,7 @@ open class RustAndroidPlugin : Plugin<Project> {
                     "RUST_ANDROID_GRADLE_AUTO_CONFIGURE_CLANG_SYS",
                     theToolchain.type != ToolchainType.DESKTOP
                 )
-                targetProperties = project.properties
+                targetProperties = project.extensions.extraProperties.properties
                     .filterKeys { it.startsWith("RUST_ANDROID_GRADLE_TARGET_") }
                     .mapValues { it.value?.toString() ?: "" }
                 cargoExtension.exec?.let {
