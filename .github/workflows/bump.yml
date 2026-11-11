@@ -17,14 +17,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     # Everything here was cribbed from or inspired by
     # https://github.com/oflynned/android-version-bump/blob/b9f6de7f8bdf25de3f695843265debf7c3919272.
     - name: Bump version
-      id: bump_version
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         NEW_VERSION: ${{ github.event.inputs.new_version }}
         CHANGELOG: ${{ github.event.inputs.changelog }}
       run: |
@@ -40,7 +39,7 @@ jobs:
         cat CHANGELOG.md >> new_CHANGELOG.md
         mv new_CHANGELOG.md CHANGELOG.md
 
-        sed -i -e "s/$old_version/$NEW_VERSION/" version.properties README.md
+        sed -i -e "/rust-android-gradle/s/$old_version/$NEW_VERSION/" README.md
 
         echo "version=$NEW_VERSION" > version.properties
 
@@ -55,21 +54,9 @@ jobs:
         git log -n 1
 
         git tag "v$NEW_VERSION"
-        remote="https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+        remote="https://${GITHUB_ACTOR}:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
         git push "${remote}" --follow-tags
         git push "${remote}" --tags
 
-        echo "::set-output name=new_tag::v$NEW_VERSION"
-
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.bump_version.outputs.new_tag }}
-        release_name: ${{ steps.bump_version.outputs.new_tag }}
-        body: "- ${{ github.event.inputs.changelog }}"
-        prerelease: false
-        draft: true
+        gh release create "v$NEW_VERSION" --draft --title "v$NEW_VERSION" --notes "- $CHANGELOG"
