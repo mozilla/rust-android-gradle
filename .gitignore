@@ -40,3 +40,4 @@ gradle-app.setting
 
 .cargo
 **/maven-repo/
+.kotlin/

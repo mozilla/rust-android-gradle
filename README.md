@@ -2,6 +2,9 @@
 
 Cross compile Rust Cargo projects for Android targets.
 
+Requires Android Gradle Plugin 9.0 or newer and Gradle 9.1 or newer. Projects still on Android Gradle Plugin 8
+can keep using the 0.10.0 release.
+
 
 <p align="left">
     <a alt="Version badge" href="https://plugins.gradle.org/plugin/org.mozilla.rust-android-gradle.rust-android">
@@ -70,14 +73,8 @@ Finally, run the `cargoBuild` task to cross compile:
 ```sh
 ./gradlew cargoBuild
 ```
-Or add it as a dependency to one of your other build tasks, to build your rust code when you normally build your project:
-```gradle
-tasks.whenTaskAdded { task ->
-    if ((task.name == 'javaPreCompileDebug' || task.name == 'javaPreCompileRelease')) {
-        task.dependsOn 'cargoBuild'
-    }
-}
-```
+Each variant's jniLibs merge and unit test tasks depend on `cargoBuild`, so building or testing the project
+builds the Rust code first.
 
 ## Configuration
 
@@ -448,23 +445,24 @@ and builds will likely fail.)
 
 ## Passing arguments to cargo
 
-The plugin passes project properties named like `RUST_ANDROID_GRADLE_target_..._KEY=VALUE` through
+The plugin passes project properties named like `RUST_ANDROID_GRADLE_TARGET_<target>_<KEY>=VALUE` through
 to the Cargo invocation for the given Rust `target` as `KEY=VALUE`.  Target should be upper-case
 with "-" replaced by "_".  (See [the links from this Cargo issue](https://github.com/rust-lang/cargo/issues/5690).) So, for example,
 
 ```groovy
-project.RUST_ANDROID_GRADLE_I686_LINUX_ANDROID_FOO=BAR
+ext.RUST_ANDROID_GRADLE_TARGET_ARMV7_LINUX_ANDROIDEABI_FOO = "BAR"
 ```
 and
 ```shell
-./gradlew -PRUST_ANDROID_GRADLE_ARMV7_LINUX_ANDROIDEABI_FOO=BAR ...
+./gradlew -PRUST_ANDROID_GRADLE_TARGET_ARMV7_LINUX_ANDROIDEABI_FOO=BAR ...
 ```
 and
 ```
-env ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_ARMV7_LINUX_ANDROIDEABI_FOO=BAR ./gradlew ...
+env ORG_GRADLE_PROJECT_RUST_ANDROID_GRADLE_TARGET_ARMV7_LINUX_ANDROIDEABI_FOO=BAR ./gradlew ...
 ```
-all set `FOO=BAR` in the `cargo` execution environment (for the "armv7-linux-androideabi` Rust
-target, corresponding to the "x86" target in the plugin).
+all set `FOO=BAR` in the `cargo` execution environment for the `armv7-linux-androideabi` Rust
+target, which is the `arm` target in the plugin.  A `gradle.properties` entry works too.  An `ext`
+value must be set in the project that applies the plugin, or through `allprojects`.
 
 # Development
 

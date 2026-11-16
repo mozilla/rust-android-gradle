@@ -2,16 +2,14 @@ buildscript {
     Properties versionProperties = new Properties()
     versionProperties.load(new FileInputStream("$project.rootDir/version.properties"))
 
-    // Kotlin 1.9.22: Required for Gradle 8.5+ (old Kotlin Gradle plugin uses removed APIs)
-    ext.kotlin_version = '1.9.22'
-    // AGP 8.2.0: Required for Gradle 8.5+ compatibility
-    ext.agp_version = '8.2.0'
+    ext.kotlin_version = '2.4.21'
+    ext.agp_version = '9.0.0'
     ext.plugin_version = versionProperties.getProperty("version")
 
     repositories {
         google()
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url = "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
@@ -24,13 +22,13 @@ subprojects {
     repositories {
         google()
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url = "https://plugins.gradle.org/m2/"
         }
     }
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
 }
 
 wrapper {

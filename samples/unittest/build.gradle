@@ -1,9 +1,9 @@
 buildscript {
-    ext.agp_version = '8.2.0'
+    ext.agp_version = '9.5.1'
     repositories {
         google()
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url = "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
@@ -16,33 +16,23 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 android {
-    compileSdkVersion 30
+    compileSdk = 36
 
     namespace = 'com.nishtahir.androidrust'
 
     defaultConfig {
-        applicationId "com.nishtahir.androidrust"
-        minSdkVersion 21
-        targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        applicationId = "com.nishtahir.androidrust"
+        minSdk = 21
+        targetSdk = 36
+        versionCode = 1
+        versionName = "1.0"
+        testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
     }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-    ndkVersion "29.0.14206865"
-    sourceSets {
-        test.resources.srcDirs += "$buildDir/rustJniLibs/desktop"
-    }
+    ndkVersion = "30.0.16248370"
 }
 
 cargo {
     module = "../rust"
-    targets = ["x86_64", "linux-x86-64"] // "x86", "x86_64", "arm64"]
     targets = ["arm64", "darwin-aarch64"]
     libname = "rust"
 }
@@ -79,7 +69,7 @@ dependencies {
     })
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.2'
 
     // For reasons unknown, resolving the jnaForTest configuration directly
     // trips a nasty issue with the Android-Gradle plugin 3.2.1, like `Cannot
@@ -89,30 +79,5 @@ dependencies {
     // causing it to be resolved.  Cloning first dissociates the configuration,
     // avoiding other configurations from being resolved.  Tricky!
     testImplementation files(configurations.jnaForTest.copyRecursive().files)
-    // testImplementation "androidx.test.ext:junit:$versions.androidx_junit"
-    testImplementation "org.robolectric:robolectric:4.14.1"
-}
-
-// Java 17: Required for Gradle 8.5+ and AGP 8.x
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
-afterEvaluate {
-    // The `cargoBuild` task isn't available until after evaluation.
-    android.applicationVariants.all { variant ->
-        def productFlavor = ""
-        variant.productFlavors.each {
-            productFlavor += "${it.name.capitalize()}"
-        }
-        def buildType = "${variant.buildType.name.capitalize()}"
-        tasks["generate${productFlavor}${buildType}Assets"].dependsOn(tasks["cargoBuild"])
-
-        // Don't merge the jni lib folders until after the Rust libraries have been built.
-        tasks["merge${productFlavor}${buildType}JniLibFolders"].dependsOn(tasks["cargoBuild"])
-
-        // For unit tests.
-        tasks["process${productFlavor}${buildType}UnitTestJavaRes"].dependsOn(tasks["cargoBuild"])
-    }
+    testImplementation "org.robolectric:robolectric:4.17"
 }
