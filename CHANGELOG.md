@@ -1,3 +1,7 @@
+# 0.11.0
+
+- BREAKING CHANGE: Require Android Gradle Plugin 9 and Gradle 9.1.
+
 # 0.10.0
 
 - Support AGP 8 by reworking several contributor PRs.

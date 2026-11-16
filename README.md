@@ -23,7 +23,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'org.mozilla.rust-android-gradle:plugin:0.10.0'
+        classpath 'org.mozilla.rust-android-gradle:plugin:0.11.0'
     }
 }
 ```
@@ -36,7 +36,7 @@ buildscript {
 }
 
 plugins {
-    id "org.mozilla.rust-android-gradle.rust-android" version "0.10.0"
+    id "org.mozilla.rust-android-gradle.rust-android" version "0.11.0"
 }
 ```
 
