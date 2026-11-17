@@ -286,7 +286,7 @@ abstract class CargoBuildTask : DefaultTask() {
         val intoDir = File(buildDir, "rustJniLibs/${toolchain.folder}")
         intoDir.mkdirs()
 
-        fileSystemOperations.copy { spec ->
+        val copied = fileSystemOperations.copy { spec ->
             spec.from(cargoOutputDir)
             spec.into(intoDir)
 
@@ -301,6 +301,9 @@ abstract class CargoBuildTask : DefaultTask() {
                 spec.include("lib${libname}.dylib")
                 spec.include("${libname}.dll")
             }
+        }
+        if (!copied.didWork) {
+            throw GradleException("No libraries found in ${cargoOutputDir}. If the crate is part of a Cargo workspace, set `targetDirectory` to the workspace's target directory.")
         }
     }
 }
