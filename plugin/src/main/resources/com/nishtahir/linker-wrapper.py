@@ -32,8 +32,8 @@ for arg in args:
         open(arg[1:], "w").write("".join(fileargs))
 
 
-# This only appears when the subprocess call fails, but it's helpful then.
-printable_cmd = " ".join(shlex.quote(arg) for arg in args)
-print(printable_cmd)
+returncode = subprocess.call(args)
+if returncode != 0:
+    print(" ".join(shlex.quote(arg) for arg in args))
 
-sys.exit(subprocess.call(args))
+sys.exit(returncode)
