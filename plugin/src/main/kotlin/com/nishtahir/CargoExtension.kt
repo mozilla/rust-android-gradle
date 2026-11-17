@@ -97,9 +97,18 @@ open class CargoExtension {
             return if (!field.isEmpty()) {
                 field
             } else {
-                getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: "python"
+                getProperty("rust.pythonCommand", "RUST_ANDROID_GRADLE_PYTHON_COMMAND") ?: defaultPythonCommand()
             }
         }
+
+    private fun defaultPythonCommand(): String {
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            return "python"
+        }
+        val path = System.getenv("PATH") ?: return "python"
+        val hasPython3 = path.split(File.pathSeparator).any { File(it, "python3").canExecute() }
+        return if (hasPython3) "python3" else "python"
+    }
 
     // Required so that we can parse the default triple out of `rustc --version --verbose`. Sadly,
     // there seems to be no way to get this information out of cargo directly. Failure to locate

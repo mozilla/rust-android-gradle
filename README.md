@@ -389,7 +389,7 @@ The plugin invokes Python, Cargo and Rustc.  In order of preference, the plugin 
 1. the value of `cargo { pythonCommand = "..." }`, if non-empty
 1. `rust.pythonCommand` in `${rootDir}/local.properties`
 1. the environment variable `RUST_ANDROID_GRADLE_PYTHON_COMMAND`
-1. the default, `python`
+1. the default: `python3` if it is on the `PATH`, otherwise `python` (always `python` on Windows)
 
 In order of preference, the plugin determines what command to invoke for Cargo by:
 
